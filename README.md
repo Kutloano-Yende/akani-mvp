@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Akani — Sales Intelligence for B-BBEE Prospecting
 
-## Getting Started
+Sprint 1 MVP: discover South African businesses, score them as B-BBEE
+prospects, qualify them, and track them through a pipeline to paying client.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router, TypeScript, Turbopack) — frontend + API routes in one app
+- Supabase (Postgres, Auth with TOTP 2FA, RLS) — project `akani-mvp` (`eu-west-1`)
+- Tailwind CSS 4
+
+## Setup
+
+```bash
+npm install
+```
+
+Supabase credentials are already in `.env.local` (URL + anon key). Two things
+are still blank and only needed for features beyond Sprint 1's mock data:
+
+- `SUPABASE_SERVICE_ROLE_KEY` — from the Supabase dashboard → Project Settings
+  → API. Only needed for admin-only server operations (none in Sprint 1 use it
+  yet).
+- `BDM_DATAFINDER_API_KEY` / `BDM_DATAFINDER_BASE_URL` — the real business
+  data provider. Until these are set, **Discover Businesses** searches a
+  built-in mock catalogue instead (see `src/lib/data/provider.ts`), so the
+  full discover → qualify → pipeline flow works without a live integration.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 (falls back to the next free port if 3000 is busy).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Logging in
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+An initial admin account was created directly in Supabase Auth:
 
-## Learn More
+- Email: `kutloanoyende@gmail.com`
+- Temporary password: `Akani-Sprint1!`
 
-To learn more about Next.js, take a look at the following resources:
+Change this password after first login (Forgot password on the login screen,
+or Settings → Security once a password-change screen is added). There's no
+public sign-up screen by design — this is an internal tool; new users are
+provisioned directly in Supabase Auth until an admin "invite user" screen
+ships (planned for Sprint 4 alongside RBAC).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## What's built (Sprint 1)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Screens:** Login, 2FA verify, Dashboard, Discover Businesses, Prospects
+(list + detail), Pipeline (kanban), Settings → Security (2FA enrollment).
 
-## Deploy on Vercel
+**Data model:** `companies`, `contacts`, `prospects`, `opportunity_signals`,
+`activities`, `profiles` — see the migration history in Supabase (project
+`akani-mvp`) for the full schema, or `src/types/database.ts` for the
+generated types.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**API routes:** the data-provider proxy (`/api/data-provider/search`) and
+mutations that need server-side logic (`/api/prospects/import`,
+`/api/prospects/[id]/status`, `/api/dashboard/summary`). Reads for
+server-rendered pages go straight through the Supabase server client under
+RLS — standard practice for Next + Supabase, and it means the browser never
+talks to Postgres or any provider API directly.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Auth:** Supabase Auth (email/password + TOTP 2FA), enforced by
+`src/proxy.ts` (Next 16's replacement for `middleware.ts`), which redirects
+unauthenticated requests to `/login` and holds MFA'd accounts at `/login/verify`.
+
+## Not built yet (later sprints, per the MVP plan)
+
+- Real BDM DataFinder integration (currently mocked)
+- Campaigns/outreach, email templates
+- Applications and conversions tracking (with the Akani/Bantu confidentiality
+  split)
+- Admin user management, audit logs, suppression list, POPIA controls
+- Rate limiting, security headers, monitoring
