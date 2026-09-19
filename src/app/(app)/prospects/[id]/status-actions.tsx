@@ -6,69 +6,125 @@ import type { Enums } from "@/types/database";
 
 type Status = Enums<"prospect_status">;
 
-const NEXT_STAGE: Partial<Record<Status, { status: Status; label: string }>> = {
-  identified: { status: "qualified", label: "Qualify prospect" },
+type NoteTransition = {
+  status: Status;
+  label: string;
+  prompt: string;
+  placeholder: string;
+  confirmLabel: string;
+  endpoint: (prospectId: string) => string;
+  body: (note: string) => Record<string, unknown>;
+};
+
+const NOTE_TRANSITIONS: Partial<Record<Status, NoteTransition>> = {
+  identified: {
+    status: "qualified",
+    label: "Qualify prospect",
+    prompt: "Why does this prospect qualify?",
+    placeholder: "e.g. Confirmed construction sector, 80+ employees, decision-maker contact on file",
+    confirmLabel: "Confirm qualification",
+    endpoint: (id) => `/api/prospects/${id}/status`,
+    body: (note) => ({ status: "qualified", note }),
+  },
+  interested: {
+    status: "application",
+    label: "Start application",
+    prompt: "Application notes (optional)",
+    placeholder: "e.g. Application submitted via portal, reference #12345",
+    confirmLabel: "Start application",
+    endpoint: (id) => `/api/prospects/${id}/application`,
+    body: (note) => ({ notes: note }),
+  },
+  application: {
+    status: "won",
+    label: "Mark won",
+    prompt: "How did this become a paying client? (optional)",
+    placeholder: "e.g. Signed engagement letter 2026-09-19",
+    confirmLabel: "Confirm paying client",
+    endpoint: () => `/api/conversions/report`,
+    body: (note) => ({ notes: note }),
+  },
+};
+
+const SIMPLE_NEXT: Partial<Record<Status, { status: Status; label: string }>> = {
   qualified: { status: "contacted", label: "Mark contacted" },
   contacted: { status: "interested", label: "Mark interested" },
-  interested: { status: "application", label: "Start application" },
-  application: { status: "won", label: "Mark won" },
 };
 
 export function StatusActions({ prospectId, status }: { prospectId: string; status: Status }) {
   const router = useRouter();
-  const [pending, setPending] = useState<Status | null>(null);
-  const [qualifying, setQualifying] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [collecting, setCollecting] = useState(false);
   const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  async function updateStatus(newStatus: Status, noteText?: string) {
-    setPending(newStatus);
+  async function updateStatus(newStatus: Status) {
+    setPending(true);
+    setError(null);
     try {
       const res = await fetch(`/api/prospects/${prospectId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus, note: noteText }),
+        body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) {
-        setQualifying(false);
-        setNote("");
-        router.refresh();
-      }
+      if (res.ok) router.refresh();
+      else setError((await res.json()).error ?? "Failed to update");
     } finally {
-      setPending(null);
+      setPending(false);
     }
   }
 
-  const next = NEXT_STAGE[status];
-  const isClosed = status === "won" || status === "lost";
-  const nextIsQualify = next?.status === "qualified";
+  async function runNoteTransition(transition: NoteTransition) {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(transition.endpoint(prospectId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...transition.body(note), prospectId }),
+      });
+      if (res.ok) {
+        setCollecting(false);
+        setNote("");
+        router.refresh();
+      } else {
+        setError((await res.json()).error ?? "Failed to update");
+      }
+    } finally {
+      setPending(false);
+    }
+  }
 
-  if (nextIsQualify && qualifying) {
+  const noteTransition = NOTE_TRANSITIONS[status];
+  const simpleNext = SIMPLE_NEXT[status];
+  const isClosed = status === "won" || status === "lost";
+
+  if (noteTransition && collecting) {
     return (
       <div className="space-y-2">
+        {error && <p className="text-sm text-red-600">{error}</p>}
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">
-            Why does this prospect qualify?
-          </span>
+          <span className="text-sm font-medium text-slate-700">{noteTransition.prompt}</span>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             autoFocus
-            placeholder="e.g. Confirmed construction sector, 80+ employees, decision-maker contact on file"
+            placeholder={noteTransition.placeholder}
             className="input mt-1"
           />
         </label>
         <div className="flex gap-2">
           <button
-            onClick={() => updateStatus("qualified", note)}
-            disabled={pending !== null}
+            onClick={() => runNoteTransition(noteTransition)}
+            disabled={pending}
             className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
           >
-            {pending === "qualified" ? "Saving…" : "Confirm qualification"}
+            {pending ? "Saving…" : noteTransition.confirmLabel}
           </button>
           <button
-            onClick={() => setQualifying(false)}
-            disabled={pending !== null}
+            onClick={() => setCollecting(false)}
+            disabled={pending}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             Cancel
@@ -80,22 +136,32 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
 
   return (
     <div className="space-y-2">
-      {next && (
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {noteTransition && (
         <button
-          onClick={() => (nextIsQualify ? setQualifying(true) : updateStatus(next.status))}
-          disabled={pending !== null}
+          onClick={() => setCollecting(true)}
+          disabled={pending}
           className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
         >
-          {pending === next.status ? "Updating…" : next.label}
+          {noteTransition.label}
+        </button>
+      )}
+      {simpleNext && (
+        <button
+          onClick={() => updateStatus(simpleNext.status)}
+          disabled={pending}
+          className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+        >
+          {pending ? "Updating…" : simpleNext.label}
         </button>
       )}
       {!isClosed && (
         <button
           onClick={() => updateStatus("lost")}
-          disabled={pending !== null}
+          disabled={pending}
           className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
         >
-          {pending === "lost" ? "Updating…" : "Mark lost"}
+          {pending ? "Updating…" : "Mark lost"}
         </button>
       )}
       {isClosed && (

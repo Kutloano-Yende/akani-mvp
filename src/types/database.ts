@@ -95,6 +95,156 @@ export type Database = {
           },
         ]
       }
+      applications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          prospect_id: string
+          status: Database["public"]["Enums"]["application_status"]
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          prospect_id: string
+          status?: Database["public"]["Enums"]["application_status"]
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          prospect_id?: string
+          status?: Database["public"]["Enums"]["application_status"]
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_prospects: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          opened_at: string | null
+          prospect_id: string
+          replied_at: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["campaign_prospect_status"]
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          opened_at?: string | null
+          prospect_id: string
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_prospect_status"]
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          opened_at?: string | null
+          prospect_id?: string
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_prospect_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_prospects_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_prospects_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["campaign_status"]
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"]
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"]
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -204,6 +354,95 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversions: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          prospect_id: string
+          reported_at: string
+          reported_by: string | null
+          status: Database["public"]["Enums"]["conversion_status"]
+          updated_at: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prospect_id: string
+          reported_at?: string
+          reported_by?: string | null
+          status?: Database["public"]["Enums"]["conversion_status"]
+          updated_at?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prospect_id?: string
+          reported_at?: string
+          reported_by?: string | null
+          status?: Database["public"]["Enums"]["conversion_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversions_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -338,6 +577,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      application_status: "submitted" | "approved" | "rejected"
+      campaign_prospect_status: "pending" | "sent" | "opened" | "replied"
+      campaign_status: "draft" | "active" | "completed"
+      conversion_status: "pending" | "confirmed" | "rejected"
       opportunity_level: "low" | "medium" | "high"
       prospect_status:
         | "identified"

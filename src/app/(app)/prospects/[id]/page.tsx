@@ -21,15 +21,30 @@ export default async function ProspectDetailPage({
 
   const company = Array.isArray(prospect.companies) ? prospect.companies[0] : prospect.companies;
 
-  const [{ data: contacts }, { data: signals }, { data: activities }] = await Promise.all([
-    supabase.from("contacts").select("*").eq("company_id", company.id),
-    supabase.from("opportunity_signals").select("*").eq("company_id", company.id),
-    supabase
-      .from("activities")
-      .select("*, profiles(name)")
-      .eq("prospect_id", id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: contacts }, { data: signals }, { data: activities }, { data: application }, { data: conversion }] =
+    await Promise.all([
+      supabase.from("contacts").select("*").eq("company_id", company.id),
+      supabase.from("opportunity_signals").select("*").eq("company_id", company.id),
+      supabase
+        .from("activities")
+        .select("*, profiles(name)")
+        .eq("prospect_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("applications")
+        .select("*")
+        .eq("prospect_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("conversions")
+        .select("*")
+        .eq("prospect_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -77,6 +92,38 @@ export default async function ProspectDetailPage({
               </div>
             )}
           </section>
+
+          {(application || conversion) && (
+            <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-sm font-semibold text-slate-900">Application &amp; conversion</h2>
+              <div className="space-y-3">
+                {application && (
+                  <div className="rounded-md bg-indigo-50 px-3 py-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-indigo-700">
+                      Application {application.status}
+                    </p>
+                    <p className="mt-0.5 text-sm text-indigo-900">
+                      Submitted{" "}
+                      {new Date(application.submitted_at).toLocaleDateString("en-ZA")}
+                      {application.notes ? ` — ${application.notes}` : ""}
+                    </p>
+                  </div>
+                )}
+                {conversion && (
+                  <div className="rounded-md bg-emerald-50 px-3 py-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                      Paying client — {conversion.status}
+                    </p>
+                    <p className="mt-0.5 text-sm text-emerald-900">
+                      {conversion.converted_at &&
+                        new Date(conversion.converted_at).toLocaleDateString("en-ZA")}
+                      {conversion.notes ? ` — ${conversion.notes}` : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold text-slate-900">Contacts</h2>

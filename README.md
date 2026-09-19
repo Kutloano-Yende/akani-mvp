@@ -55,17 +55,32 @@ public sign-up screen by design — this is an internal tool; new users are
 provisioned directly in Supabase Auth until an admin "invite user" screen
 ships (planned for Sprint 4 alongside RBAC).
 
-## What's built (Sprint 1)
+## What's built
 
 **Screens:** Login, 2FA verify, Dashboard, Discover Businesses, Prospects
-(list + detail), Pipeline (kanban), Settings → Security (2FA enrollment).
+(list + detail), Pipeline (kanban), Campaigns (list, detail, templates),
+Analytics, Settings → Security (2FA enrollment) and Data Provider (usage).
 
 **Data model:** `companies`, `contacts`, `prospects`, `opportunity_signals`,
-`activities`, `profiles`. Schema + RLS policies are tracked in
-`supabase/migrations/` (applied directly to the `akani-mvp` project via the
-Supabase MCP tools — this repo isn't yet wired to the Supabase CLI, so new
-migrations need to be applied the same way and then added here for review).
-`src/types/database.ts` has the generated TS types.
+`activities`, `profiles`, `api_usage`, `campaigns`, `campaign_prospects`,
+`email_templates`, `applications`, `conversions`. Schema + RLS policies are
+tracked in `supabase/migrations/` (applied directly to the `akani-mvp`
+project via the Supabase MCP tools — this repo isn't yet wired to the
+Supabase CLI, so new migrations need to be applied the same way and then
+added here for review). `src/types/database.ts` has the generated TS types.
+
+**Campaigns:** creating a campaign, adding prospects, and "sending" all work
+end-to-end, but there is no real email provider wired up yet — "send" marks
+`campaign_prospects` as sent and logs an activity per prospect; it does not
+dispatch an actual email. Swap in a real provider (Resend/SendGrid) behind
+`/api/campaigns/[id]/send` when ready; the data model doesn't need to change
+for that.
+
+**Conversions:** deliberately minimal — a prospect_id, a status, a date, and
+free-text notes the reporting user chooses to include. That's the boundary
+the proposal's Akani/Bantu confidentiality split calls for: reporting that a
+conversion happened without exposing confidential client-engagement details
+through this system.
 
 **Security note:** `profiles.role` cannot be changed by a regular
 authenticated user (see `20260919174923_fix_profile_role_escalation.sql`) —
@@ -73,6 +88,18 @@ RLS alone only restricts *which row* a user can touch, not *which column*,
 so without the column-level `REVOKE`/`GRANT` any signed-in user could have
 set their own role to `admin`. Apply the same scrutiny to any new
 self-service `UPDATE` policy before shipping it.
+
+Also: `handle_new_user()` and `set_updated_at()` are trigger-only functions
+with `EXECUTE` revoked from `PUBLIC` (not just `anon`/`authenticated` — a
+function's `EXECUTE` is granted to `PUBLIC` by default at creation, and
+revoking from specific roles alone is a no-op while that stands). Triggers
+still fire fine; this only blocks calling them directly via
+`/rest/v1/rpc/...`.
+
+**One thing you'll need to do manually:** Supabase Auth's leaked-password
+protection (checks new passwords against HaveIBeenPwned) is off by default
+and isn't something the available tooling could flip — turn it on in the
+dashboard under Authentication → Policies.
 
 **API routes:** the data-provider proxy (`/api/data-provider/search`) and
 mutations that need server-side logic (`/api/prospects/import`,
