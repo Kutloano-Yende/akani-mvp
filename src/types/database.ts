@@ -57,6 +57,44 @@ export type Database = {
           },
         ]
       }
+      api_usage: {
+        Row: {
+          created_at: string
+          credits_used: number
+          endpoint: string
+          id: string
+          provider: string
+          results_returned: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          credits_used?: number
+          endpoint: string
+          id?: string
+          provider: string
+          results_returned?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          credits_used?: number
+          endpoint?: string
+          id?: string
+          provider?: string
+          results_returned?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null

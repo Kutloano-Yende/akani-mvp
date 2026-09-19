@@ -26,15 +26,23 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { status } = await request.json();
+  const { status, note } = await request.json();
 
   if (!VALID_STATUSES.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  const trimmedNote = typeof note === "string" ? note.trim() : "";
+
   const update: TablesUpdate<"prospects"> = { status };
   const now = new Date().toISOString();
-  if (status === "qualified") update.qualified_at = now;
+  if (status === "qualified") {
+    update.qualified_at = now;
+    // Qualifying is the one transition where we want a reason on record —
+    // it's what "Why this prospect was identified" eventually has to hold
+    // up against, not just a status flip.
+    update.qualification_status = trimmedNote || "Qualified — no notes recorded";
+  }
   if (status === "contacted") update.first_contacted_at = now;
   if (status === "won") update.converted_at = now;
 
@@ -56,7 +64,9 @@ export async function PATCH(
     prospect_id: id,
     user_id: user.id,
     type: "STATUS_CHANGED",
-    description: `Status changed to ${status}`,
+    description: trimmedNote
+      ? `Status changed to ${status} — ${trimmedNote}`
+      : `Status changed to ${status}`,
   });
 
   return NextResponse.json({ prospect });

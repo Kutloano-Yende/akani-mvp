@@ -10,6 +10,7 @@ type SearchResult = ProviderCompany & {
   opportunityLevel: "low" | "medium" | "high";
   signals: { signalType: string; description: string; weight: number }[];
   alreadyImported: boolean;
+  possibleDuplicateOf: string | null;
 };
 
 const INDUSTRIES = [
@@ -212,7 +213,14 @@ export function DiscoverForm() {
                 const isImported = r.alreadyImported || imported.has(r.externalId);
                 return (
                   <tr key={r.externalId} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                    <td className="px-6 py-3 font-medium text-slate-900">{r.name}</td>
+                    <td className="px-6 py-3 font-medium text-slate-900">
+                      {r.name}
+                      {r.possibleDuplicateOf && !isImported && (
+                        <p className="mt-0.5 text-xs font-normal text-amber-700">
+                          Possible duplicate of &ldquo;{r.possibleDuplicateOf}&rdquo;
+                        </p>
+                      )}
+                    </td>
                     <td className="px-6 py-3 text-slate-600">{r.industry}</td>
                     <td className="px-6 py-3 text-slate-600">{r.province}</td>
                     <td className="px-6 py-3 text-slate-600">{r.phone ?? "—"}</td>
@@ -229,7 +237,11 @@ export function DiscoverForm() {
                           disabled={importing === r.externalId}
                           className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60"
                         >
-                          {importing === r.externalId ? "Adding…" : "Add to pipeline"}
+                          {importing === r.externalId
+                            ? "Adding…"
+                            : r.possibleDuplicateOf
+                              ? "Add anyway"
+                              : "Add to pipeline"}
                         </button>
                       )}
                     </td>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getProvider, scoreOpportunity } from "@/lib/data/provider";
+import { findDuplicate } from "@/lib/data/dedupe";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -33,24 +34,45 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: existing } = await supabase
+  const { data: existingCompanies } = await supabase
     .from("companies")
-    .select("external_id")
-    .eq("source", "BDM DataFinder");
-  const existingIds = new Set((existing ?? []).map((c) => c.external_id));
+    .select("id, name, external_id, source, registration_number");
+
+  const exactMatches = new Set(
+    (existingCompanies ?? []).map((c) => `${c.external_id ?? ""}::${c.source ?? ""}`),
+  );
+  const candidates = (existingCompanies ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    registrationNumber: c.registration_number,
+  }));
 
   const scored = results.map((company) => {
     const { score, level, signals } = scoreOpportunity(company);
+    const alreadyImported = exactMatches.has(`${company.externalId}::${company.source}`);
+    const duplicate = alreadyImported
+      ? null
+      : findDuplicate(company.name, company.registrationNumber, candidates);
+
     return {
       ...company,
       opportunityScore: score,
       opportunityLevel: level,
       signals,
-      alreadyImported: existingIds.has(company.externalId),
+      alreadyImported,
+      possibleDuplicateOf: duplicate?.name ?? null,
     };
   });
 
   scored.sort((a, b) => b.opportunityScore - a.opportunityScore);
+
+  await supabase.from("api_usage").insert({
+    user_id: user.id,
+    provider: provider.name,
+    endpoint: "data-provider/search",
+    results_returned: scored.length,
+    credits_used: 1,
+  });
 
   return NextResponse.json({ results: scored });
 }

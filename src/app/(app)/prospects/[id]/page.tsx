@@ -68,6 +68,14 @@ export default async function ProspectDetailPage({
                 <li className="text-sm text-slate-400">No signals recorded yet.</li>
               )}
             </ul>
+            {prospect.qualification_status && (
+              <div className="mt-4 rounded-md bg-blue-50 px-3 py-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-700">
+                  Qualification notes
+                </p>
+                <p className="mt-0.5 text-sm text-blue-900">{prospect.qualification_status}</p>
+              </div>
+            )}
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

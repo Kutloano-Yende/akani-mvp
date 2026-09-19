@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { ProviderCompany } from "@/lib/data/provider";
+import { findDuplicate } from "@/lib/data/dedupe";
 
 type ImportBody = {
   company: ProviderCompany;
@@ -22,14 +23,39 @@ export async function POST(request: Request) {
   const body: ImportBody = await request.json();
   const { company, opportunityScore, opportunityLevel, signals } = body;
 
-  const { data: existingCompany } = await supabase
+  const { data: exactMatch } = await supabase
     .from("companies")
     .select("id")
     .eq("external_id", company.externalId)
     .eq("source", company.source)
     .maybeSingle();
 
-  let companyId = existingCompany?.id;
+  let companyId = exactMatch?.id;
+  let dedupedAgainst: string | null = null;
+
+  // No exact (external_id, source) match — check whether this is the same
+  // real-world business under a different id (registration number or
+  // normalized name match) before creating a new company row.
+  if (!companyId) {
+    const { data: candidates } = await supabase
+      .from("companies")
+      .select("id, name, registration_number");
+
+    const duplicate = findDuplicate(
+      company.name,
+      company.registrationNumber,
+      (candidates ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        registrationNumber: c.registration_number,
+      })),
+    );
+
+    if (duplicate) {
+      companyId = duplicate.id;
+      dedupedAgainst = duplicate.id;
+    }
+  }
 
   if (!companyId) {
     const { data: inserted, error: insertError } = await supabase
@@ -95,7 +121,11 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (existingProspect) {
-    return NextResponse.json({ prospectId: existingProspect.id, alreadyExisted: true });
+    return NextResponse.json({
+      prospectId: existingProspect.id,
+      alreadyExisted: true,
+      dedupedAgainst,
+    });
   }
 
   const { data: prospect, error: prospectError } = await supabase
@@ -119,8 +149,10 @@ export async function POST(request: Request) {
     prospect_id: prospect.id,
     user_id: user.id,
     type: "PROSPECT_IMPORTED",
-    description: `Imported from ${company.source}`,
+    description: dedupedAgainst
+      ? `Imported from ${company.source} (matched to an existing company record)`
+      : `Imported from ${company.source}`,
   });
 
-  return NextResponse.json({ prospectId: prospect.id, alreadyExisted: false });
+  return NextResponse.json({ prospectId: prospect.id, alreadyExisted: false, dedupedAgainst });
 }
