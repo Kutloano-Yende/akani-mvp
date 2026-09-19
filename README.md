@@ -23,8 +23,18 @@ are still blank and only needed for features beyond Sprint 1's mock data:
   yet).
 - `BDM_DATAFINDER_API_KEY` / `BDM_DATAFINDER_BASE_URL` — the real business
   data provider. Until these are set, **Discover Businesses** searches a
-  built-in mock catalogue instead (see `src/lib/data/provider.ts`), so the
-  full discover → qualify → pipeline flow works without a live integration.
+  built-in mock catalogue instead, so the full discover → qualify → pipeline
+  flow works without a live integration.
+
+  Business-data search is behind a `DataProvider` interface
+  (`src/lib/data/types.ts`) so the Discover screen and its API route never
+  change when the provider does: `MockProvider` and `BDMDataFinderProvider`
+  both implement it, and `getProvider()` (`src/lib/data/get-provider.ts`)
+  picks whichever is configured. `BDMDataFinderProvider`
+  (`src/lib/data/providers/bdm-provider.ts`) is a best-effort client written
+  without BDM's actual API docs — confirm the endpoint, auth scheme, and
+  response field names against their reference and fix up `mapCompany`
+  before relying on it.
 
 ```bash
 npm run dev
@@ -51,9 +61,18 @@ ships (planned for Sprint 4 alongside RBAC).
 (list + detail), Pipeline (kanban), Settings → Security (2FA enrollment).
 
 **Data model:** `companies`, `contacts`, `prospects`, `opportunity_signals`,
-`activities`, `profiles` — see the migration history in Supabase (project
-`akani-mvp`) for the full schema, or `src/types/database.ts` for the
-generated types.
+`activities`, `profiles`. Schema + RLS policies are tracked in
+`supabase/migrations/` (applied directly to the `akani-mvp` project via the
+Supabase MCP tools — this repo isn't yet wired to the Supabase CLI, so new
+migrations need to be applied the same way and then added here for review).
+`src/types/database.ts` has the generated TS types.
+
+**Security note:** `profiles.role` cannot be changed by a regular
+authenticated user (see `20260919174923_fix_profile_role_escalation.sql`) —
+RLS alone only restricts *which row* a user can touch, not *which column*,
+so without the column-level `REVOKE`/`GRANT` any signed-in user could have
+set their own role to `admin`. Apply the same scrutiny to any new
+self-service `UPDATE` policy before shipping it.
 
 **API routes:** the data-provider proxy (`/api/data-provider/search`) and
 mutations that need server-side logic (`/api/prospects/import`,

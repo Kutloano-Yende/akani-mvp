@@ -45,12 +45,14 @@ export function DiscoverForm() {
   });
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState<string | null>(null);
   const [imported, setImported] = useState<Set<string>>(new Set());
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/data-provider/search", {
         method: "POST",
@@ -58,7 +60,15 @@ export function DiscoverForm() {
         body: JSON.stringify(filters),
       });
       const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Search failed. Try again.");
+        setResults(null);
+        return;
+      }
       setResults(data.results ?? []);
+    } catch {
+      setError("Search failed. Check your connection and try again.");
+      setResults(null);
     } finally {
       setLoading(false);
     }
@@ -173,6 +183,10 @@ export function DiscoverForm() {
           </button>
         </div>
       </form>
+
+      {error && (
+        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
 
       {results !== null && (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
