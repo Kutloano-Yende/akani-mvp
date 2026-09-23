@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 export async function listFactors() {
   const supabase = await createClient();
@@ -43,6 +44,7 @@ export async function verifyFactor(factorId: string, code: string) {
   if (error) {
     return { error: "That code didn't work. Try again." };
   }
+  await logAudit(supabase, { action: "MFA_ENABLED", entityType: "mfa_factor", entityId: factorId });
   return { success: true };
 }
 
@@ -52,5 +54,6 @@ export async function unenrollFactor(factorId: string) {
   if (error) {
     return { error: error.message };
   }
+  await logAudit(supabase, { action: "MFA_DISABLED", entityType: "mfa_factor", entityId: factorId });
   return { success: true };
 }

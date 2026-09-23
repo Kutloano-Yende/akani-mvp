@@ -15,16 +15,23 @@ export function SendCampaignButton({
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function handleSend() {
     setSending(true);
     setError(null);
+    setNotice(null);
     try {
       const res = await fetch(`/api/campaigns/${campaignId}/send`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Failed to send");
         return;
+      }
+      if (data.suppressed > 0) {
+        setNotice(
+          `Sent to ${data.sent}. Skipped ${data.suppressed} on the suppression list.`,
+        );
       }
       router.refresh();
     } finally {
@@ -37,6 +44,7 @@ export function SendCampaignButton({
   return (
     <div className="flex items-center gap-2">
       {error && <span className="text-xs text-akani-error">{error}</span>}
+      {notice && <span className="text-xs text-akani-warning">{notice}</span>}
       <button
         onClick={handleSend}
         disabled={disabled}

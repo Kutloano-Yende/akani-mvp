@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getProvider, scoreOpportunity } from "@/lib/data/provider";
 import { findDuplicate } from "@/lib/data/dedupe";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -11,6 +12,17 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Each search burns a real provider credit — cap per-user rate so a
+  // runaway client (or a compromised session) can't exhaust the account's
+  // credit balance.
+  const limit = rateLimit(`data-provider-search:${user.id}`, 20, 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many searches. Wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) } },
+    );
   }
 
   const body = await request.json();
