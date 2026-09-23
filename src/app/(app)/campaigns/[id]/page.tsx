@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { StatCard } from "@/components/stat-card";
 import { CampaignProspectPicker } from "./campaign-prospect-picker";
 import { SendCampaignButton } from "./send-campaign-button";
 
@@ -55,17 +56,17 @@ export default async function CampaignDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/campaigns" className="text-sm font-medium text-emerald-700 hover:text-emerald-800">
+        <Link href="/campaigns" className="text-sm font-medium text-akani-gold hover:text-akani-gold-bright">
           ← Campaigns
         </Link>
         <div className="mt-2 flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">{campaign.name}</h1>
+            <h1 className="text-2xl font-semibold text-akani-text-primary">{campaign.name}</h1>
             {campaign.description && (
-              <p className="mt-1 text-sm text-slate-500">{campaign.description}</p>
+              <p className="mt-1 text-sm text-akani-text-secondary">{campaign.description}</p>
             )}
           </div>
-          <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-700">
+          <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-akani-text-secondary">
             {campaign.status}
           </span>
         </div>
@@ -78,17 +79,17 @@ export default async function CampaignDetailPage({
         <StatCard label="Replied" value={repliedCount} />
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold text-slate-900">Template</h2>
+      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-sm font-semibold text-akani-text-primary">Template</h2>
         {template ? (
           <div className="text-sm">
-            <p className="font-medium text-slate-900">{template.name}</p>
-            <p className="mt-1 text-slate-600">{template.subject}</p>
+            <p className="font-medium text-akani-text-primary">{template.name}</p>
+            <p className="mt-1 text-akani-text-secondary">{template.subject}</p>
           </div>
         ) : (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-akani-text-muted">
             No template selected yet.{" "}
-            <Link href="/campaigns/templates" className="text-emerald-700 hover:underline">
+            <Link href="/campaigns/templates" className="text-akani-gold hover:underline">
               Create one
             </Link>
             .
@@ -96,21 +97,21 @@ export default async function CampaignDetailPage({
         )}
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Add prospects</h2>
+          <h2 className="text-sm font-semibold text-akani-text-primary">Add prospects</h2>
           <SendCampaignButton campaignId={campaign.id} pendingCount={pendingCount} hasTemplate={!!template} />
         </div>
         <CampaignProspectPicker campaignId={campaign.id} available={available} />
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">Prospects in this campaign</h2>
+      <section className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">
+        <div className="border-b border-akani-card-border px-6 py-4">
+          <h2 className="text-sm font-semibold text-akani-text-primary">Prospects in this campaign</h2>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
               <th className="px-6 py-3 font-medium">Company</th>
               <th className="px-6 py-3 font-medium">Industry</th>
               <th className="px-6 py-3 font-medium">Status</th>
@@ -126,23 +127,23 @@ export default async function CampaignDetailPage({
                   : prospect.companies
                 : null;
               return (
-                <tr key={cp.id} className="border-b border-slate-50 last:border-0">
+                <tr key={cp.id} className="border-b border-akani-card-border last:border-0">
                   <td className="px-6 py-3">
                     {prospect ? (
-                      <Link href={`/prospects/${prospect.id}`} className="font-medium text-slate-900 hover:text-emerald-700">
+                      <Link href={`/prospects/${prospect.id}`} className="font-medium text-akani-text-primary hover:text-akani-gold">
                         {company?.name ?? "Unknown"}
                       </Link>
                     ) : (
                       "Unknown"
                     )}
                   </td>
-                  <td className="px-6 py-3 text-slate-600">{company?.industry ?? "—"}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{company?.industry ?? "—"}</td>
                   <td className="px-6 py-3">
-                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-slate-700">
+                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-akani-text-secondary">
                       {cp.status}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-slate-500">
+                  <td className="px-6 py-3 text-akani-text-muted">
                     {cp.sent_at ? new Date(cp.sent_at).toLocaleDateString("en-ZA") : "—"}
                   </td>
                 </tr>
@@ -150,7 +151,7 @@ export default async function CampaignDetailPage({
             })}
             {(campaignProspects ?? []).length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                <td colSpan={4} className="px-6 py-8 text-center text-akani-text-muted">
                   No prospects added yet.
                 </td>
               </tr>
@@ -158,15 +159,6 @@ export default async function CampaignDetailPage({
           </tbody>
         </table>
       </section>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-slate-900">{value}</p>
     </div>
   );
 }

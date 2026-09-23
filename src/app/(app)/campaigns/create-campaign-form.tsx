@@ -18,7 +18,7 @@ export function CreateCampaignForm({ templates }: { templates: Template[] }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+        className="rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright"
       >
         New campaign
       </button>
@@ -49,12 +49,12 @@ export function CreateCampaignForm({ templates }: { templates: Template[] }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="space-y-4 rounded-xl border border-akani-card-border bg-white p-6 shadow-sm"
     >
       {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Campaign name</span>
+          <span className="text-sm font-medium text-akani-text-primary">Campaign name</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -64,7 +64,7 @@ export function CreateCampaignForm({ templates }: { templates: Template[] }) {
           />
         </label>
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Template (optional for now)</span>
+          <span className="text-sm font-medium text-akani-text-primary">Template (optional for now)</span>
           <select
             value={templateId}
             onChange={(e) => setTemplateId(e.target.value)}
@@ -80,7 +80,7 @@ export function CreateCampaignForm({ templates }: { templates: Template[] }) {
         </label>
       </div>
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Description</span>
+        <span className="text-sm font-medium text-akani-text-primary">Description</span>
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -92,14 +92,14 @@ export function CreateCampaignForm({ templates }: { templates: Template[] }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+          className="rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
         >
           {pending ? "Creating…" : "Create campaign"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg"
         >
           Cancel
         </button>

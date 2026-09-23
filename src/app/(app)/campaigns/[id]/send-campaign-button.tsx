@@ -36,12 +36,12 @@ export function SendCampaignButton({
 
   return (
     <div className="flex items-center gap-2">
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-akani-error">{error}</span>}
       <button
         onClick={handleSend}
         disabled={disabled}
         title={!hasTemplate ? "Choose a template first" : pendingCount === 0 ? "Nothing pending" : undefined}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40"
+        className="rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-40"
       >
         {sending ? "Sending…" : `Send to ${pendingCount} pending`}
       </button>

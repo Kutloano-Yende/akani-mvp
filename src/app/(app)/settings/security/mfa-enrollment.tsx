@@ -15,8 +15,8 @@ export function MfaEnrollment({ verifiedFactor }: { verifiedFactor: { id: string
 
   if (verifiedFactor) {
     return (
-      <div className="flex items-center justify-between rounded-md bg-emerald-50 px-4 py-3">
-        <p className="text-sm font-medium text-emerald-800">2FA is enabled on your account.</p>
+      <div className="flex items-center justify-between rounded-md bg-akani-success-bg px-4 py-3">
+        <p className="text-sm font-medium text-akani-success">2FA is enabled on your account.</p>
         <button
           disabled={pending}
           onClick={async () => {
@@ -26,7 +26,7 @@ export function MfaEnrollment({ verifiedFactor }: { verifiedFactor: { id: string
             if (res && "error" in res && res.error) setError(res.error);
             else router.refresh();
           }}
-          className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-60"
+          className="text-sm font-medium text-akani-error hover:opacity-80 disabled:opacity-60"
         >
           Disable
         </button>
@@ -37,7 +37,7 @@ export function MfaEnrollment({ verifiedFactor }: { verifiedFactor: { id: string
   if (!enrollment) {
     return (
       <div>
-        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-3 text-sm text-akani-error">{error}</p>}
         <button
           disabled={pending}
           onClick={async () => {
@@ -48,7 +48,7 @@ export function MfaEnrollment({ verifiedFactor }: { verifiedFactor: { id: string
             if ("error" in res) setError(res.error ?? "Failed to start enrollment.");
             else setEnrollment(res);
           }}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+          className="rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
         >
           {pending ? "Starting…" : "Enable 2FA"}
         </button>
@@ -58,24 +58,24 @@ export function MfaEnrollment({ verifiedFactor }: { verifiedFactor: { id: string
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-akani-text-secondary">
         Scan this QR code with your authenticator app, then enter the 6-digit code to confirm.
       </p>
       {/* eslint-disable-next-line @next/next/no-img-element -- data: URI from Supabase, not an optimizable asset */}
       <img
         src={enrollment.qrCode}
         alt="Scan with your authenticator app"
-        className="h-48 w-48 rounded-md border border-slate-200 p-2"
+        className="h-48 w-48 rounded-md border border-akani-card-border p-2"
       />
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-akani-text-muted">
         Can&apos;t scan? Enter this key manually: <code className="rounded bg-slate-100 px-1.5 py-0.5">{enrollment.secret}</code>
       </p>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-akani-error">{error}</p>}
 
       <div className="flex items-end gap-2">
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Verification code</span>
+          <span className="text-sm font-medium text-akani-text-primary">Verification code</span>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -98,7 +98,7 @@ export function MfaEnrollment({ verifiedFactor }: { verifiedFactor: { id: string
               router.refresh();
             }
           }}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+          className="rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
         >
           {pending ? "Verifying…" : "Confirm"}
         </button>

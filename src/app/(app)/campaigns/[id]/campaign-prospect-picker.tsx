@@ -45,7 +45,7 @@ export function CampaignProspectPicker({
 
   if (available.length === 0) {
     return (
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-akani-text-muted">
         No eligible prospects (qualified, contacted, or interested) to add right now.
       </p>
     );
@@ -53,27 +53,27 @@ export function CampaignProspectPicker({
 
   return (
     <div className="space-y-3">
-      <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2">
+      <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border border-akani-card-border p-2">
         {available.map((p) => (
           <label
             key={p.id}
-            className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-slate-50"
+            className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-akani-page-bg"
           >
             <input
               type="checkbox"
               checked={selected.has(p.id)}
               onChange={() => toggle(p.id)}
-              className="rounded border-slate-300"
+              className="rounded border-akani-card-border accent-akani-gold"
             />
-            <span className="font-medium text-slate-900">{p.companyName}</span>
-            <span className="text-slate-400">{p.industry}</span>
+            <span className="font-medium text-akani-text-primary">{p.companyName}</span>
+            <span className="text-akani-text-muted">{p.industry}</span>
           </label>
         ))}
       </div>
       <button
         onClick={handleAdd}
         disabled={selected.size === 0 || pending}
-        className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-60"
       >
         {pending ? "Adding…" : `Add ${selected.size || ""} selected`.trim()}
       </button>

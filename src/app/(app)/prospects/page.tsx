@@ -37,20 +37,17 @@ export default async function ProspectsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Prospects</h1>
-        <p className="mt-1 text-sm text-slate-500">The working prospect database.</p>
-      </div>
+      <p className="text-sm text-akani-text-secondary">The working prospect database.</p>
 
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-akani-card-border">
         {TABS.map((tab) => (
           <Link
             key={tab.key}
             href={tab.key === "all" ? "/prospects" : `/prospects?status=${tab.key}`}
             className={`border-b-2 px-4 py-2 text-sm font-medium ${
               activeTab === tab.key
-                ? "border-emerald-600 text-emerald-700"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+                ? "border-akani-gold text-akani-gold"
+                : "border-transparent text-akani-text-secondary hover:text-akani-text-primary"
             }`}
           >
             {tab.label}
@@ -58,10 +55,10 @@ export default async function ProspectsPage({
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
               <th className="px-6 py-3 font-medium">Company</th>
               <th className="px-6 py-3 font-medium">Industry</th>
               <th className="px-6 py-3 font-medium">Province</th>
@@ -76,20 +73,20 @@ export default async function ProspectsPage({
               const company = Array.isArray(p.companies) ? p.companies[0] : p.companies;
               const assignee = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
               return (
-                <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                <tr key={p.id} className="border-b border-akani-card-border last:border-0 hover:bg-akani-page-bg">
                   <td className="px-6 py-3">
-                    <Link href={`/prospects/${p.id}`} className="font-medium text-slate-900 hover:text-emerald-700">
+                    <Link href={`/prospects/${p.id}`} className="font-medium text-akani-text-primary hover:text-akani-gold">
                       {company?.name ?? "Unknown"}
                     </Link>
                   </td>
-                  <td className="px-6 py-3 text-slate-600">{company?.industry ?? "—"}</td>
-                  <td className="px-6 py-3 text-slate-600">{company?.province ?? "—"}</td>
-                  <td className="px-6 py-3 text-slate-600">{p.opportunity_score ?? "—"}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{company?.industry ?? "—"}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{company?.province ?? "—"}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{p.opportunity_score ?? "—"}</td>
                   <td className="px-6 py-3">
                     <StatusBadge status={p.status} />
                   </td>
-                  <td className="px-6 py-3 text-slate-600">{assignee?.name ?? "Unassigned"}</td>
-                  <td className="px-6 py-3 text-slate-500">
+                  <td className="px-6 py-3 text-akani-text-secondary">{assignee?.name ?? "Unassigned"}</td>
+                  <td className="px-6 py-3 text-akani-text-muted">
                     {p.last_contacted_at
                       ? new Date(p.last_contacted_at).toLocaleDateString("en-ZA")
                       : "—"}
@@ -99,7 +96,7 @@ export default async function ProspectsPage({
             })}
             {(prospects ?? []).length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-6 py-8 text-center text-akani-text-muted">
                   No prospects in this stage yet.
                 </td>
               </tr>

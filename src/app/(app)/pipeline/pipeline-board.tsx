@@ -38,6 +38,7 @@ export function PipelineBoard({ initialCards }: { initialCards: PipelineCard[] }
     <div className="flex gap-4 overflow-x-auto pb-4">
       {COLUMNS.map((col) => {
         const colCards = cards.filter((c) => c.status === col.key);
+        const isFinal = col.key === "won";
         return (
           <div
             key={col.key}
@@ -48,13 +49,19 @@ export function PipelineBoard({ initialCards }: { initialCards: PipelineCard[] }
               if (id) moveCard(id, col.key);
               setDragging(null);
             }}
-            className="flex w-64 shrink-0 flex-col rounded-xl bg-slate-100"
+            className={`flex w-64 shrink-0 flex-col rounded-xl ${
+              isFinal ? "bg-akani-gold-light/20" : "bg-akani-page-bg"
+            }`}
           >
             <div className="flex items-center justify-between px-3 py-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <h2
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  isFinal ? "text-akani-gold" : "text-akani-text-secondary"
+                }`}
+              >
                 {col.label}
               </h2>
-              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-500">
+              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-akani-text-secondary">
                 {colCards.length}
               </span>
             </div>
@@ -69,21 +76,21 @@ export function PipelineBoard({ initialCards }: { initialCards: PipelineCard[] }
                     setDragging(card.id);
                   }}
                   onDragEnd={() => setDragging(null)}
-                  className={`block cursor-grab rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-opacity hover:border-emerald-300 ${
+                  className={`block cursor-grab rounded-lg border border-akani-card-border bg-white p-3 shadow-sm transition-opacity hover:border-akani-gold ${
                     dragging === card.id ? "opacity-50" : ""
                   }`}
                 >
-                  <p className="text-sm font-medium text-slate-900">{card.companyName}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{card.industry ?? "—"}</p>
+                  <p className="text-sm font-medium text-akani-text-primary">{card.companyName}</p>
+                  <p className="mt-0.5 text-xs text-akani-text-secondary">{card.industry ?? "—"}</p>
                   {card.opportunityScore !== null && (
-                    <p className="mt-2 text-xs font-medium text-emerald-700">
+                    <p className="mt-2 text-xs font-medium text-akani-gold">
                       Score {card.opportunityScore}
                     </p>
                   )}
                 </Link>
               ))}
               {colCards.length === 0 && (
-                <p className="px-2 py-4 text-center text-xs text-slate-400">No prospects</p>
+                <p className="px-2 py-4 text-center text-xs text-akani-text-muted">No prospects</p>
               )}
             </div>
           </div>

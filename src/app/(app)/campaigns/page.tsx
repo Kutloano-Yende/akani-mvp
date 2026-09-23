@@ -16,15 +16,12 @@ export default async function CampaignsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Campaigns</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Reach qualified prospects with templated outreach.
-          </p>
-        </div>
+        <p className="text-sm text-akani-text-secondary">
+          Reach qualified prospects with templated outreach.
+        </p>
         <Link
           href="/campaigns/templates"
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg"
         >
           Manage templates
         </Link>
@@ -32,10 +29,10 @@ export default async function CampaignsPage() {
 
       <CreateCampaignForm templates={templates ?? []} />
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
               <th className="px-6 py-3 font-medium">Campaign</th>
               <th className="px-6 py-3 font-medium">Template</th>
               <th className="px-6 py-3 font-medium">Status</th>
@@ -53,30 +50,30 @@ export default async function CampaignsPage() {
               const sent = prospects.filter((p) => p.status !== "pending").length;
               const replied = prospects.filter((p) => p.status === "replied").length;
               return (
-                <tr key={c.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                <tr key={c.id} className="border-b border-akani-card-border last:border-0 hover:bg-akani-page-bg">
                   <td className="px-6 py-3">
                     <Link
                       href={`/campaigns/${c.id}`}
-                      className="font-medium text-slate-900 hover:text-emerald-700"
+                      className="font-medium text-akani-text-primary hover:text-akani-gold"
                     >
                       {c.name}
                     </Link>
                   </td>
-                  <td className="px-6 py-3 text-slate-600">{template?.name ?? "—"}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{template?.name ?? "—"}</td>
                   <td className="px-6 py-3">
-                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-slate-700">
+                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-akani-text-secondary">
                       {c.status}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-slate-600">{prospects.length}</td>
-                  <td className="px-6 py-3 text-slate-600">{sent}</td>
-                  <td className="px-6 py-3 text-slate-600">{replied}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{prospects.length}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{sent}</td>
+                  <td className="px-6 py-3 text-akani-text-secondary">{replied}</td>
                 </tr>
               );
             })}
             {(campaigns ?? []).length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-6 py-8 text-center text-akani-text-muted">
                   No campaigns yet. Create one above.
                 </td>
               </tr>

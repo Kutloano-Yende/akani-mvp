@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { StatCard } from "@/components/stat-card";
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();
@@ -50,13 +51,10 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Analytics</h1>
-        <p className="mt-1 text-sm text-slate-500">Is the system working, and where.</p>
-      </div>
+      <p className="text-sm text-akani-text-secondary">Is the system working, and where.</p>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Sourcing</h2>
+        <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Sourcing</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard label="Businesses discovered" value={businessesFound ?? 0} />
           <StatCard label="New prospects (30 days)" value={newThisMonth} />
@@ -65,7 +63,7 @@ export default async function AnalyticsPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Conversion</h2>
+        <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Conversion</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           <StatCard label="Contacted" value={counts.contacted} />
           <StatCard label="Interested" value={counts.interested} />
@@ -75,7 +73,7 @@ export default async function AnalyticsPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Performance</h2>
+        <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Performance</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           <StatCard label="Qualification rate" value={`${qualificationRate.toFixed(0)}%`} />
           <StatCard label="Application rate" value={`${applicationRate.toFixed(0)}%`} />
@@ -111,36 +109,29 @@ function tally(rows: ProspectRow[], key: (p: ProspectRow) => string | null | und
   return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
 }
 
-function StatCard({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`mt-2 text-3xl font-semibold ${accent ? "text-emerald-600" : "text-slate-900"}`}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
 function BreakdownCard({ title, data }: { title: string; data: [string, number][] }) {
   const max = Math.max(...data.map(([, count]) => count), 1);
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold text-slate-900">{title}</h2>
+    <div className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+      <h2 className="mb-4 text-sm font-semibold text-akani-text-primary">{title}</h2>
       <div className="space-y-2">
         {data.slice(0, 8).map(([label, count]) => (
           <div key={label} className="flex items-center gap-3">
-            <div className="w-32 shrink-0 truncate text-xs font-medium text-slate-600">{label}</div>
-            <div className="h-5 flex-1 rounded bg-slate-100">
+            <div className="w-32 shrink-0 truncate text-xs font-medium text-akani-text-secondary">
+              {label}
+            </div>
+            <div className="h-5 flex-1 rounded bg-akani-page-bg">
               <div
-                className="h-5 rounded bg-emerald-500"
+                className="h-5 rounded bg-akani-deep-blue"
                 style={{ width: `${Math.max((count / max) * 100, 4)}%` }}
               />
             </div>
-            <div className="w-6 shrink-0 text-right text-xs font-semibold text-slate-700">{count}</div>
+            <div className="w-6 shrink-0 text-right text-xs font-semibold text-akani-text-primary">
+              {count}
+            </div>
           </div>
         ))}
-        {data.length === 0 && <p className="text-sm text-slate-400">No data yet.</p>}
+        {data.length === 0 && <p className="text-sm text-akani-text-muted">No data yet.</p>}
       </div>
     </div>
   );

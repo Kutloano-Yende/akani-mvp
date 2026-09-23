@@ -100,7 +100,7 @@ export function DiscoverForm() {
     <div className="space-y-6">
       <form
         onSubmit={handleSearch}
-        className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-4 rounded-xl border border-akani-card-border bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3"
       >
         <Field label="Industry">
           <select
@@ -178,7 +178,7 @@ export function DiscoverForm() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+            className="rounded-md bg-akani-gold px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
           >
             {loading ? "Searching…" : "Find businesses"}
           </button>
@@ -190,15 +190,15 @@ export function DiscoverForm() {
       )}
 
       {results !== null && (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-4">
-            <h2 className="text-sm font-semibold text-slate-900">
+        <div className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">
+          <div className="border-b border-akani-card-border px-6 py-4">
+            <h2 className="text-sm font-semibold text-akani-text-primary">
               {results.length} result{results.length === 1 ? "" : "s"}
             </h2>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
                 <th className="px-6 py-3 font-medium">Company</th>
                 <th className="px-6 py-3 font-medium">Industry</th>
                 <th className="px-6 py-3 font-medium">Province</th>
@@ -212,30 +212,30 @@ export function DiscoverForm() {
               {results.map((r) => {
                 const isImported = r.alreadyImported || imported.has(r.externalId);
                 return (
-                  <tr key={r.externalId} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                    <td className="px-6 py-3 font-medium text-slate-900">
+                  <tr key={r.externalId} className="border-b border-akani-card-border last:border-0 hover:bg-akani-page-bg">
+                    <td className="px-6 py-3 font-medium text-akani-text-primary">
                       {r.name}
                       {r.possibleDuplicateOf && !isImported && (
-                        <p className="mt-0.5 text-xs font-normal text-amber-700">
+                        <p className="mt-0.5 text-xs font-normal text-akani-warning">
                           Possible duplicate of &ldquo;{r.possibleDuplicateOf}&rdquo;
                         </p>
                       )}
                     </td>
-                    <td className="px-6 py-3 text-slate-600">{r.industry}</td>
-                    <td className="px-6 py-3 text-slate-600">{r.province}</td>
-                    <td className="px-6 py-3 text-slate-600">{r.phone ?? "—"}</td>
-                    <td className="px-6 py-3 text-slate-600">{r.email ?? "—"}</td>
+                    <td className="px-6 py-3 text-akani-text-secondary">{r.industry}</td>
+                    <td className="px-6 py-3 text-akani-text-secondary">{r.province}</td>
+                    <td className="px-6 py-3 text-akani-text-secondary">{r.phone ?? "—"}</td>
+                    <td className="px-6 py-3 text-akani-text-secondary">{r.email ?? "—"}</td>
                     <td className="px-6 py-3">
                       <OpportunityBadge level={r.opportunityLevel} />
                     </td>
                     <td className="px-6 py-3 text-right">
                       {isImported ? (
-                        <span className="text-xs font-medium text-emerald-700">In pipeline</span>
+                        <span className="text-xs font-medium text-akani-success">In pipeline</span>
                       ) : (
                         <button
                           onClick={() => handleImport(r)}
                           disabled={importing === r.externalId}
-                          className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                          className="rounded-md border border-akani-card-border px-3 py-1.5 text-xs font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-60"
                         >
                           {importing === r.externalId
                             ? "Adding…"
@@ -250,7 +250,7 @@ export function DiscoverForm() {
               })}
               {results.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
+                  <td colSpan={7} className="px-6 py-8 text-center text-akani-text-muted">
                     No businesses matched those filters. Try widening your search.
                   </td>
                 </tr>
@@ -261,9 +261,9 @@ export function DiscoverForm() {
       )}
 
       {imported.size > 0 && (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-akani-text-secondary">
           Imported prospects are now on your{" "}
-          <Link href="/prospects" className="font-medium text-emerald-700 hover:underline">
+          <Link href="/prospects" className="font-medium text-akani-gold hover:underline">
             Prospects
           </Link>{" "}
           list.
@@ -276,7 +276,7 @@ export function DiscoverForm() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <span className="text-sm font-medium text-akani-text-primary">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );

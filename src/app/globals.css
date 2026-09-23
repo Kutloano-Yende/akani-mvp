@@ -10,6 +10,32 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Akani brand palette */
+  --color-akani-navy: #07124c;
+  --color-akani-navy-dark: #02062b;
+  --color-akani-deep-blue: #0a155a;
+  --color-akani-gold: #d6a000;
+  --color-akani-gold-bright: #ecb100;
+  --color-akani-gold-light: #f2c23a;
+  --color-akani-bg: #f3f6fb;
+  --color-akani-muted: #697084;
+  --color-akani-border: #cfd5df;
+
+  /* Dashboard / app-shell tokens — same family, used across the signed-in app */
+  --color-akani-page-bg: #f6f8fc;
+  --color-akani-card-border: #e0e4ec;
+  --color-akani-text-primary: #12205e;
+  --color-akani-text-secondary: #667085;
+  --color-akani-text-muted: #98a2b3;
+  --color-akani-success: #15803d;
+  --color-akani-success-bg: #dcfce7;
+  --color-akani-warning: #b7791f;
+  --color-akani-warning-bg: #fef3c7;
+  --color-akani-error: #b42318;
+  --color-akani-error-bg: #fee4e2;
+  --color-akani-info: #2563eb;
+  --color-akani-info-bg: #dbeafe;
 }
 
 body {
@@ -20,6 +46,84 @@ body {
 
 @layer utilities {
   .input {
-    @apply block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500;
+    @apply block w-full rounded-md border border-akani-card-border px-3 py-2 text-sm text-akani-text-primary shadow-sm focus:border-akani-gold focus:outline-none focus:ring-1 focus:ring-akani-gold;
   }
+}
+
+/*
+ * Login page dark-mode scope. Toggled by ThemeScope (src/app/login/theme-scope.tsx)
+ * setting data-login-theme on its wrapper — scoped to the login panel only,
+ * not a site-wide theme, so it can't affect any other route.
+ */
+[data-login-theme="dark"] {
+  background-color: var(--color-akani-navy-dark);
+  --akani-logo-mark-bg: #ffffff;
+  --akani-logo-mark-fg: #07124c;
+  --akani-logo-wordmark: #ffffff;
+  --akani-logo-tagline: #a9b1c9;
+}
+[data-login-theme="dark"] .login-heading {
+  color: #ffffff;
+}
+[data-login-theme="dark"] .login-subtext {
+  color: #a9b1c9;
+}
+[data-login-theme="dark"] .login-label {
+  color: #d7dbea;
+}
+[data-login-theme="dark"] .login-fieldwrap {
+  background-color: #0b1440;
+  border-color: #1e2a5c;
+}
+[data-login-theme="dark"] .login-fieldwrap input {
+  color: #ffffff;
+}
+[data-login-theme="dark"] .login-fieldwrap input::placeholder {
+  color: #6b7394;
+}
+[data-login-theme="dark"] .login-icon {
+  color: #7c85ab;
+}
+[data-login-theme="dark"] .login-divider-text {
+  color: #8990ac;
+}
+[data-login-theme="dark"] .login-divider-line {
+  border-color: #1e2a5c;
+}
+[data-login-theme="dark"] .login-social-btn {
+  background-color: #0b1440;
+  border-color: #1e2a5c;
+  color: #ffffff;
+}
+[data-login-theme="dark"] .login-footer {
+  color: #8990ac;
+  border-color: #1e2a5c;
+}
+[data-login-theme="dark"] .login-footer a {
+  color: #c7cde3;
+}
+[data-login-theme="dark"] .login-mfa-row {
+  color: #c7cde3;
+}
+[data-login-theme="dark"] .login-security-card {
+  background-color: #0b1440;
+}
+[data-login-theme="dark"] .login-security-card .login-heading {
+  color: #ffffff;
+}
+[data-login-theme="dark"] .login-lang-select {
+  background-color: #0b1440;
+  border-color: #1e2a5c;
+  color: #ffffff;
+}
+[data-login-theme="dark"] .login-lang-menu {
+  background-color: #0b1440;
+  border-color: #1e2a5c;
+}
+[data-login-theme="dark"] .login-lang-menu button {
+  color: #ffffff;
+}
+[data-login-theme="dark"] .login-lang-menu button:hover,
+[data-login-theme="dark"] .login-lang-menu button[aria-selected="true"] {
+  background-color: #131c4d;
 }

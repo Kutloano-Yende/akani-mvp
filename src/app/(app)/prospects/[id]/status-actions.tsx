@@ -104,7 +104,7 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
       <div className="space-y-2">
         {error && <p className="text-sm text-red-600">{error}</p>}
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">{noteTransition.prompt}</span>
+          <span className="text-sm font-medium text-akani-text-primary">{noteTransition.prompt}</span>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -118,14 +118,14 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
           <button
             onClick={() => runNoteTransition(noteTransition)}
             disabled={pending}
-            className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+            className="flex-1 rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
           >
             {pending ? "Saving…" : noteTransition.confirmLabel}
           </button>
           <button
             onClick={() => setCollecting(false)}
             disabled={pending}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-60"
           >
             Cancel
           </button>
@@ -136,12 +136,12 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
 
   return (
     <div className="space-y-2">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-akani-error">{error}</p>}
       {noteTransition && (
         <button
           onClick={() => setCollecting(true)}
           disabled={pending}
-          className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+          className="w-full rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
         >
           {noteTransition.label}
         </button>
@@ -150,7 +150,7 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
         <button
           onClick={() => updateStatus(simpleNext.status)}
           disabled={pending}
-          className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+          className="w-full rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
         >
           {pending ? "Updating…" : simpleNext.label}
         </button>
@@ -159,13 +159,13 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
         <button
           onClick={() => updateStatus("lost")}
           disabled={pending}
-          className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+          className="w-full rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-60"
         >
           {pending ? "Updating…" : "Mark lost"}
         </button>
       )}
       {isClosed && (
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-akani-text-secondary">
           This prospect is {status === "won" ? "a paying client" : "closed as lost"}.
         </p>
       )}

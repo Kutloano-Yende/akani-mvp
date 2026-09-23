@@ -7,9 +7,9 @@ export default async function SecuritySettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-1 text-sm font-semibold text-slate-900">Two-factor authentication</h2>
-        <p className="mb-4 text-sm text-slate-500">
+      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+        <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Two-factor authentication</h2>
+        <p className="mb-4 text-sm text-akani-text-secondary">
           Require a 6-digit code from an authenticator app when signing in.
         </p>
         <MfaEnrollment verifiedFactor={verifiedFactor ? { id: verifiedFactor.id } : null} />

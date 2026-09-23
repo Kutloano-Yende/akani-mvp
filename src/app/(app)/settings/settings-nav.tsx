@@ -12,15 +12,15 @@ export function SettingsNav() {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-1 border-b border-slate-200">
+    <div className="flex gap-1 border-b border-akani-card-border">
       {TABS.map((tab) => (
         <Link
           key={tab.href}
           href={tab.href}
           className={`border-b-2 px-4 py-2 text-sm font-medium ${
             pathname === tab.href
-              ? "border-emerald-600 text-emerald-700"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-akani-gold text-akani-gold"
+              : "border-transparent text-akani-text-secondary hover:text-akani-text-primary"
           }`}
         >
           {tab.label}
