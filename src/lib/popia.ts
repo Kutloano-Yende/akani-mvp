@@ -1,13 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { escapeLike } from "@/lib/like";
 
 type Client = SupabaseClient<Database>;
-
-// ilike treats % and _ as wildcards and \ as the escape character; an email
-// containing them must match literally, never widen the match.
-function escapeLike(value: string) {
-  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
 
 export function normalizeEmail(email: string) {
   return email.trim().toLowerCase();

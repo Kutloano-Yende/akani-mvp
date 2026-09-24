@@ -135,6 +135,16 @@ they can't be re-imported and contacted. Company, prospect and pipeline
 history are kept so reporting still works. Free-text notes typed by staff
 (activity descriptions, application notes) are not scanned for names.
 
+## Search, alerts and exports
+
+The header search finds prospects by company or contact name. The bell shows
+live alerts (no stored read state): prospects needing a follow-up (sales see
+only their own) and, for admins, POPIA requests overdue or due within 7 days.
+Prospects can be exported to CSV from the Prospects page (respecting the
+current stage and My/All filter) and admins can export the audit log. Both
+exports are recorded in the audit log, and text cells that could run as
+spreadsheet formulas are neutralised.
+
 ## Not built yet
 
 - Real BDM DataFinder integration (currently mocked) and a real email

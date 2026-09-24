@@ -54,6 +54,18 @@ export default async function ProspectsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-akani-text-secondary">The working prospect database.</p>
+        <div className="flex items-center gap-3">
+        <a
+          href={`/api/export/prospects${(() => {
+            const qs = new URLSearchParams();
+            if (activeTab !== "all") qs.set("status", activeTab);
+            if (onlyMine) qs.set("mine", "1");
+            return qs.size ? `?${qs}` : "";
+          })()}`}
+          className="rounded-md border border-akani-card-border bg-white px-3 py-1.5 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg"
+        >
+          Export CSV
+        </a>
         <div className="inline-flex rounded-md border border-akani-card-border bg-white p-0.5 text-sm">
           <Link
             href={hrefFor(activeTab, false)}
@@ -71,6 +83,7 @@ export default async function ProspectsPage({
           >
             Mine
           </Link>
+        </div>
         </div>
       </div>
 

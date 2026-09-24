@@ -20,6 +20,8 @@ const ACTION_LABELS: Record<string, string> = {
   POPIA_REQUEST_REJECTED: "Rejected POPIA request",
   POPIA_DATA_EXPORTED: "Exported subject data",
   POPIA_ERASURE_COMPLETED: "Erased subject data",
+  PROSPECTS_EXPORTED: "Exported prospects",
+  AUDIT_LOGS_EXPORTED: "Exported audit logs",
 };
 
 export default async function AuditLogsPage({
@@ -51,10 +53,20 @@ export default async function AuditLogsPage({
   return (
     <div className="max-w-4xl space-y-4">
       <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
-        <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Audit log</h2>
-        <p className="mb-4 text-sm text-akani-text-secondary">
-          A record of security-relevant actions across the account. This log is append-only.
-        </p>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Audit log</h2>
+            <p className="text-sm text-akani-text-secondary">
+              A record of security-relevant actions across the account. This log is append-only.
+            </p>
+          </div>
+          <a
+            href="/api/export/audit-logs"
+            className="shrink-0 rounded-md border border-akani-card-border px-3 py-1.5 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg"
+          >
+            Export CSV
+          </a>
+        </div>
 
         <table className="w-full text-left text-sm">
           <thead>
