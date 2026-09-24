@@ -12,6 +12,7 @@ const ADMIN_TABS = [
   { href: "/settings/users", label: "Users" },
   { href: "/settings/suppression", label: "Suppression List" },
   { href: "/settings/audit-logs", label: "Audit Logs" },
+  { href: "/settings/popia", label: "POPIA" },
 ];
 
 export function SettingsNav({ isAdmin }: { isAdmin: boolean }) {

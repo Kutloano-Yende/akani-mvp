@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CreateCampaignForm } from "./create-campaign-form";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export default async function CampaignsPage() {
   const supabase = await createClient();
+  const currentUser = await getCurrentUser();
+  const canManage = currentUser?.role === "admin" || currentUser?.role === "manager";
 
   const [{ data: campaigns }, { data: templates }] = await Promise.all([
     supabase
@@ -27,7 +30,13 @@ export default async function CampaignsPage() {
         </Link>
       </div>
 
-      <CreateCampaignForm templates={templates ?? []} />
+      {canManage ? (
+        <CreateCampaignForm templates={templates ?? []} />
+      ) : (
+        <p className="rounded-md bg-akani-info-bg px-3 py-2 text-sm text-akani-info">
+          Campaigns are created and sent by managers and admins. You can view their progress here.
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">
         <table className="w-full text-sm">

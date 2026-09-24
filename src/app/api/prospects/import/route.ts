@@ -134,6 +134,7 @@ export async function POST(request: Request) {
       company_id: companyId,
       status: "identified",
       opportunity_score: opportunityScore,
+      assigned_to: user.id,
     })
     .select("id")
     .single();

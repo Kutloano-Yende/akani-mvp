@@ -13,6 +13,13 @@ const ACTION_LABELS: Record<string, string> = {
   USER_INVITED: "Invited user",
   SUPPRESSION_ADDED: "Added suppression",
   SUPPRESSION_REMOVED: "Removed suppression",
+  PROSPECT_ASSIGNED: "Assigned prospect",
+  MFA_RESET: "Reset user's 2FA",
+  POPIA_REQUEST_LOGGED: "Logged POPIA request",
+  POPIA_REQUEST_COMPLETED: "Completed POPIA request",
+  POPIA_REQUEST_REJECTED: "Rejected POPIA request",
+  POPIA_DATA_EXPORTED: "Exported subject data",
+  POPIA_ERASURE_COMPLETED: "Erased subject data",
 };
 
 export default async function AuditLogsPage({

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth/require-role";
 
 /**
  * Marks pending campaign_prospects as sent. There is no email provider
@@ -19,11 +20,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: campaignId } = await params;
+  const check = await requireRole(["admin", "manager"]);
+  if (!check.authorized) {
+    return NextResponse.json({ error: "Forbidden" }, { status: check.status });
+  }
+  const user = { id: check.userId };
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: campaign } = await supabase
     .from("campaigns")

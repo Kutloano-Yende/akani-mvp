@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import type { Enums } from "@/types/database";
 
 const TABS = [
@@ -16,11 +17,21 @@ const TABS = [
 export default async function ProspectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; mine?: string }>;
 }) {
-  const { status } = await searchParams;
+  const { status, mine } = await searchParams;
   const activeTab = status ?? "all";
+  const onlyMine = mine === "1";
   const supabase = await createClient();
+  const currentUser = await getCurrentUser();
+
+  function hrefFor(tab: string, mineFlag: boolean) {
+    const qs = new URLSearchParams();
+    if (tab !== "all") qs.set("status", tab);
+    if (mineFlag) qs.set("mine", "1");
+    const str = qs.toString();
+    return str ? `/prospects?${str}` : "/prospects";
+  }
 
   let query = supabase
     .from("prospects")
@@ -33,17 +44,41 @@ export default async function ProspectsPage({
     query = query.eq("status", activeTab as Enums<"prospect_status">);
   }
 
+  if (onlyMine && currentUser) {
+    query = query.eq("assigned_to", currentUser.id);
+  }
+
   const { data: prospects } = await query;
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-akani-text-secondary">The working prospect database.</p>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-akani-text-secondary">The working prospect database.</p>
+        <div className="inline-flex rounded-md border border-akani-card-border bg-white p-0.5 text-sm">
+          <Link
+            href={hrefFor(activeTab, false)}
+            className={`rounded px-3 py-1 font-medium ${
+              !onlyMine ? "bg-akani-navy text-white" : "text-akani-text-secondary hover:text-akani-text-primary"
+            }`}
+          >
+            All
+          </Link>
+          <Link
+            href={hrefFor(activeTab, true)}
+            className={`rounded px-3 py-1 font-medium ${
+              onlyMine ? "bg-akani-navy text-white" : "text-akani-text-secondary hover:text-akani-text-primary"
+            }`}
+          >
+            Mine
+          </Link>
+        </div>
+      </div>
 
       <div className="flex gap-1 border-b border-akani-card-border">
         {TABS.map((tab) => (
           <Link
             key={tab.key}
-            href={tab.key === "all" ? "/prospects" : `/prospects?status=${tab.key}`}
+            href={hrefFor(tab.key, onlyMine)}
             className={`border-b-2 px-4 py-2 text-sm font-medium ${
               activeTab === tab.key
                 ? "border-akani-gold text-akani-gold"

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/stat-card";
 import { CampaignProspectPicker } from "./campaign-prospect-picker";
 import { SendCampaignButton } from "./send-campaign-button";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 export default async function CampaignDetailPage({
   params,
@@ -12,6 +13,8 @@ export default async function CampaignDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const currentUser = await getCurrentUser();
+  const canManage = currentUser?.role === "admin" || currentUser?.role === "manager";
 
   const { data: campaign } = await supabase
     .from("campaigns")
@@ -100,9 +103,17 @@ export default async function CampaignDetailPage({
       <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-akani-text-primary">Add prospects</h2>
-          <SendCampaignButton campaignId={campaign.id} pendingCount={pendingCount} hasTemplate={!!template} />
+          {canManage && (
+            <SendCampaignButton campaignId={campaign.id} pendingCount={pendingCount} hasTemplate={!!template} />
+          )}
         </div>
-        <CampaignProspectPicker campaignId={campaign.id} available={available} />
+        {canManage ? (
+          <CampaignProspectPicker campaignId={campaign.id} available={available} />
+        ) : (
+          <p className="text-sm text-akani-text-secondary">
+            Only managers and admins can add prospects to or send a campaign.
+          </p>
+        )}
       </section>
 
       <section className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">

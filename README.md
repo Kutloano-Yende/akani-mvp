@@ -52,8 +52,9 @@ An initial admin account was created directly in Supabase Auth:
 Change this password after first login (Forgot password on the login screen,
 or Settings → Security once a password-change screen is added). There's no
 public sign-up screen by design — this is an internal tool; new users are
-provisioned directly in Supabase Auth until an admin "invite user" screen
-ships (planned for Sprint 4 alongside RBAC).
+invited from Settings → Users once `SUPABASE_SERVICE_ROLE_KEY` is configured
+(inviting and resetting another user's 2FA both need it; until then those
+actions return a clear 501).
 
 ## What's built
 
@@ -112,11 +113,34 @@ talks to Postgres or any provider API directly.
 `src/proxy.ts` (Next 16's replacement for `middleware.ts`), which redirects
 unauthenticated requests to `/login` and holds MFA'd accounts at `/login/verify`.
 
-## Not built yet (later sprints, per the MVP plan)
+## Roles
 
-- Real BDM DataFinder integration (currently mocked)
-- Campaigns/outreach, email templates
-- Applications and conversions tracking (with the Akani/Bantu confidentiality
-  split)
-- Admin user management, audit logs, suppression list, POPIA controls
-- Rate limiting, security headers, monitoring
+- **Sales** — can view everything, but can only change prospects that are
+  unassigned or assigned to them (acting on an unassigned prospect claims it).
+  Cannot create or send campaigns.
+- **Manager** — can change any prospect, assign prospects, and create/send
+  campaigns.
+- **Admin** — everything a manager can do, plus Users, Suppression List,
+  Audit Logs and POPIA in Settings.
+
+These rules are enforced in Postgres RLS (not just hidden in the UI).
+
+## POPIA
+
+Settings → POPIA is a register of data-subject requests (due 30 days after
+logging). **Export** downloads everything linked to the person's email as
+JSON. **Erase** anonymises their contact record, clears company-level contact
+details matching that email, and adds the address to the suppression list so
+they can't be re-imported and contacted. Company, prospect and pipeline
+history are kept so reporting still works. Free-text notes typed by staff
+(activity descriptions, application notes) are not scanned for names.
+
+## Not built yet
+
+- Real BDM DataFinder integration (currently mocked) and a real email
+  provider (campaign sends are simulated; the suppression list is enforced)
+- 2FA backup codes (Supabase MFA has no built-in recovery codes; admins can
+  reset a user's 2FA instead)
+- Consent tracking beyond the suppression list (opt-out register)
+- Backups/PITR and monitoring (ops setup in Supabase/hosting, not app code)
+- Rate limiting is in-memory, so it only holds on a single server instance

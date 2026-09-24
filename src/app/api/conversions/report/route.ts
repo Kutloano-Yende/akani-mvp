@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkProspectAccess } from "@/lib/auth/prospect-access";
 
 /**
  * Records that a prospect became a paying client. Deliberately minimal:
@@ -22,6 +23,11 @@ export async function POST(request: Request) {
   const { prospectId, notes } = await request.json();
   if (!prospectId) {
     return NextResponse.json({ error: "prospectId is required" }, { status: 400 });
+  }
+
+  const access = await checkProspectAccess(supabase, user.id, prospectId);
+  if (!access.allowed) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
   const trimmedNotes = typeof notes === "string" ? notes.trim() : "";

@@ -29,7 +29,27 @@ export function UsersTable({
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  function handleMfaReset(userId: string, name: string) {
+    if (!window.confirm(`Remove ${name}'s two-factor authentication? They will need to set it up again.`)) {
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setPendingId(userId);
+    startTransition(async () => {
+      const res = await fetch(`/api/admin/users/${userId}/mfa-reset`, { method: "POST" });
+      const data = await res.json();
+      setPendingId(null);
+      if (!res.ok) {
+        setError(data.error ?? "Failed to reset 2FA");
+        return;
+      }
+      setNotice(`Removed ${data.factorsRemoved} 2FA factor(s) for ${name}.`);
+    });
+  }
 
   function handleRoleChange(userId: string, role: Role) {
     setError(null);
@@ -55,12 +75,16 @@ export function UsersTable({
       {error && (
         <div className="rounded-md bg-akani-error-bg px-3 py-2 text-sm text-akani-error">{error}</div>
       )}
+      {notice && (
+        <div className="rounded-md bg-akani-success-bg px-3 py-2 text-sm text-akani-success">{notice}</div>
+      )}
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-akani-card-border text-akani-text-muted">
             <th className="py-2 font-medium">Name</th>
             <th className="py-2 font-medium">Role</th>
             <th className="py-2 font-medium">Joined</th>
+            <th className="py-2 font-medium"></th>
           </tr>
         </thead>
         <tbody>
@@ -88,6 +112,17 @@ export function UsersTable({
               </td>
               <td className="py-3 text-akani-text-secondary">
                 {new Date(profile.created_at).toLocaleDateString("en-ZA")}
+              </td>
+              <td className="py-3 text-right">
+                {profile.id !== currentUserId && (
+                  <button
+                    onClick={() => handleMfaReset(profile.id, profile.name)}
+                    disabled={isPending && pendingId === profile.id}
+                    className="text-akani-text-secondary hover:text-akani-error hover:underline disabled:opacity-50"
+                  >
+                    Reset 2FA
+                  </button>
+                )}
               </td>
             </tr>
           ))}

@@ -529,6 +529,63 @@ export type Database = {
           },
         ]
       }
+      popia_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_at: string
+          handled_by: string | null
+          id: string
+          notes: string | null
+          request_type: string
+          status: string
+          subject_email: string
+          subject_name: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          request_type: string
+          status?: string
+          subject_email: string
+          subject_name?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          request_type?: string
+          status?: string
+          subject_email?: string
+          subject_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "popia_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "popia_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -662,6 +719,10 @@ export type Database = {
           target_user_id: string
         }
         Returns: undefined
+      }
+      current_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
       }
     }
     Enums: {

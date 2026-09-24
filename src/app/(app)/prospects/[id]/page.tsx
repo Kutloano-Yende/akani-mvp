@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge, OpportunityBadge } from "@/components/status-badge";
 import { StatusActions } from "./status-actions";
+import { AssignProspect } from "./assign-prospect";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { canModifyProspect } from "@/lib/auth/prospect-access";
 
 export default async function ProspectDetailPage({
   params,
@@ -21,7 +24,18 @@ export default async function ProspectDetailPage({
 
   const company = Array.isArray(prospect.companies) ? prospect.companies[0] : prospect.companies;
 
-  const [{ data: contacts }, { data: signals }, { data: activities }, { data: application }, { data: conversion }] =
+  const currentUser = await getCurrentUser();
+  const isManager = currentUser?.role === "admin" || currentUser?.role === "manager";
+  const canAct = currentUser ? canModifyProspect(currentUser.role, currentUser.id, prospect.assigned_to) : false;
+
+  const [
+    { data: contacts },
+    { data: signals },
+    { data: activities },
+    { data: application },
+    { data: conversion },
+    { data: members },
+  ] =
     await Promise.all([
       supabase.from("contacts").select("*").eq("company_id", company.id),
       supabase.from("opportunity_signals").select("*").eq("company_id", company.id),
@@ -44,7 +58,10 @@ export default async function ProspectDetailPage({
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase.from("profiles").select("id, name").order("name"),
     ]);
+
+  const owner = (members ?? []).find((m) => m.id === prospect.assigned_to);
 
   return (
     <div className="space-y-6">
@@ -174,7 +191,27 @@ export default async function ProspectDetailPage({
         <div className="space-y-6">
           <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold text-akani-text-primary">Actions</h2>
-            <StatusActions prospectId={prospect.id} status={prospect.status} />
+            {canAct ? (
+              <StatusActions prospectId={prospect.id} status={prospect.status} />
+            ) : (
+              <p className="text-sm text-akani-text-secondary">
+                This prospect is assigned to {owner?.name ?? "another team member"}. Only they, or a
+                manager, can change it.
+              </p>
+            )}
+          </section>
+
+          <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-sm font-semibold text-akani-text-primary">Owner</h2>
+            {isManager ? (
+              <AssignProspect
+                prospectId={prospect.id}
+                assignedTo={prospect.assigned_to}
+                members={members ?? []}
+              />
+            ) : (
+              <p className="text-sm text-akani-text-secondary">{owner?.name ?? "Unassigned"}</p>
+            )}
           </section>
 
           <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">

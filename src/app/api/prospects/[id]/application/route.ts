@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkProspectAccess } from "@/lib/auth/prospect-access";
 
 export async function POST(
   request: Request,
@@ -13,6 +14,11 @@ export async function POST(
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const access = await checkProspectAccess(supabase, user.id, prospectId);
+  if (!access.allowed) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
   const { notes } = await request.json();

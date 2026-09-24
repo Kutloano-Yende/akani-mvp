@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkProspectAccess } from "@/lib/auth/prospect-access";
 import type { Enums, TablesUpdate } from "@/types/database";
 
 const VALID_STATUSES: Enums<"prospect_status">[] = [
@@ -32,9 +33,16 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  const access = await checkProspectAccess(supabase, user.id, id);
+  if (!access.allowed) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
+  }
+
   const trimmedNote = typeof note === "string" ? note.trim() : "";
 
   const update: TablesUpdate<"prospects"> = { status };
+  // Acting on an unassigned prospect as a sales rep claims it.
+  if (access.role === "sales" && !access.assignedTo) update.assigned_to = user.id;
   const now = new Date().toISOString();
   if (status === "qualified") {
     update.qualified_at = now;

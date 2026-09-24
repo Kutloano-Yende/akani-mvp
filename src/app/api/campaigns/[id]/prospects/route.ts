@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth/require-role";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: campaignId } = await params;
+  const check = await requireRole(["admin", "manager"]);
+  if (!check.authorized) {
+    return NextResponse.json({ error: "Forbidden" }, { status: check.status });
+  }
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { prospectIds } = await request.json();
   if (!Array.isArray(prospectIds) || prospectIds.length === 0) {
