@@ -169,10 +169,25 @@ html[data-updating="1"] #update-skeleton {
   }
 }
 
+.akani-modal-in {
+  animation: akani-modal-in 0.18s ease-out both;
+}
+@keyframes akani-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton,
   .skeleton-dark,
-  .akani-toast-in {
+  .akani-toast-in,
+  .akani-modal-in {
     animation: none;
   }
 }

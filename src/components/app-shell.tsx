@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { signOut } from "@/app/(app)/actions";
 import { AkaniLogo } from "@/components/akani-logo";
+import { SignOutButton } from "@/components/sign-out-dialog";
 import { TopHeader } from "@/components/top-header";
 import { UpdateManager } from "@/components/whats-new/update-manager";
 import { UpdateSkeleton } from "@/components/whats-new/update-skeleton";
@@ -146,14 +146,7 @@ export function AppShell({
             </span>
             What&apos;s new
           </button>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white"
-            >
-              Sign out
-            </button>
-          </form>
+          <SignOutButton userName={userName} role={role} />
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
