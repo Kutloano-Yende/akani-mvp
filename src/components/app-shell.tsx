@@ -2,28 +2,33 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut } from "@/app/(app)/actions";
 import { AkaniLogo } from "@/components/akani-logo";
 import { TopHeader } from "@/components/top-header";
+import { UpdateManager } from "@/components/whats-new/update-manager";
+import { UpdateSkeleton } from "@/components/whats-new/update-skeleton";
+import type { Release } from "@/lib/whats-new/tour";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
-  { href: "/prospects/discover", label: "Discover Businesses", icon: SearchIcon },
-  { href: "/prospects", label: "Prospects", icon: ListIcon },
-  { href: "/pipeline", label: "Pipeline", icon: PipelineIcon },
-  { href: "/campaigns", label: "Campaigns", icon: CampaignIcon },
-  { href: "/analytics", label: "Analytics", icon: AnalyticsIcon },
+  { href: "/dashboard", label: "Dashboard", icon: DashboardIcon, tour: "nav-dashboard" },
+  { href: "/prospects/discover", label: "Discover Businesses", icon: SearchIcon, tour: "nav-discover" },
+  { href: "/prospects", label: "Prospects", icon: ListIcon, tour: "nav-prospects" },
+  { href: "/pipeline", label: "Pipeline", icon: PipelineIcon, tour: "nav-pipeline" },
+  { href: "/campaigns", label: "Campaigns", icon: CampaignIcon, tour: "nav-campaigns" },
+  { href: "/analytics", label: "Analytics", icon: AnalyticsIcon, tour: "nav-analytics" },
 ];
 
 export function AppShell({
   children,
   userName,
   role,
+  release,
 }: {
   children: React.ReactNode;
   userName: string;
   role: string;
+  release?: Release;
 }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
@@ -38,6 +43,21 @@ export function AppShell({
     setNavOpen(false);
   }
 
+  // The product tour opens/closes the mobile drawer so sidebar steps can be
+  // shown on small screens; on desktop the sidebar is always visible.
+  useEffect(() => {
+    const open = () => {
+      if (window.innerWidth < 1024) setNavOpen(true);
+    };
+    const close = () => setNavOpen(false);
+    window.addEventListener("akani:open-nav", open);
+    window.addEventListener("akani:close-nav", close);
+    return () => {
+      window.removeEventListener("akani:open-nav", open);
+      window.removeEventListener("akani:close-nav", close);
+    };
+  }, []);
+
   const activeItem = NAV_ITEMS.find((item) => {
     const section = item.href;
     return pathname === section || pathname.startsWith(section + "/");
@@ -46,6 +66,8 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen bg-akani-page-bg">
+      <UpdateSkeleton />
+      <UpdateManager role={role} release={release} />
       {navOpen && (
         <div
           onClick={() => setNavOpen(false)}
@@ -69,6 +91,7 @@ export function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
+                data-tour={item.tour}
                 className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-colors ${
                   active
                     ? "bg-white/10 text-white"
@@ -88,6 +111,7 @@ export function AppShell({
 
           <Link
             href="/settings/security"
+            data-tour="nav-settings"
             className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-colors ${
               pathname.startsWith("/settings")
                 ? "bg-white/10 text-white"
@@ -111,6 +135,17 @@ export function AppShell({
               <p className="truncate text-xs capitalize text-white/50">{role}</p>
             </div>
           </div>
+          <button
+            type="button"
+            data-tour="whats-new"
+            onClick={() => window.dispatchEvent(new Event("akani:start-tour"))}
+            className="mb-1 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white"
+          >
+            <span className="text-akani-gold" aria-hidden="true">
+              ✦
+            </span>
+            What&apos;s new
+          </button>
           <form action={signOut}>
             <button
               type="submit"

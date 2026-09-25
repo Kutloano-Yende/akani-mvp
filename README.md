@@ -192,7 +192,7 @@ domains.
 npm test                     # unit tests (vitest): CSV export safety, template
                              # rendering, send planning/suppression, rate limiting,
                              # dedupe, prospect ownership, unsubscribe tokens
-npx tsc --noEmit && npm run lint
+npm run typecheck && npm run lint
 ```
 
 Row-level-security rules can't be unit-tested in JS, so

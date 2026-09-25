@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { getSupabaseEnv } from "./env";
 
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/unsubscribe", "/api/unsubscribe", "/privacy", "/terms", "/contact-support"];
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/unsubscribe", "/api/unsubscribe", "/privacy", "/terms", "/contact-support", "/api/version"];
 
 export async function updateSession(request: NextRequest) {
   // Every request passes through here, so a missing variable would otherwise

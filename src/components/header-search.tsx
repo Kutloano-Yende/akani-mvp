@@ -63,7 +63,7 @@ export function HeaderSearch() {
   const active = query.trim().length >= 2;
 
   return (
-    <div ref={containerRef} className="relative hidden sm:block"
+    <div ref={containerRef} data-tour="search" className="relative hidden sm:block"
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
       }}

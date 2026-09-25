@@ -15,7 +15,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx tsc --noEmit
+      # Next generates some global types (e.g. LayoutProps); a fresh checkout needs them before tsc.
+      - run: npm run typecheck
       - run: npm run lint
       - run: npm test
       # Dummy values: the build needs the variables to exist but never

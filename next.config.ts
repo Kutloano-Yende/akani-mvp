@@ -26,6 +26,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  env: {
+    // A new value per deployment lets open tabs detect that an update exists.
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? "dev",
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },

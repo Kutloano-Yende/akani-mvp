@@ -54,7 +54,7 @@ export default async function ProspectsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-akani-text-secondary">The working prospect database.</p>
-        <div className="flex items-center gap-3">
+        <div data-tour="prospects-toolbar" className="flex items-center gap-3">
         <a
           href={`/api/export/prospects${(() => {
             const qs = new URLSearchParams();

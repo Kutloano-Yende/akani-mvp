@@ -46,7 +46,7 @@ export function NotificationsMenu() {
   const count = items?.length ?? 0;
 
   return (
-    <div ref={containerRef} className="relative"
+    <div ref={containerRef} data-tour="notifications" className="relative"
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
       }}
