@@ -81,7 +81,7 @@ export default async function LeadsPage() {
           <thead>
             <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
               <th className="px-6 py-3 font-medium">Lead</th>
-              <th className="px-6 py-3 font-medium">Source</th>
+              <th className="hidden md:table-cell px-6 py-3 font-medium">Source</th>
               <th className="px-6 py-3 font-medium">Status</th>
               <th className="px-6 py-3 font-medium">Emails</th>
               <th className="px-6 py-3 font-medium">Call</th>
@@ -109,7 +109,7 @@ export default async function LeadsPage() {
                       </p>
                     )}
                   </td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{SOURCE_LABELS[l.source] ?? l.source}</td>
+                  <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{SOURCE_LABELS[l.source] ?? l.source}</td>
                   <td className="px-6 py-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[l.status] ?? ""}`}>
                       {l.status}

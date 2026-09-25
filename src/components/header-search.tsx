@@ -11,6 +11,9 @@ type Result = { id: string; name: string; industry: string | null; status: Enums
 export function HeaderSearch() {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Below the sm breakpoint the search box is hidden; a header icon opens it as a full-width overlay.
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [open, setOpen] = useState(false);
@@ -47,14 +50,22 @@ export function HeaderSearch() {
 
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!containerRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+        setMobileOpen(false);
+      }
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
+  useEffect(() => {
+    if (mobileOpen) inputRef.current?.focus();
+  }, [mobileOpen]);
+
   function close() {
     setOpen(false);
+    setMobileOpen(false);
     setQuery("");
     setResults([]);
     setSearched(false);
@@ -63,9 +74,31 @@ export function HeaderSearch() {
   const active = query.trim().length >= 2;
 
   return (
-    <div ref={containerRef} data-tour="search" className="relative hidden sm:block"
+    <>
+    {!mobileOpen && (
+      <button
+        type="button"
+        aria-label="Search"
+        onClick={() => setMobileOpen(true)}
+        className="flex h-9 w-9 items-center justify-center rounded-md text-akani-text-secondary hover:bg-akani-page-bg sm:hidden"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+          <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </button>
+    )}
+    <div ref={containerRef} data-tour="search"
+      className={
+        mobileOpen
+          ? "fixed inset-x-3 top-2 z-50 rounded-lg bg-white p-2 shadow-lg sm:relative sm:inset-auto sm:top-auto sm:rounded-none sm:bg-transparent sm:p-0 sm:shadow-none"
+          : "relative hidden sm:block"
+      }
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setOpen(false);
+          setMobileOpen(false);
+        }
       }}
     >
       <svg
@@ -74,12 +107,13 @@ export function HeaderSearch() {
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-akani-text-muted"
+        className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-akani-text-muted sm:left-3"
       >
         <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
         <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
       <input
+        ref={inputRef}
         type="search"
         placeholder="Search prospects, companies…"
         aria-label="Search"
@@ -97,11 +131,11 @@ export function HeaderSearch() {
             close();
           }
         }}
-        className="h-9 w-56 rounded-md border border-akani-card-border bg-akani-page-bg pl-9 pr-3 text-sm text-akani-text-primary placeholder:text-akani-text-muted focus:border-akani-gold focus:outline-none focus:ring-1 focus:ring-akani-gold lg:w-72"
+        className="h-10 w-full rounded-md border border-akani-card-border bg-akani-page-bg pl-9 pr-3 text-sm text-akani-text-primary placeholder:text-akani-text-muted focus:border-akani-gold focus:outline-none focus:ring-1 focus:ring-akani-gold sm:h-9 sm:w-56 lg:w-72"
       />
 
       {open && active && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-akani-card-border bg-white shadow-lg">
+        <div className="absolute inset-x-0 z-50 mt-2 overflow-hidden sm:inset-x-auto sm:right-0 sm:w-80 rounded-lg border border-akani-card-border bg-white shadow-lg">
           {error ? (
             <p className="px-4 py-3 text-sm text-akani-error">{error}</p>
           ) : !searched ? (
@@ -132,5 +166,6 @@ export function HeaderSearch() {
         </div>
       )}
     </div>
+    </>
   );
 }

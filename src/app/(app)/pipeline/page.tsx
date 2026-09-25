@@ -23,7 +23,10 @@ export default async function PipelinePage() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-akani-text-secondary">Drag a card to move it to the next stage.</p>
+      <p className="text-sm text-akani-text-secondary">
+        <span className="hidden md:inline">Drag a card to move it to the next stage.</span>
+        <span className="md:hidden">Use the menu on a card to move it to another stage.</span>
+      </p>
       <PipelineBoard initialCards={cards} />
     </div>
   );

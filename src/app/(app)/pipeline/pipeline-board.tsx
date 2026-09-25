@@ -67,27 +67,41 @@ export function PipelineBoard({ initialCards }: { initialCards: PipelineCard[] }
             </div>
             <div className="flex-1 space-y-2 px-2 pb-2">
               {colCards.map((card) => (
-                <Link
+                <div
                   key={card.id}
-                  href={`/prospects/${card.id}`}
                   draggable
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/plain", card.id);
                     setDragging(card.id);
                   }}
                   onDragEnd={() => setDragging(null)}
-                  className={`block cursor-grab rounded-lg border border-akani-card-border bg-white p-3 shadow-sm transition-opacity hover:border-akani-gold ${
+                  className={`rounded-lg border border-akani-card-border bg-white p-3 shadow-sm transition-opacity hover:border-akani-gold md:cursor-grab ${
                     dragging === card.id ? "opacity-50" : ""
                   }`}
                 >
-                  <p className="text-sm font-medium text-akani-text-primary">{card.companyName}</p>
-                  <p className="mt-0.5 text-xs text-akani-text-secondary">{card.industry ?? "—"}</p>
-                  {card.opportunityScore !== null && (
-                    <p className="mt-2 text-xs font-medium text-akani-gold">
-                      Score {card.opportunityScore}
-                    </p>
-                  )}
-                </Link>
+                  <Link href={`/prospects/${card.id}`} draggable={false} className="block">
+                    <p className="text-sm font-medium text-akani-text-primary">{card.companyName}</p>
+                    <p className="mt-0.5 text-xs text-akani-text-secondary">{card.industry ?? "—"}</p>
+                    {card.opportunityScore !== null && (
+                      <p className="mt-2 text-xs font-medium text-akani-gold">
+                        Score {card.opportunityScore}
+                      </p>
+                    )}
+                  </Link>
+                  {/* Browsers don't support drag and drop on touch screens, so phones and tablets move cards with this menu. */}
+                  <select
+                    aria-label={`Move ${card.companyName} to another stage`}
+                    value={card.status}
+                    onChange={(e) => moveCard(card.id, e.target.value as Enums<"prospect_status">)}
+                    className="input mt-2 py-1.5 text-xs md:hidden"
+                  >
+                    {COLUMNS.map((c) => (
+                      <option key={c.key} value={c.key}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               ))}
               {colCards.length === 0 && (
                 <p className="px-2 py-4 text-center text-xs text-akani-text-muted">No prospects</p>

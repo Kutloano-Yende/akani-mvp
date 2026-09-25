@@ -189,14 +189,15 @@ export default async function DashboardPage() {
             View all
           </Link>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm">
           <thead>
             <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
-              <th className="px-6 py-3 font-medium">Company</th>
-              <th className="px-6 py-3 font-medium">Industry</th>
-              <th className="px-6 py-3 font-medium">Province</th>
-              <th className="px-6 py-3 font-medium">Status</th>
-              <th className="px-6 py-3 font-medium">Score</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Company</th>
+              <th className="hidden md:table-cell px-4 py-3 font-medium sm:px-6">Industry</th>
+              <th className="hidden md:table-cell px-4 py-3 font-medium sm:px-6">Province</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Status</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Score</th>
             </tr>
           </thead>
           <tbody>
@@ -204,7 +205,7 @@ export default async function DashboardPage() {
               const company = Array.isArray(p.companies) ? p.companies[0] : p.companies;
               return (
                 <tr key={p.id} className="border-b border-akani-card-border last:border-0 hover:bg-akani-page-bg">
-                  <td className="px-6 py-3">
+                  <td className="px-4 py-3 sm:px-6">
                     <Link
                       href={`/prospects/${p.id}`}
                       className="font-medium text-akani-text-primary hover:text-akani-gold"
@@ -212,12 +213,12 @@ export default async function DashboardPage() {
                       {company?.name ?? "Unknown"}
                     </Link>
                   </td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{company?.industry ?? "—"}</td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{company?.province ?? "—"}</td>
-                  <td className="px-6 py-3">
+                  <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{company?.industry ?? "—"}</td>
+                  <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{company?.province ?? "—"}</td>
+                  <td className="px-4 py-3 sm:px-6">
                     <StatusBadge status={p.status} />
                   </td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{p.opportunity_score ?? "—"}</td>
+                  <td className="px-4 py-3 sm:px-6 text-akani-text-secondary">{p.opportunity_score ?? "—"}</td>
                 </tr>
               );
             })}
@@ -234,6 +235,7 @@ export default async function DashboardPage() {
             )}
           </tbody>
         </table>
+</div>
       </div>
     </div>
   );

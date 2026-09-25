@@ -53,7 +53,7 @@ export default async function AuditLogsPage({
   return (
     <div className="max-w-4xl space-y-4">
       <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Audit log</h2>
             <p className="text-sm text-akani-text-secondary">
@@ -68,13 +68,14 @@ export default async function AuditLogsPage({
           </a>
         </div>
 
-        <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-akani-card-border text-akani-text-muted">
               <th className="py-2 font-medium">When</th>
               <th className="py-2 font-medium">Who</th>
               <th className="py-2 font-medium">Action</th>
-              <th className="py-2 font-medium">Details</th>
+              <th className="hidden md:table-cell py-2 font-medium">Details</th>
             </tr>
           </thead>
           <tbody>
@@ -89,7 +90,7 @@ export default async function AuditLogsPage({
                 <td className="py-3 text-akani-text-primary">
                   {ACTION_LABELS[log.action] ?? log.action}
                 </td>
-                <td className="py-3 text-akani-text-muted">
+                <td className="hidden md:table-cell py-3 text-akani-text-muted">
                   {log.entity_type && (
                     <span>
                       {log.entity_type}
@@ -111,6 +112,7 @@ export default async function AuditLogsPage({
             )}
           </tbody>
         </table>
+</div>
 
         {totalPages > 1 && (
           <div className="mt-4 flex items-center justify-between text-sm text-akani-text-secondary">

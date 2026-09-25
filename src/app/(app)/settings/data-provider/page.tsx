@@ -23,7 +23,7 @@ export default async function DataProviderSettingsPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-akani-text-primary">{provider.name}</h2>
             <p className="mt-1 text-sm text-akani-text-secondary">
@@ -53,14 +53,15 @@ export default async function DataProviderSettingsPage() {
         <div className="border-b border-akani-card-border px-6 py-4">
           <h2 className="text-sm font-semibold text-akani-text-primary">Recent searches</h2>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm">
           <thead>
             <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
-              <th className="px-6 py-3 font-medium">User</th>
-              <th className="px-6 py-3 font-medium">Provider</th>
-              <th className="px-6 py-3 font-medium">Results</th>
-              <th className="px-6 py-3 font-medium">Credits</th>
-              <th className="px-6 py-3 font-medium">When</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">User</th>
+              <th className="hidden sm:table-cell px-4 py-3 font-medium sm:px-6">Provider</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Results</th>
+              <th className="hidden sm:table-cell px-4 py-3 font-medium sm:px-6">Credits</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">When</th>
             </tr>
           </thead>
           <tbody>
@@ -68,11 +69,11 @@ export default async function DataProviderSettingsPage() {
               const actor = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
               return (
                 <tr key={r.id} className="border-b border-akani-card-border last:border-0">
-                  <td className="px-6 py-3 text-akani-text-primary">{actor?.name ?? "Unknown"}</td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{r.provider}</td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{r.results_returned}</td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{r.credits_used}</td>
-                  <td className="px-6 py-3 text-akani-text-muted">
+                  <td className="px-4 py-3 sm:px-6 text-akani-text-primary">{actor?.name ?? "Unknown"}</td>
+                  <td className="hidden sm:table-cell px-6 py-3 text-akani-text-secondary">{r.provider}</td>
+                  <td className="px-4 py-3 sm:px-6 text-akani-text-secondary">{r.results_returned}</td>
+                  <td className="hidden sm:table-cell px-6 py-3 text-akani-text-secondary">{r.credits_used}</td>
+                  <td className="px-4 py-3 sm:px-6 text-akani-text-muted">
                     {new Date(r.created_at).toLocaleString("en-ZA")}
                   </td>
                 </tr>
@@ -87,6 +88,7 @@ export default async function DataProviderSettingsPage() {
             )}
           </tbody>
         </table>
+</div>
       </section>
     </div>
   );

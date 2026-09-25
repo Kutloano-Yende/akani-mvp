@@ -202,16 +202,17 @@ export function DiscoverForm() {
               {results.length} result{results.length === 1 ? "" : "s"}
             </h2>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+<table className="w-full text-sm">
             <thead>
               <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
-                <th className="px-6 py-3 font-medium">Company</th>
-                <th className="px-6 py-3 font-medium">Industry</th>
-                <th className="px-6 py-3 font-medium">Province</th>
-                <th className="px-6 py-3 font-medium">Phone</th>
-                <th className="px-6 py-3 font-medium">Email</th>
-                <th className="px-6 py-3 font-medium">Opportunity</th>
-                <th className="px-6 py-3 font-medium"></th>
+                <th className="px-4 py-3 sm:px-6 font-medium">Company</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium sm:px-6">Industry</th>
+                <th className="hidden md:table-cell px-4 py-3 font-medium sm:px-6">Province</th>
+                <th className="hidden lg:table-cell px-4 py-3 font-medium sm:px-6">Phone</th>
+                <th className="hidden lg:table-cell px-4 py-3 font-medium sm:px-6">Email</th>
+                <th className="px-4 py-3 sm:px-6 font-medium">Opportunity</th>
+                <th className="px-4 py-3 sm:px-6 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -219,22 +220,25 @@ export function DiscoverForm() {
                 const isImported = r.alreadyImported || imported.has(r.externalId);
                 return (
                   <tr key={r.externalId} className="border-b border-akani-card-border last:border-0 hover:bg-akani-page-bg">
-                    <td className="px-6 py-3 font-medium text-akani-text-primary">
+                    <td className="px-4 py-3 sm:px-6 font-medium text-akani-text-primary">
                       {r.name}
+                      <span className="block text-xs font-normal text-akani-text-muted md:hidden">
+                        {[r.industry, r.province].filter(Boolean).join(" · ")}
+                      </span>
                       {r.possibleDuplicateOf && !isImported && (
                         <p className="mt-0.5 text-xs font-normal text-akani-warning">
                           Possible duplicate of &ldquo;{r.possibleDuplicateOf}&rdquo;
                         </p>
                       )}
                     </td>
-                    <td className="px-6 py-3 text-akani-text-secondary">{r.industry}</td>
-                    <td className="px-6 py-3 text-akani-text-secondary">{r.province}</td>
-                    <td className="px-6 py-3 text-akani-text-secondary">{r.phone ?? "—"}</td>
-                    <td className="px-6 py-3 text-akani-text-secondary">{r.email ?? "—"}</td>
-                    <td className="px-6 py-3">
+                    <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{r.industry}</td>
+                    <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{r.province}</td>
+                    <td className="hidden lg:table-cell px-6 py-3 text-akani-text-secondary">{r.phone ?? "—"}</td>
+                    <td className="hidden lg:table-cell px-6 py-3 text-akani-text-secondary">{r.email ?? "—"}</td>
+                    <td className="px-4 py-3 sm:px-6">
                       <OpportunityBadge level={r.opportunityLevel} />
                     </td>
-                    <td className="px-6 py-3 text-right">
+                    <td className="px-4 py-3 sm:px-6 text-right">
                       {isImported ? (
                         <span className="text-xs font-medium text-akani-success">In pipeline</span>
                       ) : (
@@ -263,6 +267,7 @@ export function DiscoverForm() {
               )}
             </tbody>
           </table>
+</div>
         </div>
       )}
 

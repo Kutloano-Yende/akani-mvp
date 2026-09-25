@@ -79,7 +79,7 @@ export function NotificationsMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-akani-card-border bg-white shadow-lg">
+        <div className="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-lg border border-akani-card-border bg-white shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80">
           <p className="border-b border-akani-card-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-akani-text-muted">
             Needs attention
           </p>

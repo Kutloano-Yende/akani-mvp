@@ -86,12 +86,13 @@ export function SuppressionList({ entries }: { entries: Entry[] }) {
         </button>
       </form>
 
-      <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto">
+<table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-akani-card-border text-akani-text-muted">
             <th className="py-2 font-medium">Email</th>
             <th className="py-2 font-medium">Reason</th>
-            <th className="py-2 font-medium">Added</th>
+            <th className="hidden sm:table-cell py-2 font-medium">Added</th>
             <th className="py-2 font-medium"></th>
           </tr>
         </thead>
@@ -100,7 +101,7 @@ export function SuppressionList({ entries }: { entries: Entry[] }) {
             <tr key={entry.id} className="border-b border-akani-card-border last:border-0">
               <td className="py-3 text-akani-text-primary">{entry.email ?? entry.phone}</td>
               <td className="py-3 text-akani-text-secondary">{entry.reason ?? "—"}</td>
-              <td className="py-3 text-akani-text-secondary">
+              <td className="hidden sm:table-cell py-3 text-akani-text-secondary">
                 {new Date(entry.created_at).toLocaleDateString("en-ZA")}
               </td>
               <td className="py-3 text-right">
@@ -123,6 +124,7 @@ export function SuppressionList({ entries }: { entries: Entry[] }) {
           )}
         </tbody>
       </table>
+</div>
     </div>
   );
 }

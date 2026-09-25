@@ -63,7 +63,7 @@ export default async function CampaignDetailPage({
         <Link href="/campaigns" className="text-sm font-medium text-akani-gold hover:text-akani-gold-bright">
           ← Campaigns
         </Link>
-        <div className="mt-2 flex items-start justify-between">
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-akani-text-primary">{campaign.name}</h1>
             {campaign.description && (
@@ -102,7 +102,7 @@ export default async function CampaignDetailPage({
       </section>
 
       <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-akani-text-primary">Add prospects</h2>
             {canManage && (
@@ -139,14 +139,15 @@ export default async function CampaignDetailPage({
         <div className="border-b border-akani-card-border px-6 py-4">
           <h2 className="text-sm font-semibold text-akani-text-primary">Prospects in this campaign</h2>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm">
           <thead>
             <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
-              <th className="px-6 py-3 font-medium">Company</th>
-              <th className="px-6 py-3 font-medium">Industry</th>
-              <th className="px-6 py-3 font-medium">Status</th>
-              <th className="px-6 py-3 font-medium">Permission</th>
-              <th className="px-6 py-3 font-medium">Sent</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Company</th>
+              <th className="hidden md:table-cell px-4 py-3 font-medium sm:px-6">Industry</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Status</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Permission</th>
+              <th className="hidden sm:table-cell px-4 py-3 font-medium sm:px-6">Sent</th>
             </tr>
           </thead>
           <tbody>
@@ -159,7 +160,7 @@ export default async function CampaignDetailPage({
                 : null;
               return (
                 <tr key={cp.id} className="border-b border-akani-card-border last:border-0">
-                  <td className="px-6 py-3">
+                  <td className="px-4 py-3 sm:px-6">
                     {prospect ? (
                       <Link href={`/prospects/${prospect.id}`} className="font-medium text-akani-text-primary hover:text-akani-gold">
                         {company?.name ?? "Unknown"}
@@ -168,13 +169,13 @@ export default async function CampaignDetailPage({
                       "Unknown"
                     )}
                   </td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{company?.industry ?? "—"}</td>
-                  <td className="px-6 py-3">
+                  <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{company?.industry ?? "—"}</td>
+                  <td className="px-4 py-3 sm:px-6">
                     <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-akani-text-secondary">
                       {cp.status}
                     </span>
                   </td>
-                  <td className="px-6 py-3">
+                  <td className="px-4 py-3 sm:px-6">
                     {cp.consent_answer === "yes" ? (
                       <span className="inline-flex rounded-full bg-akani-success-bg px-2 py-0.5 text-xs font-medium text-akani-success">
                         Said yes
@@ -187,7 +188,7 @@ export default async function CampaignDetailPage({
                       <span className="text-akani-text-muted">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-3 text-akani-text-muted">
+                  <td className="hidden sm:table-cell px-6 py-3 text-akani-text-muted">
                     {cp.sent_at ? new Date(cp.sent_at).toLocaleDateString("en-ZA") : "—"}
                   </td>
                 </tr>
@@ -202,6 +203,7 @@ export default async function CampaignDetailPage({
             )}
           </tbody>
         </table>
+</div>
       </section>
     </div>
   );

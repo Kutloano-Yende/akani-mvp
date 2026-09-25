@@ -15,7 +15,7 @@ export function MfaEnrollment({ verifiedFactor }: { verifiedFactor: { id: string
 
   if (verifiedFactor) {
     return (
-      <div className="flex items-center justify-between rounded-md bg-akani-success-bg px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-akani-success-bg px-4 py-3">
         <p className="text-sm font-medium text-akani-success">2FA is enabled on your account.</p>
         <button
           disabled={pending}

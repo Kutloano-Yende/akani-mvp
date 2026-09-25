@@ -78,12 +78,13 @@ export function UsersTable({
       {notice && (
         <div className="rounded-md bg-akani-success-bg px-3 py-2 text-sm text-akani-success">{notice}</div>
       )}
-      <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto">
+<table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-akani-card-border text-akani-text-muted">
             <th className="py-2 font-medium">Name</th>
             <th className="py-2 font-medium">Role</th>
-            <th className="py-2 font-medium">Joined</th>
+            <th className="hidden sm:table-cell py-2 font-medium">Joined</th>
             <th className="py-2 font-medium"></th>
           </tr>
         </thead>
@@ -110,7 +111,7 @@ export function UsersTable({
                   ))}
                 </select>
               </td>
-              <td className="py-3 text-akani-text-secondary">
+              <td className="hidden sm:table-cell py-3 text-akani-text-secondary">
                 {new Date(profile.created_at).toLocaleDateString("en-ZA")}
               </td>
               <td className="py-3 text-right">
@@ -128,6 +129,7 @@ export function UsersTable({
           ))}
         </tbody>
       </table>
+</div>
     </div>
   );
 }

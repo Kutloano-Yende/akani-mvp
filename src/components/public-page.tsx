@@ -8,7 +8,7 @@ export function PublicPage({ title, children }: { title: string; children: React
         <Link href="/login" className="inline-block">
           <AkaniLogo variant="light" size="sm" />
         </Link>
-        <article className="mt-8 rounded-xl border border-akani-card-border bg-white p-8 shadow-sm">
+        <article className="mt-8 rounded-xl border border-akani-card-border bg-white p-5 shadow-sm sm:p-8">
           <h1 className="text-xl font-semibold text-akani-text-primary">{title}</h1>
           <div className="mt-4 space-y-4 text-sm leading-relaxed text-akani-text-secondary">{children}</div>
         </article>

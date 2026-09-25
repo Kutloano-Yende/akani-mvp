@@ -18,7 +18,7 @@ export default async function CampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="text-sm text-akani-text-secondary">
           Reach qualified prospects with templated outreach.
         </p>
@@ -39,15 +39,16 @@ export default async function CampaignsPage() {
       )}
 
       <div className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+<table className="w-full text-sm">
           <thead>
             <tr className="border-b border-akani-card-border text-left text-xs uppercase tracking-wide text-akani-text-muted">
-              <th className="px-6 py-3 font-medium">Campaign</th>
-              <th className="px-6 py-3 font-medium">Template</th>
-              <th className="px-6 py-3 font-medium">Status</th>
-              <th className="px-6 py-3 font-medium">Prospects</th>
-              <th className="px-6 py-3 font-medium">Sent</th>
-              <th className="px-6 py-3 font-medium">Replied</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Campaign</th>
+              <th className="hidden md:table-cell px-4 py-3 font-medium sm:px-6">Template</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Status</th>
+              <th className="px-4 py-3 sm:px-6 font-medium">Prospects</th>
+              <th className="hidden sm:table-cell px-4 py-3 font-medium sm:px-6">Sent</th>
+              <th className="hidden sm:table-cell px-4 py-3 font-medium sm:px-6">Replied</th>
             </tr>
           </thead>
           <tbody>
@@ -60,7 +61,7 @@ export default async function CampaignsPage() {
               const replied = prospects.filter((p) => p.status === "replied").length;
               return (
                 <tr key={c.id} className="border-b border-akani-card-border last:border-0 hover:bg-akani-page-bg">
-                  <td className="px-6 py-3">
+                  <td className="px-4 py-3 sm:px-6">
                     <Link
                       href={`/campaigns/${c.id}`}
                       className="font-medium text-akani-text-primary hover:text-akani-gold"
@@ -68,15 +69,15 @@ export default async function CampaignsPage() {
                       {c.name}
                     </Link>
                   </td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{template?.name ?? "—"}</td>
-                  <td className="px-6 py-3">
+                  <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{template?.name ?? "—"}</td>
+                  <td className="px-4 py-3 sm:px-6">
                     <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-akani-text-secondary">
                       {c.status}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{prospects.length}</td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{sent}</td>
-                  <td className="px-6 py-3 text-akani-text-secondary">{replied}</td>
+                  <td className="px-4 py-3 sm:px-6 text-akani-text-secondary">{prospects.length}</td>
+                  <td className="hidden sm:table-cell px-6 py-3 text-akani-text-secondary">{sent}</td>
+                  <td className="hidden sm:table-cell px-6 py-3 text-akani-text-secondary">{replied}</td>
                 </tr>
               );
             })}
@@ -89,6 +90,7 @@ export default async function CampaignsPage() {
             )}
           </tbody>
         </table>
+</div>
       </div>
     </div>
   );
