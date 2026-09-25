@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ProviderCompany } from "@/lib/data/provider";
 import { OpportunityBadge } from "@/components/status-badge";
+import { Select } from "@/components/select";
 
 type SearchResult = ProviderCompany & {
   opportunityScore: number;
@@ -105,33 +106,21 @@ export function DiscoverForm() {
         className="grid grid-cols-1 gap-4 rounded-xl border border-akani-card-border bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3"
       >
         <Field label="Industry">
-          <select
+          <Select
+            aria-label="Industry"
             value={filters.industry}
-            onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
-            className="input"
-          >
-            <option value="">Any</option>
-            {INDUSTRIES.map((i) => (
-              <option key={i} value={i}>
-                {i}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setFilters({ ...filters, industry: v })}
+            options={[{ value: "", label: "Any" }, ...INDUSTRIES.map((i) => ({ value: i, label: i }))]}
+          />
         </Field>
 
         <Field label="Province">
-          <select
+          <Select
+            aria-label="Province"
             value={filters.province}
-            onChange={(e) => setFilters({ ...filters, province: e.target.value })}
-            className="input"
-          >
-            <option value="">Any</option>
-            {PROVINCES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setFilters({ ...filters, province: v })}
+            options={[{ value: "", label: "Any" }, ...PROVINCES.map((p) => ({ value: p, label: p }))]}
+          />
         </Field>
 
         <Field label="Location (city)">

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { Enums } from "@/types/database";
+import { Select } from "@/components/select";
 
 type Role = Enums<"user_role">;
 
@@ -62,11 +63,17 @@ export function InviteUserForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <select className="input w-32" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-          <option value="sales">Sales</option>
-          <option value="manager">Manager</option>
-          <option value="admin">Admin</option>
-        </select>
+        <Select
+          aria-label="Role"
+          className="w-32"
+          value={role}
+          onChange={(v) => setRole(v as Role)}
+          options={[
+            { value: "sales", label: "Sales" },
+            { value: "manager", label: "Manager" },
+            { value: "admin", label: "Admin" },
+          ]}
+        />
         <button
           type="submit"
           disabled={isPending}

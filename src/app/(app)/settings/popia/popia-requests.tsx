@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Select } from "@/components/select";
 
 type PopiaRequest = {
   id: string;
@@ -98,14 +99,16 @@ export function PopiaRequests({ requests }: { requests: PopiaRequest[] }) {
 
       <form onSubmit={handleCreate} className="space-y-3 rounded-lg bg-akani-page-bg p-4">
         <div className="flex flex-wrap gap-3">
-          <select
-            className="input w-36"
+          <Select
+            aria-label="Request type"
+            className="w-44"
             value={requestType}
-            onChange={(e) => setRequestType(e.target.value)}
-          >
-            <option value="access">Access request</option>
-            <option value="erasure">Erasure request</option>
-          </select>
+            onChange={setRequestType}
+            options={[
+              { value: "access", label: "Access request" },
+              { value: "erasure", label: "Erasure request" },
+            ]}
+          />
           <input
             type="email"
             placeholder="Data subject's email"

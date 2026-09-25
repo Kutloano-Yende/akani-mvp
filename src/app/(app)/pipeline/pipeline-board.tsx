@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Enums } from "@/types/database";
+import { Select } from "@/components/select";
 
 export type PipelineCard = {
   id: string;
@@ -89,18 +90,13 @@ export function PipelineBoard({ initialCards }: { initialCards: PipelineCard[] }
                     )}
                   </Link>
                   {/* Browsers don't support drag and drop on touch screens, so phones and tablets move cards with this menu. */}
-                  <select
+                  <Select
                     aria-label={`Move ${card.companyName} to another stage`}
                     value={card.status}
-                    onChange={(e) => moveCard(card.id, e.target.value as Enums<"prospect_status">)}
-                    className="input mt-2 py-1.5 text-xs md:hidden"
-                  >
-                    {COLUMNS.map((c) => (
-                      <option key={c.key} value={c.key}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => moveCard(card.id, v as Enums<"prospect_status">)}
+                    options={COLUMNS.map((c) => ({ value: c.key, label: c.label }))}
+                    className="mt-2 py-1.5 text-xs md:hidden"
+                  />
                 </div>
               ))}
               {colCards.length === 0 && (

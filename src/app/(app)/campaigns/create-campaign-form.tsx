@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Select } from "@/components/select";
 
 type Template = { id: string; name: string };
 
@@ -65,18 +66,13 @@ export function CreateCampaignForm({ templates }: { templates: Template[] }) {
         </label>
         <label className="block">
           <span className="text-sm font-medium text-akani-text-primary">Template (optional for now)</span>
-          <select
+          <Select
+            aria-label="Template"
             value={templateId}
-            onChange={(e) => setTemplateId(e.target.value)}
-            className="input mt-1"
-          >
-            <option value="">Choose later</option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={setTemplateId}
+            className="mt-1"
+            options={[{ value: "", label: "Choose later" }, ...templates.map((t) => ({ value: t.id, label: t.name }))]}
+          />
         </label>
       </div>
       <label className="block">

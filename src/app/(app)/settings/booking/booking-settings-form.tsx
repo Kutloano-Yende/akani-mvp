@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Tables } from "@/types/database";
 import { SLOT_LENGTHS } from "@/lib/booking/settings";
+import { Select } from "@/components/select";
 
 const DAYS = [
   { n: 1, label: "Mon" },
@@ -119,13 +120,12 @@ export function BookingSettingsForm({ settings }: { settings: Tables<"booking_se
         </label>
         <label className="block">
           <span className={label}>Call length</span>
-          <select className="input mt-1" value={form.slot_minutes} onChange={(e) => set("slot_minutes", Number(e.target.value))}>
-            {SLOT_LENGTHS.map((m) => (
-              <option key={m} value={m}>
-                {m} minutes
-              </option>
-            ))}
-          </select>
+          <Select
+            className="mt-1"
+            value={String(form.slot_minutes)}
+            onChange={(v) => set("slot_minutes", Number(v))}
+            options={SLOT_LENGTHS.map((m) => ({ value: String(m), label: `${m} minutes` }))}
+          />
         </label>
         <label className="block">
           <span className={label}>Time zone</span>

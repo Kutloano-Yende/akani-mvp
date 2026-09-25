@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Select } from "@/components/select";
 
 type Member = { id: string; name: string };
 
@@ -37,19 +38,13 @@ export function AssignProspect({
   return (
     <div className="space-y-2">
       {error && <p className="text-sm text-akani-error">{error}</p>}
-      <select
-        className="input"
+      <Select
+        aria-label="Owner"
         value={assignedTo ?? ""}
         disabled={isPending}
-        onChange={(e) => handleChange(e.target.value)}
-      >
-        <option value="">Unassigned</option>
-        {members.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.name}
-          </option>
-        ))}
-      </select>
+        onChange={handleChange}
+        options={[{ value: "", label: "Unassigned" }, ...members.map((m) => ({ value: m.id, label: m.name }))]}
+      />
     </div>
   );
 }

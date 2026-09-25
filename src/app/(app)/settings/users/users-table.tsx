@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Enums } from "@/types/database";
+import { Select } from "@/components/select";
 
 type Role = Enums<"user_role">;
 
@@ -98,18 +99,14 @@ export function UsersTable({
                 )}
               </td>
               <td className="py-3">
-                <select
-                  className="input w-32 py-1"
+                <Select
+                  aria-label={`Role for ${profile.name}`}
+                  className="w-32 py-1"
                   value={profile.role}
                   disabled={profile.id === currentUserId || (isPending && pendingId === profile.id)}
-                  onChange={(e) => handleRoleChange(profile.id, e.target.value as Role)}
-                >
-                  {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => handleRoleChange(profile.id, v as Role)}
+                  options={Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }))}
+                />
               </td>
               <td className="hidden sm:table-cell py-3 text-akani-text-secondary">
                 {new Date(profile.created_at).toLocaleDateString("en-ZA")}
