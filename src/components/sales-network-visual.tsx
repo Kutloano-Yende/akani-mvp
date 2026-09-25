@@ -171,7 +171,10 @@ export function SalesNetworkVisual() {
 
   return (
     <svg
-      viewBox="0 0 600 500"
+      viewBox="0 0 600 480"
+      // Anchored to the bottom so the main nodes stay clear of the headline
+      // text above them on shorter windows.
+      preserveAspectRatio="xMidYMax meet"
       className="h-full w-full"
       role="img"
       aria-label="Network diagram connecting analytics, relationships, and clients, flowing into a stream of data across the panel"

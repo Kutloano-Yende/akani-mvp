@@ -65,7 +65,7 @@ export default async function LoginPage({
             <h2 className="mt-8 text-xl font-semibold text-white">
               Smarter sales. Stronger relationships.
             </h2>
-            <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-[#B9C0D4]">
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#B9C0D4]">
               Akani&rsquo;s Sales Intelligent System helps you find opportunities, engage
               clients and close deals — faster and smarter.
             </p>
