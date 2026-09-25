@@ -1,15 +1,28 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
+import { getSupabaseEnv } from "./env";
 
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/unsubscribe", "/api/unsubscribe"];
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/unsubscribe", "/api/unsubscribe", "/privacy", "/terms", "/contact-support"];
 
 export async function updateSession(request: NextRequest) {
+  // Every request passes through here, so a missing variable would otherwise
+  // turn the whole site into an opaque 500. Say what's wrong instead.
+  const { url, anonKey, missing } = getSupabaseEnv();
+  if (missing.length > 0) {
+    const message = `Server misconfigured: missing environment variable(s) ${missing.join(", ")}. Set them in the hosting provider's settings and redeploy.`;
+    console.error(message);
+    return new NextResponse(message, {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {

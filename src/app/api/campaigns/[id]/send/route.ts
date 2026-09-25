@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { logAudit } from "@/lib/audit";
 import { getAppUrl, getEmailMode, sendEmail } from "@/lib/email/provider";
+import { planRecipients } from "@/lib/email/plan";
 import { escapeHtml, renderSubject, renderTemplate, textToHtml } from "@/lib/email/render";
 
 /**
@@ -90,32 +91,8 @@ export async function POST(
     (suppressed ?? []).map((s) => (s.email ?? "").toLowerCase()).filter(Boolean),
   );
 
-  const one = <T,>(v: T | T[] | null | undefined): T | null =>
-    Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
-
-  type Plan = {
-    row: (typeof pending)[number];
-    to: string | null;
-    firstName: string;
-    companyName: string;
-    suppressed: boolean;
-  };
-
-  const plans: Plan[] = pending.map((row) => {
-    const company = one(one(row.prospects)?.companies);
-    const contacts = Array.isArray(company?.contacts) ? company.contacts : [];
-    const contact = contacts.find((c) => c.email) ?? null;
-    const to = (contact?.email ?? company?.email ?? "").trim().toLowerCase() || null;
-    // A suppressed address on either the contact or the company blocks the send.
-    const candidates = [contact?.email, company?.email].map((e) => e?.trim().toLowerCase());
-    return {
-      row,
-      to,
-      firstName: contact?.first_name?.trim() || "there",
-      companyName: company?.name ?? "your company",
-      suppressed: candidates.some((e) => e && suppressedEmails.has(e)),
-    };
-  });
+  const plans = planRecipients(pending, suppressedEmails);
+  type Plan = (typeof plans)[number];
 
   const noEmail = plans.filter((p) => !p.to && !p.suppressed);
   const skipped = plans.filter((p) => p.suppressed);

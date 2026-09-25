@@ -172,6 +172,34 @@ It adds the address to the suppression list.
 realistic-looking addresses. Clear them out first, or you'll email real
 domains.
 
+## Testing
+
+```bash
+npm test                     # unit tests (vitest): CSV export safety, template
+                             # rendering, send planning/suppression, rate limiting,
+                             # dedupe, prospect ownership, unsubscribe tokens
+npx tsc --noEmit && npm run lint
+```
+
+Row-level-security rules can't be unit-tested in JS, so
+`supabase/tests/rls_checks.sql` exercises them directly as sales, manager,
+admin and signed-out users, then rolls back. Run it in the Supabase SQL
+editor after any migration that touches policies, grants or auth functions.
+GitHub Actions (`.github/workflows/ci.yml`) runs type check, lint, tests and
+a build on every push and pull request; it needs no secrets.
+
+## Optional settings
+
+- `SUPPORT_EMAIL` — shown on the public Privacy and Contact pages. Without it
+  they tell people to contact their administrator.
+- `NEXT_PUBLIC_OAUTH_PROVIDERS` — e.g. `google,azure`. The login page shows
+  Google/Microsoft buttons only for providers listed here, so enable a
+  provider in Supabase Auth first, then list it. Default: none shown.
+
+The Privacy notice and Terms pages describe what the system actually does,
+but they are not legal advice; have them reviewed before relying on them
+externally.
+
 ## Not built yet
 
 - Real BDM DataFinder integration (currently mocked)

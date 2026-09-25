@@ -28,6 +28,9 @@ export function normalizeCompanyName(name: string): string {
   return name
     .toLowerCase()
     .replace(/[().,]/g, " ")
+    // Removing punctuation leaves runs of spaces ("(Pty) Ltd" -> " Pty  Ltd"),
+    // which would stop multi-word suffixes like "pty ltd" from matching.
+    .replace(/\s+/g, " ")
     .replace(SUFFIX_PATTERN, " ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();

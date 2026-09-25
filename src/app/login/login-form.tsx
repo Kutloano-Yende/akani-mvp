@@ -5,6 +5,13 @@ import Link from "next/link";
 import { signIn, type ActionResult } from "./actions";
 import { LoginSocialButton } from "@/components/login-social-button";
 
+// Social sign-in is shown only for providers that are actually enabled in
+// Supabase Auth, e.g. NEXT_PUBLIC_OAUTH_PROVIDERS="google,azure".
+const enabledProviders = (process.env.NEXT_PUBLIC_OAUTH_PROVIDERS ?? "")
+  .split(",")
+  .map((p) => p.trim())
+  .filter(Boolean);
+
 export function LoginForm({ next }: { next: string }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     async (_prev, formData) => signIn(formData),
@@ -99,22 +106,24 @@ export function LoginForm({ next }: { next: string }) {
         </button>
       </form>
 
-      <div className="flex items-center gap-3">
-        <span className="login-divider-line h-px flex-1 bg-akani-border" />
-        <span className="login-divider-text text-xs text-akani-muted">or continue with</span>
-        <span className="login-divider-line h-px flex-1 bg-akani-border" />
-      </div>
+      {enabledProviders.length > 0 && (
+        <>
+          <div className="flex items-center gap-3">
+            <span className="login-divider-line h-px flex-1 bg-akani-border" />
+            <span className="login-divider-text text-xs text-akani-muted">or continue with</span>
+            <span className="login-divider-line h-px flex-1 bg-akani-border" />
+          </div>
 
-      <div className="space-y-2">
-        <LoginSocialButton provider="google" label="Continue with Google" icon={<GoogleIcon />} />
-        <LoginSocialButton provider="azure" label="Continue with Microsoft" icon={<MicrosoftIcon />} />
-        <LoginSocialButton
-          label="Continue with Passkey"
-          icon={<PasskeyIcon />}
-          disabled
-          disabledHint="Passkey sign-in isn't set up yet."
-        />
-      </div>
+          <div className="space-y-2">
+            {enabledProviders.includes("google") && (
+              <LoginSocialButton provider="google" label="Continue with Google" icon={<GoogleIcon />} />
+            )}
+            {enabledProviders.includes("azure") && (
+              <LoginSocialButton provider="azure" label="Continue with Microsoft" icon={<MicrosoftIcon />} />
+            )}
+          </div>
+        </>
+      )}
 
       <div className="login-mfa-row flex items-center gap-3 text-sm text-akani-navy">
         <span className="login-divider-line h-px flex-1 bg-akani-border" />
@@ -225,11 +234,3 @@ function MicrosoftIcon() {
   );
 }
 
-function PasskeyIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="9" cy="8" r="4" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M9 12v2M15 15l5 5M17 17l2-2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
