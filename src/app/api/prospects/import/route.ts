@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { ProviderCompany } from "@/lib/data/provider";
+import { getProvider, scoreOpportunity, type ProviderCompany } from "@/lib/data/provider";
+import { dailyLimitReached } from "@/lib/data/usage";
+import { rateLimit } from "@/lib/rate-limit";
 import { findDuplicate } from "@/lib/data/dedupe";
 
 type ImportBody = {
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
   }
 
   const body: ImportBody = await request.json();
-  const { company, opportunityScore, opportunityLevel, signals } = body;
+  let { company, opportunityScore, opportunityLevel, signals } = body;
 
   const { data: exactMatch } = await supabase
     .from("companies")
@@ -58,6 +60,34 @@ export async function POST(request: Request) {
   }
 
   if (!companyId) {
+    // Search results can carry only basic details (name and location). For a
+    // company being newly imported, fetch its full record so the prospect has
+    // contact details — one billable lookup, and only for companies actually chosen.
+    const provider = getProvider();
+    if (
+      provider.enrich &&
+      company.source === provider.name &&
+      !company.email &&
+      rateLimit(`import-enrich:${user.id}`, 30, 60_000).allowed &&
+      !(await dailyLimitReached(supabase, provider.name))
+    ) {
+      const full = await provider.enrich(company);
+      if (full) {
+        company = full;
+        const rescored = scoreOpportunity(full);
+        opportunityScore = rescored.score;
+        opportunityLevel = rescored.level;
+        signals = rescored.signals;
+        await supabase.from("api_usage").insert({
+          user_id: user.id,
+          provider: provider.name,
+          endpoint: "data-provider/enrich",
+          results_returned: 1,
+          credits_used: 1,
+        });
+      }
+    }
+
     const { data: inserted, error: insertError } = await supabase
       .from("companies")
       .insert({

@@ -21,20 +21,34 @@ are still blank and only needed for features beyond Sprint 1's mock data:
 - `SUPABASE_SERVICE_ROLE_KEY` — from the Supabase dashboard → Project Settings
   → API. Only needed for admin-only server operations (none in Sprint 1 use it
   yet).
-- `BDM_DATAFINDER_API_KEY` / `BDM_DATAFINDER_BASE_URL` — the real business
-  data provider. Until these are set, **Discover Businesses** searches a
-  built-in mock catalogue instead, so the full discover → qualify → pipeline
-  flow works without a live integration.
+- `COMPANYDATA_API_KEY` — the real business-data provider
+  ([CompanyData](https://companydata.com)). Until it is set, **Discover
+  Businesses** searches a built-in mock catalogue instead, so the full
+  discover → qualify → pipeline flow works without a live integration.
+  Optional: `COMPANYDATA_PAGE_SIZE` (default 10, the most a trial key allows
+  per export; paid plans allow more) and `PROVIDER_DAILY_SEARCH_LIMIT`
+  (default 60 billable calls per day across all users, so a busy day can't
+  use up the plan's credits).
 
   Business-data search is behind a `DataProvider` interface
   (`src/lib/data/types.ts`) so the Discover screen and its API route never
-  change when the provider does: `MockProvider` and `BDMDataFinderProvider`
-  both implement it, and `getProvider()` (`src/lib/data/get-provider.ts`)
-  picks whichever is configured. `BDMDataFinderProvider`
-  (`src/lib/data/providers/bdm-provider.ts`) is a best-effort client written
-  without BDM's actual API docs — confirm the endpoint, auth scheme, and
-  response field names against their reference and fix up `mapCompany`
-  before relying on it.
+  change when the provider does. `getProvider()` picks `CompanyDataProvider`
+  when the key is set, otherwise `MockProvider`.
+
+  How the CompanyData connector behaves (`src/lib/data/providers/companydata-provider.ts`):
+  - It searches South Africa only, and only companies that have an email.
+  - It asks for full records (email, phone, website, employees, revenue,
+    registration number) from the export endpoint. If the account refuses that
+    query (a **trial key refuses combined filters and large pages**), it falls
+    back to the basic search endpoint, which returns name, address and province
+    only, and the Discover screen says so.
+  - When you **import** a company found that way, the app fetches that one
+    company's full record by ID, so the prospect gets its contact details. One
+    billable lookup per newly imported company.
+  - The API returns no industry field, so each Discover industry is searched as
+    a curated set of SIC codes (`INDUSTRY_SIC_CODES`) and results are labelled
+    with the industry searched. This is an approximation.
+  - "Company name" matches from the start of the name, not anywhere in it.
 
 ```bash
 npm run dev
@@ -202,7 +216,8 @@ externally.
 
 ## Not built yet
 
-- Real BDM DataFinder integration (currently mocked)
+- Employee-size and combined filters returning full contact details on the
+  CompanyData trial key (a paid plan or support confirmation is needed)
 - Open/reply/bounce tracking (needs provider webhooks); bounces and spam
   complaints don't yet feed the suppression list
 - 2FA backup codes (Supabase MFA has no built-in recovery codes; admins can

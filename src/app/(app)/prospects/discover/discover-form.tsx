@@ -45,6 +45,7 @@ export function DiscoverForm() {
     keywords: "",
   });
   const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export function DiscoverForm() {
         return;
       }
       setResults(data.results ?? []);
+      setNotice(data.notice ?? null);
     } catch {
       setError("Search failed. Check your connection and try again.");
       setResults(null);
@@ -164,13 +166,13 @@ export function DiscoverForm() {
           />
         </Field>
 
-        <Field label="Keywords">
+        <Field label="Company name">
           <input
             type="text"
             value={filters.keywords}
             onChange={(e) => setFilters({ ...filters, keywords: e.target.value })}
             className="input"
-            placeholder="e.g. steel, logistics"
+            placeholder="Starts with, e.g. Kagiso"
           />
         </Field>
 
@@ -187,6 +189,10 @@ export function DiscoverForm() {
 
       {error && (
         <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
+
+      {results !== null && notice && (
+        <div className="rounded-md bg-akani-warning-bg px-4 py-3 text-sm text-akani-warning">{notice}</div>
       )}
 
       {results !== null && (

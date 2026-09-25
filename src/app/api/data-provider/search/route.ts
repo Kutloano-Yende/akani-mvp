@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProvider, scoreOpportunity } from "@/lib/data/provider";
 import { findDuplicate } from "@/lib/data/dedupe";
 import { rateLimit } from "@/lib/rate-limit";
+import { dailyLimitReached, dailyProviderLimit, MOCK_PROVIDER_NAME } from "@/lib/data/usage";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -28,6 +29,14 @@ export async function POST(request: Request) {
   const body = await request.json();
 
   const provider = getProvider();
+
+  if (await dailyLimitReached(supabase, provider.name)) {
+    return NextResponse.json(
+      { error: `The daily search limit (${dailyProviderLimit()}) has been reached. It resets at midnight UTC.` },
+      { status: 429 },
+    );
+  }
+
   let results;
   try {
     results = await provider.search({
@@ -86,5 +95,17 @@ export async function POST(request: Request) {
     credits_used: 1,
   });
 
-  return NextResponse.json({ results: scored });
+  // Some plans return only names and addresses for certain searches. Say so,
+  // rather than leaving people to wonder why nothing has an email or phone.
+  const limitedDetail =
+    provider.name !== MOCK_PROVIDER_NAME &&
+    scored.length > 0 &&
+    scored.every((r) => !r.email && !r.phone && !r.website);
+
+  return NextResponse.json({
+    results: scored,
+    notice: limitedDetail
+      ? "These results show company name and location only. Your data plan didn't return contact details for this search; a simpler search (fewer filters) may."
+      : null,
+  });
 }

@@ -39,4 +39,10 @@ export type ProviderCompany = {
 export interface DataProvider {
   readonly name: string;
   search(params: ProviderSearchParams): Promise<ProviderCompany[]>;
+  /**
+   * Optional: fetch the full record for one company found by `search`, for
+   * providers whose search results carry only basic details. Returns null if
+   * unavailable; must never throw.
+   */
+  enrich?(company: ProviderCompany): Promise<ProviderCompany | null>;
 }
