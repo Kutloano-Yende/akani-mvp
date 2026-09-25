@@ -8,6 +8,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   } = await supabase.auth.getUser();
 
   let isAdmin = false;
+  let canManage = false;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -15,11 +16,12 @@ export default async function SettingsLayout({ children }: { children: React.Rea
       .eq("id", user.id)
       .single();
     isAdmin = profile?.role === "admin";
+    canManage = isAdmin || profile?.role === "manager";
   }
 
   return (
     <div className="space-y-6">
-      <SettingsNav isAdmin={isAdmin} />
+      <SettingsNav isAdmin={isAdmin} canManage={canManage} />
       {children}
     </div>
   );

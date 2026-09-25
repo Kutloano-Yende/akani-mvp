@@ -32,7 +32,7 @@ export default async function CampaignDetailPage({
   const [{ data: campaignProspects }, { data: eligibleProspects }] = await Promise.all([
     supabase
       .from("campaign_prospects")
-      .select("id, status, sent_at, replied_at, prospects(id, companies(name, industry))")
+      .select("id, status, sent_at, replied_at, consent_answer, prospects(id, companies(name, industry))")
       .eq("campaign_id", id)
       .order("created_at", { ascending: false }),
     supabase
@@ -145,6 +145,7 @@ export default async function CampaignDetailPage({
               <th className="px-6 py-3 font-medium">Company</th>
               <th className="px-6 py-3 font-medium">Industry</th>
               <th className="px-6 py-3 font-medium">Status</th>
+              <th className="px-6 py-3 font-medium">Permission</th>
               <th className="px-6 py-3 font-medium">Sent</th>
             </tr>
           </thead>
@@ -173,6 +174,19 @@ export default async function CampaignDetailPage({
                       {cp.status}
                     </span>
                   </td>
+                  <td className="px-6 py-3">
+                    {cp.consent_answer === "yes" ? (
+                      <span className="inline-flex rounded-full bg-akani-success-bg px-2 py-0.5 text-xs font-medium text-akani-success">
+                        Said yes
+                      </span>
+                    ) : cp.consent_answer === "no" ? (
+                      <span className="inline-flex rounded-full bg-akani-error-bg px-2 py-0.5 text-xs font-medium text-akani-error">
+                        Said no
+                      </span>
+                    ) : (
+                      <span className="text-akani-text-muted">—</span>
+                    )}
+                  </td>
                   <td className="px-6 py-3 text-akani-text-muted">
                     {cp.sent_at ? new Date(cp.sent_at).toLocaleDateString("en-ZA") : "—"}
                   </td>
@@ -181,7 +195,7 @@ export default async function CampaignDetailPage({
             })}
             {(campaignProspects ?? []).length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-akani-text-muted">
+                <td colSpan={5} className="px-6 py-8 text-center text-akani-text-muted">
                   No prospects added yet.
                 </td>
               </tr>

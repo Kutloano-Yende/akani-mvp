@@ -8,6 +8,8 @@ const TABS = [
   { href: "/settings/data-provider", label: "Data Provider" },
 ];
 
+const MANAGER_TABS = [{ href: "/settings/booking", label: "Booking" }];
+
 const ADMIN_TABS = [
   { href: "/settings/users", label: "Users" },
   { href: "/settings/suppression", label: "Suppression List" },
@@ -15,9 +17,9 @@ const ADMIN_TABS = [
   { href: "/settings/popia", label: "POPIA" },
 ];
 
-export function SettingsNav({ isAdmin }: { isAdmin: boolean }) {
+export function SettingsNav({ isAdmin, canManage }: { isAdmin: boolean; canManage: boolean }) {
   const pathname = usePathname();
-  const tabs = isAdmin ? [...TABS, ...ADMIN_TABS] : TABS;
+  const tabs = [...TABS, ...(canManage ? MANAGER_TABS : []), ...(isAdmin ? ADMIN_TABS : [])];
 
   return (
     <div className="flex gap-1 overflow-x-auto border-b border-akani-card-border">

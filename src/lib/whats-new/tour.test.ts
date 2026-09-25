@@ -55,9 +55,26 @@ describe("the shipped release", () => {
     }
   });
 
-  it("keeps the admin-only step away from sales", () => {
-    expect(stepsForRole(RELEASE, "sales").some((s) => s.id === "admin")).toBe(false);
-    expect(stepsForRole(RELEASE, "admin").some((s) => s.id === "admin")).toBe(true);
+  it("only shows the booking-settings step to people who can change them", () => {
+    expect(stepsForRole(RELEASE, "sales").some((s) => s.id === "booking")).toBe(false);
+    expect(stepsForRole(RELEASE, "manager").some((s) => s.id === "booking")).toBe(true);
+    expect(stepsForRole(RELEASE, "admin").some((s) => s.id === "booking")).toBe(true);
+  });
+
+  it("points every target at an element that exists in the app", async () => {
+    const { readFileSync, readdirSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const walk = (dir: string): string[] =>
+      readdirSync(dir).flatMap((f) => {
+        const p = join(dir, f);
+        return statSync(p).isDirectory() ? walk(p) : /\.(tsx|ts)$/.test(f) && !f.includes(".test.") ? [p] : [];
+      });
+    const source = walk("src").map((f) => readFileSync(f, "utf8")).join("\n");
+    const targets = RELEASE.steps.map((s) => s.target).filter((t): t is string => !!t);
+    for (const t of targets) {
+      // A target may be written literally (data-tour="x") or via a `tour: "x"` field.
+      expect(source.includes(`data-tour="${t}"`) || source.includes(`tour: "${t}"`)).toBe(true);
+    }
   });
 });
 

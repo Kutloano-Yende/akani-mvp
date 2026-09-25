@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon, tour: "nav-dashboard" },
   { href: "/prospects/discover", label: "Discover Businesses", icon: SearchIcon, tour: "nav-discover" },
   { href: "/prospects", label: "Prospects", icon: ListIcon, tour: "nav-prospects" },
+  { href: "/leads", label: "Leads", icon: LeadsIcon, tour: "nav-leads" },
   { href: "/pipeline", label: "Pipeline", icon: PipelineIcon, tour: "nav-pipeline" },
   { href: "/campaigns", label: "Campaigns", icon: CampaignIcon, tour: "nav-campaigns" },
   { href: "/analytics", label: "Analytics", icon: AnalyticsIcon, tour: "nav-analytics" },
@@ -228,6 +229,21 @@ function SettingsIcon({ active }: { active: boolean }) {
     <svg {...iconProps(active)}>
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z" />
+    </svg>
+  );
+}
+
+function LeadsIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={active ? "text-akani-gold" : ""}>
+      <path
+        d="M4 6h16v10H8l-4 4V6z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <path d="M8.5 10h7M8.5 13h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }

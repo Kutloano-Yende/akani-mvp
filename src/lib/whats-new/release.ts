@@ -4,46 +4,34 @@ import type { Release } from "./tour";
 // this id are offered the tour once. Steps point at elements by their
 // data-tour attribute.
 export const RELEASE: Release = {
-  id: "2026-09-25",
+  id: "2026-09-26",
   steps: [
     {
       id: "intro",
       title: "Akani has been updated",
-      body: "Here's a quick tour of what's new. Use Next and Back to move around, or Cancel any time.",
+      body: "There's a new way to follow up with leads, and branded emails that ask permission. Use Next and Back to look around, or Cancel any time.",
     },
     {
-      id: "search",
-      target: "search",
-      title: "Search everything",
-      body: "Find any prospect by company or contact name, from anywhere in the app.",
-    },
-    {
-      id: "alerts",
-      target: "notifications",
-      title: "Needs-attention alerts",
-      body: "The bell shows prospects that need a follow-up. Admins also see POPIA requests that are due.",
-    },
-    {
-      id: "discover",
-      target: "nav-discover",
+      id: "leads",
+      target: "nav-leads",
       openNav: true,
-      title: "Real business data",
-      body: "Discover Businesses now searches real South African companies. Add one to your pipeline to save it.",
+      title: "Leads",
+      body: "Anyone who gets in touch gets an instant reply, up to three follow-ups, and a link to book a call. The emails stop when they book, reply or unsubscribe.",
     },
     {
-      id: "prospects-tools",
-      path: "/prospects",
-      target: "prospects-toolbar",
-      title: "Your prospects, your way",
-      body: "Switch between All and Mine, and export the list to CSV.",
+      id: "templates",
+      path: "/campaigns/templates",
+      target: "new-template",
+      title: "Ask permission to keep in touch",
+      body: "Create a template with Yes and No buttons in an Akani-branded email, and preview it first. A No is added to the do-not-contact list automatically.",
     },
     {
-      id: "admin",
-      target: "nav-settings",
-      openNav: true,
-      roles: ["admin"],
-      title: "Admin tools",
-      body: "Users, the suppression list, audit logs and POPIA requests are all in Settings.",
+      id: "booking",
+      path: "/settings/booking",
+      target: "booking-settings",
+      roles: ["admin", "manager"],
+      title: "Set when calls can be booked",
+      body: "Choose your working days and hours. This page also has the form to add to your website so enquiries arrive here.",
     },
     {
       id: "reopen",

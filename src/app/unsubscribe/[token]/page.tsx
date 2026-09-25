@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { BrandLogo } from "@/components/brand-logo";
 import { redirect } from "next/navigation";
 import { rateLimit } from "@/lib/rate-limit";
 import { TOKEN_PATTERN, unsubscribeByToken } from "@/lib/unsubscribe";
@@ -49,6 +50,9 @@ export default async function UnsubscribePage({
   return (
     <main className="flex min-h-screen items-center justify-center bg-akani-page-bg px-4">
       <div className="w-full max-w-md rounded-xl border border-akani-card-border bg-white p-8 text-center shadow-sm">
+        <div className="mb-6 flex justify-center">
+          <BrandLogo />
+        </div>
         <h1 className="text-lg font-semibold text-akani-text-primary">{heading}</h1>
         <p className="mt-2 text-sm text-akani-text-secondary">{message}</p>
         {showForm && (

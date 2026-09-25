@@ -3,7 +3,11 @@ export type EmailMessage = {
   subject: string;
   text: string;
   html: string;
-  unsubscribeUrl: string;
+  // Omit for transactional emails (e.g. a booking confirmation).
+  unsubscribeUrl?: string;
+  replyTo?: string;
+  // Base64-encoded content.
+  attachments?: { filename: string; content: string; contentType?: string }[];
 };
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -37,12 +41,27 @@ export async function sendEmail(message: EmailMessage): Promise<SendResult> {
         subject: message.subject,
         text: message.text,
         html: message.html,
-        ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
+        ...(message.replyTo || process.env.EMAIL_REPLY_TO
+          ? { reply_to: message.replyTo ?? process.env.EMAIL_REPLY_TO }
+          : {}),
+        ...(message.attachments?.length
+          ? {
+              attachments: message.attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+                ...(a.contentType ? { content_type: a.contentType } : {}),
+              })),
+            }
+          : {}),
         // RFC 8058 one-click unsubscribe, which Gmail/Yahoo expect from bulk senders.
-        headers: {
-          "List-Unsubscribe": `<${message.unsubscribeUrl}>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-        },
+        ...(message.unsubscribeUrl
+          ? {
+              headers: {
+                "List-Unsubscribe": `<${message.unsubscribeUrl}>`,
+                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+              },
+            }
+          : {}),
       }),
       signal: AbortSignal.timeout(15_000),
     });
@@ -55,4 +74,22 @@ export async function sendEmail(message: EmailMessage): Promise<SendResult> {
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Email provider unreachable" };
   }
+}
+
+// Live sending puts links in real inboxes, so it needs a public https address
+// to point them at. Returns what's wrong, or null when all is well.
+export function liveModeProblem(appUrl: string): string | null {
+  if (getEmailMode() !== "live") return null;
+  if (!process.env.APP_URL || !appUrl.startsWith("https://")) {
+    return "Live sending needs APP_URL set to this app's public https address, so links in emails work.";
+  }
+  return null;
+}
+
+// In production, pretending to send would tell people (and the lead list) that
+// someone was answered when no email went out. The lead-follow-up system holds
+// its emails until real sending is configured. Local development keeps the
+// simulation so the flow can be tried without an email account.
+export function sendingUnavailable(env: Record<string, string | undefined> = process.env): boolean {
+  return env.NODE_ENV === "production" && !(env.RESEND_API_KEY && env.EMAIL_FROM);
 }

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, subject, body } = await request.json();
+  const { name, subject, body, includePermissionButtons } = await request.json();
   if (!name?.trim() || !subject?.trim() || !body?.trim()) {
     return NextResponse.json(
       { error: "Name, subject, and body are all required" },
@@ -33,7 +33,13 @@ export async function POST(request: Request) {
 
   const { data: template, error } = await supabase
     .from("email_templates")
-    .insert({ name: name.trim(), subject: subject.trim(), body, created_by: user.id })
+    .insert({
+      name: name.trim(),
+      subject: subject.trim(),
+      body,
+      include_permission_buttons: includePermissionButtons === true,
+      created_by: user.id,
+    })
     .select("*")
     .single();
 

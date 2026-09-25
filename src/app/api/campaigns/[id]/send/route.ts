@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { logAudit } from "@/lib/audit";
 import { getAppUrl, getEmailMode, sendEmail } from "@/lib/email/provider";
 import { planRecipients } from "@/lib/email/plan";
-import { escapeHtml, renderSubject, renderTemplate, textToHtml } from "@/lib/email/render";
+import { buildCampaignEmail } from "@/lib/email/campaign-email";
 
 /**
  * Sends pending campaign emails. With RESEND_API_KEY + EMAIL_FROM configured
@@ -63,7 +63,7 @@ export async function POST(
 
   const { data: template } = await supabase
     .from("email_templates")
-    .select("subject, body")
+    .select("subject, body, include_permission_buttons")
     .eq("id", campaign.template_id)
     .single();
   if (!template) {
@@ -115,18 +115,13 @@ export async function POST(
   const failed: { plan: Plan; error: string }[] = [];
 
   for (const plan of batch) {
-    const vars = { firstName: plan.firstName, companyName: plan.companyName };
-    const unsubscribeUrl = `${appUrl}/unsubscribe/${plan.row.unsubscribe_token}`;
-    const body = renderTemplate(template.body, vars);
-    const footer = `You're receiving this because ${plan.companyName} was identified as a possible fit for Akani's services. To stop receiving these emails, unsubscribe here: ${unsubscribeUrl}`;
+    const { subject, html, text, unsubscribeUrl } = buildCampaignEmail(
+      template,
+      { firstName: plan.firstName, companyName: plan.companyName, token: plan.row.unsubscribe_token },
+      appUrl,
+    );
 
-    const result = await sendEmail({
-      to: plan.to!,
-      subject: renderSubject(template.subject, vars),
-      text: `${body}\n\n--\n${footer}`,
-      html: `${textToHtml(body)}\n<hr>\n<p style="color:#667085;font-size:12px">You're receiving this because ${escapeHtml(plan.companyName)} was identified as a possible fit for Akani's services. <a href="${unsubscribeUrl}">Unsubscribe</a></p>`,
-      unsubscribeUrl,
-    });
+    const result = await sendEmail({ to: plan.to!, subject, text, html, unsubscribeUrl });
 
     if (!result.ok) {
       failed.push({ plan, error: result.error });

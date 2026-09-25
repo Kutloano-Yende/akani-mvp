@@ -195,10 +195,11 @@ npm test                     # unit tests (vitest): CSV export safety, template
 npm run typecheck && npm run lint
 ```
 
-Row-level-security rules can't be unit-tested in JS, so
-`supabase/tests/rls_checks.sql` exercises them directly as sales, manager,
-admin and signed-out users, then rolls back. Run it in the Supabase SQL
-editor after any migration that touches policies, grants or auth functions.
+Row-level-security rules can't be unit-tested in JS, so the scripts in
+`supabase/tests/` (`rls_checks.sql`, `permission_checks.sql`,
+`leads_checks.sql`) exercise them directly as sales, manager, admin and
+signed-out users, then roll back. Run them in the Supabase SQL editor after any
+migration that touches policies, grants or database functions.
 GitHub Actions (`.github/workflows/ci.yml`) runs type check, lint, tests and
 a build on every push and pull request; it needs no secrets.
 
@@ -213,6 +214,67 @@ a build on every push and pull request; it needs no secrets.
 The Privacy notice and Terms pages describe what the system actually does,
 but they are not legal advice; have them reviewed before relying on them
 externally.
+
+## Branded emails and asking permission
+
+Every email (campaigns, lead replies, booking confirmations) uses one layout in
+the official Akani BEE Ratings colours (blue `#050058`, gold `#CE9B01`) and
+logo (`public/email/akani-logo.png`, from the December 2022 logo detail sheet).
+The brand typeface, Biome, isn't available in email, so a system sans stands in.
+
+A campaign template can tick **Ask permission to keep in touch**. Its email then
+shows Yes / No buttons and the template editor previews the email as recipients
+will see it. Each button opens a page that asks for one confirmation (so mail
+scanners that pre-fetch links can't answer for anyone). **No** adds the address
+to the suppression list; **Yes** records consent and turns the company into a
+lead (below). A seeded template, "Permission to stay in touch", is ready to use.
+
+Optional wording: `EMAIL_SENDER_NAME` (default "Akani BEE Ratings"),
+`EMAIL_SIGN_OFF` (default "Warm regards,\nThe Akani team") and
+`EMAIL_FOOTER_ADDRESS` (a physical address line for the footer).
+
+## Leads, follow-ups and booking
+
+A lead comes from the **website form** (or from a company saying yes to a
+permission email). Within seconds they get a branded reply with a **Choose a
+time** link; then up to three follow-ups, about 1, 3 and 6 days after they
+arrived, on weekday mornings only. The emails stop as soon as the lead books a
+call, is marked replied or closed by staff, or unsubscribes. The last email says
+it is the last. Follow-ups never go to cold campaign contacts, only to people who
+contacted Akani or said yes (POPIA limits unsolicited marketing to one approach
+until someone opts in).
+
+- **Leads** (sidebar) lists everyone with their progress and upcoming calls.
+- **Settings → Booking** (managers and admins) sets working days, hours, call
+  length, notice and the address to tell when a call is booked, and shows the
+  website form to copy. Booking happens on an Akani page (`/book/<token>`); the
+  lead gets a confirmation with a calendar invite, the team gets a notice, and
+  leads can move or cancel from the same link. It doesn't read anyone's calendar,
+  so it won't see meetings booked elsewhere.
+
+Setup (all values go in `.env.local` and your host's environment):
+
+- `LEADS_SECRET` — a long random string. Only the server knows it. Store its
+  hash in the database once:
+  `insert into private.app_secrets (name, hash) values ('leads', encode(sha256(convert_to('<the secret>', 'UTF8')), 'hex'));`
+  Without it the lead functions refuse to run, so nobody with the public
+  database key can start emails.
+- `CRON_SECRET` — another random string; Vercel sends it to the scheduled
+  follow-up run (`vercel.json`).
+- `LEAD_ALLOWED_ORIGINS` — the website(s) allowed to post the form, e.g.
+  `https://akanibee.co.za`.
+- `APP_URL`, `RESEND_API_KEY`, `EMAIL_FROM` — as under Email sending above.
+  Until real sending is configured, lead emails are held (not pretended sent)
+  and go out once it is.
+
+The follow-up run is scheduled **once a day (about 08:00 South African time)**,
+which is the most a Vercel Hobby plan allows; follow-ups are days apart, so
+that is enough. The instant reply doesn't wait for it. A finer schedule needs a
+paid plan or a Supabase scheduled job that calls `/api/cron/leads`.
+
+The public form endpoint checks the sending site, ignores a hidden "website"
+field that bots fill in, limits each address to 5 enquiries an hour, and gives the
+same reply for repeats so it can't be used to discover who is on file.
 
 ## Not built yet
 

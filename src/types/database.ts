@@ -187,9 +187,94 @@ export type Database = {
           },
         ]
       }
+      booking_settings: {
+        Row: {
+          end_hour: number
+          host_email: string | null
+          host_name: string
+          id: boolean
+          max_days_ahead: number
+          meeting_details: string
+          min_notice_hours: number
+          slot_minutes: number
+          start_hour: number
+          timezone: string
+          updated_at: string
+          working_days: number[]
+        }
+        Insert: {
+          end_hour?: number
+          host_email?: string | null
+          host_name?: string
+          id?: boolean
+          max_days_ahead?: number
+          meeting_details?: string
+          min_notice_hours?: number
+          slot_minutes?: number
+          start_hour?: number
+          timezone?: string
+          updated_at?: string
+          working_days?: number[]
+        }
+        Update: {
+          end_hour?: number
+          host_email?: string | null
+          host_name?: string
+          id?: boolean
+          max_days_ahead?: number
+          meeting_details?: string
+          min_notice_hours?: number
+          slot_minutes?: number
+          start_hour?: number
+          timezone?: string
+          updated_at?: string
+          working_days?: number[]
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          end_at: string
+          id: string
+          lead_id: string
+          start_at: string
+          status: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          end_at: string
+          id?: string
+          lead_id: string
+          start_at: string
+          status?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          end_at?: string
+          id?: string
+          lead_id?: string
+          start_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_prospects: {
         Row: {
           campaign_id: string
+          consent_answer: string | null
+          consent_at: string | null
           created_at: string
           id: string
           opened_at: string | null
@@ -202,6 +287,8 @@ export type Database = {
         }
         Insert: {
           campaign_id: string
+          consent_answer?: string | null
+          consent_at?: string | null
           created_at?: string
           id?: string
           opened_at?: string | null
@@ -214,6 +301,8 @@ export type Database = {
         }
         Update: {
           campaign_id?: string
+          consent_answer?: string | null
+          consent_at?: string | null
           created_at?: string
           id?: string
           opened_at?: string | null
@@ -465,6 +554,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          include_permission_buttons: boolean
           name: string
           subject: string
           updated_at: string
@@ -474,6 +564,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          include_permission_buttons?: boolean
           name: string
           subject: string
           updated_at?: string
@@ -483,6 +574,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          include_permission_buttons?: boolean
           name?: string
           subject?: string
           updated_at?: string
@@ -493,6 +585,112 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_emails: {
+        Row: {
+          error: string | null
+          id: string
+          lead_id: string
+          sent_at: string
+          status: string
+          step: number
+          subject: string | null
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          lead_id: string
+          sent_at?: string
+          status: string
+          step: number
+          subject?: string | null
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          lead_id?: string
+          sent_at?: string
+          status?: string
+          step?: number
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          booked_at: string | null
+          company_name: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_emailed_at: string | null
+          message: string | null
+          name: string | null
+          next_action_at: string | null
+          phone: string | null
+          prospect_id: string | null
+          send_failures: number
+          sequence_step: number
+          source: string
+          status: string
+          token: string
+        }
+        Insert: {
+          booked_at?: string | null
+          company_name?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          last_emailed_at?: string | null
+          message?: string | null
+          name?: string | null
+          next_action_at?: string | null
+          phone?: string | null
+          prospect_id?: string | null
+          send_failures?: number
+          sequence_step?: number
+          source: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          booked_at?: string | null
+          company_name?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_emailed_at?: string | null
+          message?: string | null
+          name?: string | null
+          next_action_at?: string | null
+          phone?: string | null
+          prospect_id?: string | null
+          send_failures?: number
+          sequence_step?: number
+          source?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
             referencedColumns: ["id"]
           },
         ]
@@ -725,6 +923,39 @@ export type Database = {
           target_user_id: string
         }
         Returns: undefined
+      }
+      book_slot: { Args: { p_start: string; p_token: string }; Returns: Json }
+      booking_page_data: { Args: { p_token: string }; Returns: Json }
+      cancel_booking: { Args: { p_token: string }; Returns: Json }
+      lead_claim_due: { Args: { p_limit?: number; p_secret: string }; Returns: Json }
+      lead_intake: {
+        Args: {
+          p_company: string
+          p_email: string
+          p_message: string
+          p_name: string
+          p_phone: string
+          p_prospect_id?: string
+          p_secret: string
+          p_source: string
+        }
+        Returns: Json
+      }
+      lead_record_send: {
+        Args: {
+          p_error: string
+          p_lead_id: string
+          p_next_at: string
+          p_ok: boolean
+          p_secret: string
+          p_step: number
+          p_subject: string
+        }
+        Returns: undefined
+      }
+      answer_permission: {
+        Args: { p_answer: string; p_token: string }
+        Returns: Json
       }
       current_user_role: {
         Args: never

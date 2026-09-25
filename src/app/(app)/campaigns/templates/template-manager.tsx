@@ -8,7 +8,9 @@ type Template = Tables<"email_templates">;
 export function TemplateManager({ initialTemplates }: { initialTemplates: Template[] }) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: "", subject: "", body: "" });
+  const [form, setForm] = useState({ name: "", subject: "", body: "", includePermissionButtons: false });
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -29,10 +31,35 @@ export function TemplateManager({ initialTemplates }: { initialTemplates: Templa
         return;
       }
       setTemplates((prev) => [data.template, ...prev]);
-      setForm({ name: "", subject: "", body: "" });
+      setForm({ name: "", subject: "", body: "", includePermissionButtons: false });
+      setPreview(null);
       setCreating(false);
     } finally {
       setPending(false);
+    }
+  }
+
+  async function handlePreview() {
+    setPreviewing(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/email-templates/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: form.subject,
+          body: form.body,
+          includePermission: form.includePermissionButtons,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Couldn't build the preview");
+        return;
+      }
+      setPreview(data);
+    } finally {
+      setPreviewing(false);
     }
   }
 
@@ -84,7 +111,47 @@ export function TemplateManager({ initialTemplates }: { initialTemplates: Templa
               placeholder={"Hi {{firstName}},\n\n..."}
             />
           </label>
+          <label className="flex items-start gap-3 rounded-md bg-akani-page-bg p-3">
+            <input
+              type="checkbox"
+              checked={form.includePermissionButtons}
+              onChange={(e) => setForm({ ...form, includePermissionButtons: e.target.checked })}
+              className="mt-0.5 h-4 w-4 accent-akani-gold"
+            />
+            <span>
+              <span className="block text-sm font-medium text-akani-text-primary">
+                Ask permission to keep in touch
+              </span>
+              <span className="block text-sm text-akani-text-secondary">
+                Adds &ldquo;Yes, keep in touch&rdquo; and &ldquo;No, thanks&rdquo; buttons. A no is added to the
+                suppression list automatically.
+              </span>
+            </span>
+          </label>
+
+          {preview && (
+            <div className="space-y-2">
+              <p className="text-sm text-akani-text-secondary">
+                Subject: <span className="font-medium text-akani-text-primary">{preview.subject}</span>
+              </p>
+              <iframe
+                title="Email preview"
+                sandbox=""
+                srcDoc={preview.html}
+                className="h-[640px] w-full rounded-lg border border-akani-card-border bg-white"
+              />
+            </div>
+          )}
+
           <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={previewing || !form.subject.trim() || !form.body.trim()}
+              className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-50"
+            >
+              {previewing ? "Building…" : "Preview email"}
+            </button>
             <button
               type="submit"
               disabled={pending}
@@ -103,6 +170,7 @@ export function TemplateManager({ initialTemplates }: { initialTemplates: Templa
         </form>
       ) : (
         <button
+          data-tour="new-template"
           onClick={() => setCreating(true)}
           className="rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright"
         >
@@ -115,7 +183,14 @@ export function TemplateManager({ initialTemplates }: { initialTemplates: Templa
           <div key={t.id} className="rounded-xl border border-akani-card-border bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-akani-text-primary">{t.name}</h3>
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-akani-text-primary">
+                  {t.name}
+                  {t.include_permission_buttons && (
+                    <span className="rounded-full bg-akani-warning-bg px-2 py-0.5 text-xs font-medium text-akani-warning">
+                      Asks permission
+                    </span>
+                  )}
+                </h3>
                 <p className="mt-1 text-sm text-akani-text-secondary">{t.subject}</p>
               </div>
               <button
