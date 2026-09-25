@@ -1,22 +1,27 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
+import { logAudit } from "@/lib/audit";
+import { getAppUrl, getEmailMode, sendEmail } from "@/lib/email/provider";
+import { escapeHtml, renderSubject, renderTemplate, textToHtml } from "@/lib/email/render";
 
 /**
- * Marks pending campaign_prospects as sent. There is no email provider
- * wired up yet (no Resend/SendGrid credentials) — this simulates delivery
- * so the campaign lifecycle and stats can be built and tested end-to-end.
- * Swap in a real send here (behind the same route contract) once a
- * provider is chosen; nothing about the campaign data model needs to
- * change for that.
+ * Sends pending campaign emails. With RESEND_API_KEY + EMAIL_FROM configured
+ * these are real emails; otherwise delivery is simulated so the campaign
+ * lifecycle can still be exercised end-to-end.
  *
- * Suppression list IS enforced here for real, though — a recipient whose
- * company email is on suppression_list is skipped rather than sent to,
- * because a suppression list that isn't actually checked before sending
- * isn't compliance, it's decoration.
+ * Either way, the checks that matter for compliance are real: recipients on
+ * the suppression list (by contact OR company address) are skipped, and every
+ * email carries a working one-click unsubscribe link tied to that recipient.
+ * A row is only marked sent after its email is accepted, so a failure or a
+ * dropped request never records a send that didn't happen.
  */
+const BATCH_LIMIT = 50;
+// Resend's default limit is 2 requests/second.
+const LIVE_SEND_DELAY_MS = 600;
+
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: campaignId } = await params;
@@ -43,11 +48,35 @@ export async function POST(
     );
   }
 
+  const mode = getEmailMode();
+  const appUrl = getAppUrl(new URL(request.url).origin);
+  if (mode === "live" && (!process.env.APP_URL || !appUrl.startsWith("https://"))) {
+    return NextResponse.json(
+      {
+        error:
+          "Live sending needs APP_URL set to this app's public https address, so unsubscribe links work for recipients.",
+      },
+      { status: 501 },
+    );
+  }
+
+  const { data: template } = await supabase
+    .from("email_templates")
+    .select("subject, body")
+    .eq("id", campaign.template_id)
+    .single();
+  if (!template) {
+    return NextResponse.json({ error: "Template not found" }, { status: 400 });
+  }
+
   const { data: pending } = await supabase
     .from("campaign_prospects")
-    .select("id, prospect_id, prospects(companies(email))")
+    .select(
+      "id, prospect_id, unsubscribe_token, prospects(companies(name, email, contacts(first_name, email)))",
+    )
     .eq("campaign_id", campaignId)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
 
   if (!pending || pending.length === 0) {
     return NextResponse.json({ error: "No pending prospects to send to" }, { status: 400 });
@@ -61,70 +90,133 @@ export async function POST(
     (suppressed ?? []).map((s) => (s.email ?? "").toLowerCase()).filter(Boolean),
   );
 
-  const recipientEmail = (row: (typeof pending)[number]) => {
-    const prospect = Array.isArray(row.prospects) ? row.prospects[0] : row.prospects;
-    const company = prospect
-      ? Array.isArray(prospect.companies)
-        ? prospect.companies[0]
-        : prospect.companies
-      : null;
-    return company?.email?.toLowerCase() ?? null;
+  const one = <T,>(v: T | T[] | null | undefined): T | null =>
+    Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
+
+  type Plan = {
+    row: (typeof pending)[number];
+    to: string | null;
+    firstName: string;
+    companyName: string;
+    suppressed: boolean;
   };
 
-  const toSend = pending.filter((p) => {
-    const email = recipientEmail(p);
-    return !email || !suppressedEmails.has(email);
+  const plans: Plan[] = pending.map((row) => {
+    const company = one(one(row.prospects)?.companies);
+    const contacts = Array.isArray(company?.contacts) ? company.contacts : [];
+    const contact = contacts.find((c) => c.email) ?? null;
+    const to = (contact?.email ?? company?.email ?? "").trim().toLowerCase() || null;
+    // A suppressed address on either the contact or the company blocks the send.
+    const candidates = [contact?.email, company?.email].map((e) => e?.trim().toLowerCase());
+    return {
+      row,
+      to,
+      firstName: contact?.first_name?.trim() || "there",
+      companyName: company?.name ?? "your company",
+      suppressed: candidates.some((e) => e && suppressedEmails.has(e)),
+    };
   });
-  const skipped = pending.filter((p) => !toSend.includes(p));
 
-  if (toSend.length === 0) {
+  const noEmail = plans.filter((p) => !p.to && !p.suppressed);
+  const skipped = plans.filter((p) => p.suppressed);
+  const sendable = plans.filter((p) => p.to && !p.suppressed);
+  const batch = sendable.slice(0, BATCH_LIMIT);
+
+  if (batch.length === 0) {
     return NextResponse.json(
-      { error: "Every pending prospect's contact email is on the suppression list." },
+      {
+        error:
+          skipped.length > 0 && noEmail.length === 0
+            ? "Every pending prospect's contact email is on the suppression list."
+            : "None of the pending prospects have an email address on file.",
+      },
       { status: 400 },
     );
   }
 
-  const now = new Date().toISOString();
+  const sent: Plan[] = [];
+  const failed: { plan: Plan; error: string }[] = [];
 
-  const { error: updateError } = await supabase
-    .from("campaign_prospects")
-    .update({ status: "sent", sent_at: now })
-    .in(
-      "id",
-      toSend.map((p) => p.id),
-    );
+  for (const plan of batch) {
+    const vars = { firstName: plan.firstName, companyName: plan.companyName };
+    const unsubscribeUrl = `${appUrl}/unsubscribe/${plan.row.unsubscribe_token}`;
+    const body = renderTemplate(template.body, vars);
+    const footer = `You're receiving this because ${plan.companyName} was identified as a possible fit for Akani's services. To stop receiving these emails, unsubscribe here: ${unsubscribeUrl}`;
 
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    const result = await sendEmail({
+      to: plan.to!,
+      subject: renderSubject(template.subject, vars),
+      text: `${body}\n\n--\n${footer}`,
+      html: `${textToHtml(body)}\n<hr>\n<p style="color:#667085;font-size:12px">You're receiving this because ${escapeHtml(plan.companyName)} was identified as a possible fit for Akani's services. <a href="${unsubscribeUrl}">Unsubscribe</a></p>`,
+      unsubscribeUrl,
+    });
+
+    if (!result.ok) {
+      failed.push({ plan, error: result.error });
+    } else {
+      sent.push(plan);
+      const { error: updateError } = await supabase
+        .from("campaign_prospects")
+        .update({ status: "sent", sent_at: new Date().toISOString(), recipient_email: plan.to })
+        .eq("id", plan.row.id);
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
+    }
+
+    if (mode === "live") await new Promise((r) => setTimeout(r, LIVE_SEND_DELAY_MS));
   }
 
-  await supabase
-    .from("campaigns")
-    .update({
-      status: "active",
-      started_at: campaign.started_at ?? now,
-    })
-    .eq("id", campaignId);
+  if (sent.length > 0) {
+    const now = new Date().toISOString();
+    await supabase
+      .from("campaigns")
+      .update({ status: "active", started_at: campaign.started_at ?? now })
+      .eq("id", campaignId);
+  }
 
-  await supabase.from("activities").insert(
-    toSend.map((p) => ({
-      prospect_id: p.prospect_id,
+  const activities = [
+    ...sent.map((p) => ({
+      prospect_id: p.row.prospect_id,
       user_id: user.id,
       type: "EMAIL_SENT",
-      description: "Campaign email sent",
+      description: mode === "live" ? "Campaign email sent" : "Campaign email sent (simulated)",
     })),
-  );
+    ...failed.map((f) => ({
+      prospect_id: f.plan.row.prospect_id,
+      user_id: user.id,
+      type: "EMAIL_FAILED",
+      description: `Campaign email failed — ${f.error}`,
+    })),
+    ...skipped.map((p) => ({
+      prospect_id: p.row.prospect_id,
+      user_id: user.id,
+      type: "EMAIL_SUPPRESSED",
+      description: "Skipped — contact is on the suppression list",
+    })),
+  ];
+  if (activities.length > 0) await supabase.from("activities").insert(activities);
 
-  if (skipped.length > 0) {
-    await supabase.from("activities").insert(
-      skipped.map((p) => ({
-        prospect_id: p.prospect_id,
-        user_id: user.id,
-        type: "EMAIL_SUPPRESSED",
-        description: "Skipped — contact is on the suppression list",
-      })),
-    );
-  }
+  await logAudit(supabase, {
+    action: "CAMPAIGN_SENT",
+    entityType: "campaign",
+    entityId: campaignId,
+    metadata: {
+      mode,
+      sent: sent.length,
+      failed: failed.length,
+      suppressed: skipped.length,
+      noEmail: noEmail.length,
+    },
+  });
 
-  return NextResponse.json({ sent: toSend.length, suppressed: skipped.length });
+  return NextResponse.json({
+    mode,
+    sent: sent.length,
+    failed: failed.length,
+    firstError: failed[0]?.error ?? null,
+    suppressed: skipped.length,
+    noEmail: noEmail.length,
+    remaining: sendable.length - batch.length,
+  });
 }

@@ -28,11 +28,12 @@ export function SendCampaignButton({
         setError(data.error ?? "Failed to send");
         return;
       }
-      if (data.suppressed > 0) {
-        setNotice(
-          `Sent to ${data.sent}. Skipped ${data.suppressed} on the suppression list.`,
-        );
-      }
+      const parts = [`${data.mode === "live" ? "Sent" : "Simulated sending"} to ${data.sent}`];
+      if (data.suppressed > 0) parts.push(`skipped ${data.suppressed} on the suppression list`);
+      if (data.noEmail > 0) parts.push(`${data.noEmail} have no email address`);
+      if (data.failed > 0) parts.push(`${data.failed} failed (${data.firstError})`);
+      if (data.remaining > 0) parts.push(`${data.remaining} still pending, send again to continue`);
+      if (parts.length > 1 || data.failed > 0) setNotice(parts.join(". ") + ".");
       router.refresh();
     } finally {
       setSending(false);

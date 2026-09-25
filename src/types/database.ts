@@ -194,9 +194,11 @@ export type Database = {
           id: string
           opened_at: string | null
           prospect_id: string
+          recipient_email: string | null
           replied_at: string | null
           sent_at: string | null
           status: Database["public"]["Enums"]["campaign_prospect_status"]
+          unsubscribe_token: string
         }
         Insert: {
           campaign_id: string
@@ -204,9 +206,11 @@ export type Database = {
           id?: string
           opened_at?: string | null
           prospect_id: string
+          recipient_email?: string | null
           replied_at?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["campaign_prospect_status"]
+          unsubscribe_token?: string
         }
         Update: {
           campaign_id?: string
@@ -214,9 +218,11 @@ export type Database = {
           id?: string
           opened_at?: string | null
           prospect_id?: string
+          recipient_email?: string | null
           replied_at?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["campaign_prospect_status"]
+          unsubscribe_token?: string
         }
         Relationships: [
           {
@@ -724,6 +730,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      unsubscribe_by_token: { Args: { p_token: string }; Returns: boolean }
     }
     Enums: {
       application_status: "submitted" | "approved" | "rejected"

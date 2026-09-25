@@ -5,6 +5,7 @@ import { StatCard } from "@/components/stat-card";
 import { CampaignProspectPicker } from "./campaign-prospect-picker";
 import { SendCampaignButton } from "./send-campaign-button";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { getEmailMode } from "@/lib/email/provider";
 
 export default async function CampaignDetailPage({
   params,
@@ -102,7 +103,25 @@ export default async function CampaignDetailPage({
 
       <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-akani-text-primary">Add prospects</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-akani-text-primary">Add prospects</h2>
+            {canManage && (
+              <span
+                title={
+                  getEmailMode() === "live"
+                    ? "Emails are delivered through the configured provider."
+                    : "No email provider configured (RESEND_API_KEY / EMAIL_FROM). Sending is simulated."
+                }
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  getEmailMode() === "live"
+                    ? "bg-akani-success-bg text-akani-success"
+                    : "bg-akani-warning-bg text-akani-warning"
+                }`}
+              >
+                {getEmailMode() === "live" ? "Live sending" : "Simulated sending"}
+              </span>
+            )}
+          </div>
           {canManage && (
             <SendCampaignButton campaignId={campaign.id} pendingCount={pendingCount} hasTemplate={!!template} />
           )}

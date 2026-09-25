@@ -145,10 +145,38 @@ current stage and My/All filter) and admins can export the audit log. Both
 exports are recorded in the audit log, and text cells that could run as
 spreadsheet formulas are neutralised.
 
+## Email sending and unsubscribe
+
+Campaign sends are **simulated** until an email provider is configured. To go
+live, set these in `.env.local` (or your host's environment) and restart:
+
+- `RESEND_API_KEY` — API key from resend.com
+- `EMAIL_FROM` — a sender on a domain you've verified there, e.g. `Akani <hello@yourdomain.co.za>`
+- `APP_URL` — this app's public https address (unsubscribe links point here;
+  live sending refuses to start without it)
+- `EMAIL_REPLY_TO` — optional
+
+The campaign page shows a "Live sending" or "Simulated sending" badge. Each
+email is personalised (`{{firstName}}`, `{{companyName}}`), goes to the
+company's first contact with an email (falling back to the company address),
+and carries a per-recipient unsubscribe link plus `List-Unsubscribe` headers.
+Recipients on the suppression list, by contact or company address, are never
+sent to. A row is marked sent only after the provider accepts it; failures stay
+pending so they can be retried. Sends go out in batches of 50 per click.
+
+The unsubscribe page (`/unsubscribe/<token>`) is public and asks for
+confirmation, so mail scanners that pre-fetch links can't unsubscribe anyone.
+It adds the address to the suppression list.
+
+**Before enabling live sending:** the seeded demo companies and contacts use
+realistic-looking addresses. Clear them out first, or you'll email real
+domains.
+
 ## Not built yet
 
-- Real BDM DataFinder integration (currently mocked) and a real email
-  provider (campaign sends are simulated; the suppression list is enforced)
+- Real BDM DataFinder integration (currently mocked)
+- Open/reply/bounce tracking (needs provider webhooks); bounces and spam
+  complaints don't yet feed the suppression list
 - 2FA backup codes (Supabase MFA has no built-in recovery codes; admins can
   reset a user's 2FA instead)
 - Consent tracking beyond the suppression list (opt-out register)
