@@ -7,6 +7,7 @@ import {
   isExportAllowanceError,
   mapRecord,
   mergeCompany,
+  normalizeProvince,
   resetExportBlock,
 } from "./companydata-provider";
 
@@ -274,5 +275,25 @@ describe("CompanyDataProvider.enrich", () => {
 
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { records: [] } }) }));
     expect(await new CompanyDataProvider("k").enrich(base)).toBeNull();
+  });
+});
+
+describe("normalizeProvince", () => {
+  it.each([
+    ["Kwazulu-natal", "KwaZulu-Natal"],
+    ["KWAZULU-NATAL", "KwaZulu-Natal"],
+    ["north west", "North West"],
+    ["Gauteng", "Gauteng"],
+    ["Western Cape", "Western Cape"],
+    ["Somewhere Else", "Somewhere Else"],
+    [null, null],
+  ])("%s -> %s", (input, expected) => {
+    expect(normalizeProvince(input)).toBe(expected);
+  });
+
+  it("is applied when mapping records", () => {
+    expect(mapRecord({ ID: "1", "Company Name": "X", "State/Province": "Kwazulu-natal" }, null)!.province).toBe(
+      "KwaZulu-Natal",
+    );
   });
 });

@@ -94,6 +94,19 @@ export function formatRevenue(zar: number | null): string | null {
   return "R250m+";
 }
 
+const PROVINCES = [
+  "Gauteng", "Western Cape", "KwaZulu-Natal", "Eastern Cape", "Free State",
+  "Mpumalanga", "North West", "Limpopo", "Northern Cape",
+];
+const PROVINCE_BY_KEY = new Map(PROVINCES.map((p) => [p.toLowerCase().replace(/[^a-z]/g, ""), p]));
+
+// The API spells provinces its own way ("Kwazulu-natal"); use the same names as
+// the Discover dropdown so provinces group and filter consistently.
+export function normalizeProvince(raw: string | null): string | null {
+  if (!raw) return null;
+  return PROVINCE_BY_KEY.get(raw.toLowerCase().replace(/[^a-z]/g, "")) ?? raw;
+}
+
 function pickContact(r: Record<string, unknown>, email: string | null, phone: string | null) {
   let first: string | null = null;
   let last: string | null = null;
@@ -144,7 +157,7 @@ export function mapRecord(raw: unknown, industry: string | null): ProviderCompan
     name,
     registrationNumber: str(r["Company Registration Number"]),
     industry,
-    province: str(r["State/Province"]),
+    province: normalizeProvince(str(r["State/Province"])),
     city,
     employeeCount: num(r["Employees Total"]) ?? num(r["Employees On Site"]),
     revenueRange: formatRevenue(num(r["Yearly Revenue Local Currency"])),
