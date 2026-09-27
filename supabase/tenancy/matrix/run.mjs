@@ -64,7 +64,7 @@ console.log("\n== 3. Cross-tenant INSERT / tenant_id tampering ==");
   check("sales A's tenant_id IS IGNORED by the insert trigger (row lands in A, not B)", r.status < 300 && wroteTenant === T.A, `status ${r.status}, tenant_id written=${wroteTenant}, body=${JSON.stringify(r.data)}`);
 }
 {
-  const r = await rest(A_admin.tok, `companies?id=eq.${seedA.co}`, { method: "PATCH", body: { tenant_id: T.B } });
+  await rest(A_admin.tok, `companies?id=eq.${seedA.co}`, { method: "PATCH", body: { tenant_id: T.B } });
   const still = sql(`select tenant_id from companies where id='${seedA.co}'`);
   check("admin A cannot move their own company to tenant B by UPDATE", still === T.A, `now tenant_id=${still}`);
 }
@@ -89,12 +89,12 @@ console.log("\n== 6. Same-tenant rules are preserved (sales ownership) ==");
 {
   const otherOwned = sql(`insert into companies (tenant_id, name) values ('${T.A}','Owned by manager') returning id`).split("\n")[0];
   const otherProspect = sql(`insert into prospects (tenant_id, company_id, assigned_to) values ('${T.A}','${otherOwned}','${A_manager.id}') returning id`).split("\n")[0];
-  const r = await rest(A_sales.tok, `prospects?id=eq.${otherProspect}`, { method: "PATCH", body: { qualification_status: "x" } });
+  await rest(A_sales.tok, `prospects?id=eq.${otherProspect}`, { method: "PATCH", body: { qualification_status: "x" } });
   const after = sql(`select qualification_status from prospects where id='${otherProspect}'`);
   check("sales A (same tenant) still cannot update another rep's assigned prospect", after === "" || after === "\\N");
 }
 {
-  const r = await rest(A_sales.tok, `prospects?id=eq.${seedA.pr}`, { method: "PATCH", body: { qualification_status: "own-update-ok" } });
+  await rest(A_sales.tok, `prospects?id=eq.${seedA.pr}`, { method: "PATCH", body: { qualification_status: "own-update-ok" } });
   const after = sql(`select qualification_status from prospects where id='${seedA.pr}'`);
   check("sales A CAN still update their own tenant's prospect assigned to them", after === "own-update-ok");
 }

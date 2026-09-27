@@ -66,7 +66,7 @@ export function AppShell({
   const pageTitle = activeItem?.label ?? (pathname.startsWith("/settings") ? "Settings" : "Akani");
 
   return (
-    <div className="flex min-h-screen bg-akani-page-bg">
+    <div className="flex h-dvh overflow-hidden bg-akani-page-bg">
       <UpdateSkeleton />
       <UpdateManager role={role} release={release} />
       {navOpen && (
@@ -84,7 +84,7 @@ export function AppShell({
         <div className="flex h-16 items-center px-5">
           <AkaniLogo variant="dark" size="sm" compact />
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon;
@@ -150,7 +150,7 @@ export function AppShell({
           <SignOutButton userName={userName} role={role} />
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopHeader title={pageTitle} userName={userName} onMenuClick={() => setNavOpen(true)} />
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</div>
