@@ -5,6 +5,7 @@ import { logAudit } from "@/lib/audit";
 import { getAppUrl, getEmailMode, sendEmail } from "@/lib/email/provider";
 import { planRecipients } from "@/lib/email/plan";
 import { buildCampaignEmail } from "@/lib/email/campaign-email";
+import { withServerTenantMany } from "@/lib/supabase/tenant-insert";
 
 /**
  * Sends pending campaign emails. With RESEND_API_KEY + EMAIL_FROM configured
@@ -167,7 +168,7 @@ export async function POST(
       description: "Skipped — contact is on the suppression list",
     })),
   ];
-  if (activities.length > 0) await supabase.from("activities").insert(activities);
+  if (activities.length > 0) await supabase.from("activities").insert(withServerTenantMany(activities));
 
   await logAudit(supabase, {
     action: "CAMPAIGN_SENT",

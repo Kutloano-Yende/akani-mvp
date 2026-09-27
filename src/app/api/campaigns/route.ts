@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 
 export async function GET() {
   const supabase = await createClient();
@@ -32,12 +33,12 @@ export async function POST(request: Request) {
 
   const { data: campaign, error } = await supabase
     .from("campaigns")
-    .insert({
+    .insert(withServerTenant({
       name: name.trim(),
       description: description?.trim() || null,
       template_id: templateId || null,
       created_by: user.id,
-    })
+    }))
     .select("*")
     .single();
 

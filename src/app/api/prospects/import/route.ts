@@ -4,6 +4,7 @@ import { getProvider, scoreOpportunity, type ProviderCompany } from "@/lib/data/
 import { dailyLimitReached } from "@/lib/data/usage";
 import { rateLimit } from "@/lib/rate-limit";
 import { findDuplicate } from "@/lib/data/dedupe";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 
 type ImportBody = {
   company: ProviderCompany;
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
 
     const { data: inserted, error: insertError } = await supabase
       .from("companies")
-      .insert({
+      .insert(withServerTenant({
         external_id: company.externalId,
         source: company.source,
         name: company.name,
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
         address: company.address,
         opportunity_score: opportunityScore,
         opportunity_level: opportunityLevel,
-      })
+      }))
       .select("id")
       .single();
 
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
     companyId = inserted.id;
 
     if (company.contact) {
-      await supabase.from("contacts").insert({
+      await supabase.from("contacts").insert(withServerTenant({
         company_id: companyId,
         first_name: company.contact.firstName,
         last_name: company.contact.lastName,
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
         email: company.contact.email,
         phone: company.contact.phone,
         source: company.source,
-      });
+      }));
     }
 
     if (signals.length) {
@@ -160,12 +161,12 @@ export async function POST(request: Request) {
 
   const { data: prospect, error: prospectError } = await supabase
     .from("prospects")
-    .insert({
+    .insert(withServerTenant({
       company_id: companyId,
-      status: "identified",
+      status: "identified" as const,
       opportunity_score: opportunityScore,
       assigned_to: user.id,
-    })
+    }))
     .select("id")
     .single();
 
@@ -176,14 +177,14 @@ export async function POST(request: Request) {
     );
   }
 
-  await supabase.from("activities").insert({
+  await supabase.from("activities").insert(withServerTenant({
     prospect_id: prospect.id,
     user_id: user.id,
     type: "PROSPECT_IMPORTED",
     description: dedupedAgainst
       ? `Imported from ${company.source} (matched to an existing company record)`
       : `Imported from ${company.source}`,
-  });
+  }));
 
   return NextResponse.json({ prospectId: prospect.id, alreadyExisted: false, dedupedAgainst });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
+import { withServerTenantMany } from "@/lib/supabase/tenant-insert";
 
 export async function POST(
   request: Request,
@@ -19,10 +20,12 @@ export async function POST(
   }
 
   const { error } = await supabase.from("campaign_prospects").upsert(
-    prospectIds.map((prospectId: string) => ({
-      campaign_id: campaignId,
-      prospect_id: prospectId,
-    })),
+    withServerTenantMany(
+      prospectIds.map((prospectId: string) => ({
+        campaign_id: campaignId,
+        prospect_id: prospectId,
+      })),
+    ),
     { onConflict: "campaign_id,prospect_id", ignoreDuplicates: true },
   );
 

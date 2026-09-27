@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AkaniLogo } from "@/components/akani-logo";
 import { SignOutButton } from "@/components/sign-out-dialog";
 import { TopHeader } from "@/components/top-header";
+import { UserAvatar } from "@/components/user-avatar";
 import { UpdateManager } from "@/components/whats-new/update-manager";
 import { UpdateSkeleton } from "@/components/whats-new/update-skeleton";
 import type { Release } from "@/lib/whats-new/tour";
@@ -24,15 +25,35 @@ export function AppShell({
   children,
   userName,
   role,
+  avatarUrl,
+  initialSidebarCollapsed,
   release,
 }: {
   children: React.ReactNode;
   userName: string;
   role: string;
+  avatarUrl?: string | null;
+  initialSidebarCollapsed: boolean;
   release?: Release;
 }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
+  // Desktop-only preference (mobile always uses the full-width drawer above).
+  // Starts from the server-known value so there's no flash of the wrong
+  // state, then persists any change for next time.
+  const [collapsed, setCollapsed] = useState(initialSidebarCollapsed);
+  function toggleCollapsed() {
+    const next = !collapsed;
+    setCollapsed(next);
+    fetch("/api/profile/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sidebarCollapsed: next }),
+    }).catch(() => {
+      // A failed save just means the choice doesn't stick for next time —
+      // not worth interrupting the person to say so.
+    });
+  }
 
   // A drawer left open across a client-side route change would trap the
   // user behind an overlay on the new page. Reset it during render (the
@@ -77,12 +98,19 @@ export function AppShell({
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col bg-akani-navy transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col bg-akani-navy transition-transform duration-200 lg:static lg:translate-x-0 lg:transition-[width] lg:duration-150 ${
           navOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${collapsed ? "lg:w-[76px]" : "lg:w-60"}`}
       >
-        <div className="flex h-16 items-center px-5">
-          <AkaniLogo variant="dark" size="sm" compact />
+        <div className={`flex h-16 items-center ${collapsed ? "lg:justify-center lg:px-0 px-5" : "px-5"}`}>
+          <span className={collapsed ? "lg:hidden" : ""}>
+            <AkaniLogo variant="dark" size="sm" compact />
+          </span>
+          {collapsed && (
+            <span className="hidden lg:block">
+              <AkaniLogo variant="dark" size="sm" icon />
+            </span>
+          )}
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {NAV_ITEMS.map((item) => {
@@ -93,17 +121,16 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 data-tour={item.tour}
+                title={collapsed ? item.label : undefined}
                 className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-white/10 text-white"
-                    : "text-white/60 hover:bg-white/5 hover:text-white/90"
-                }`}
+                  collapsed ? "lg:justify-center lg:px-0" : ""
+                } ${active ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white/90"}`}
               >
                 {active && (
                   <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-akani-gold" />
                 )}
                 <Icon active={active} />
-                {item.label}
+                <span className={collapsed ? "lg:hidden" : ""}>{item.label}</span>
               </Link>
             );
           })}
@@ -113,25 +140,44 @@ export function AppShell({
           <Link
             href="/settings/security"
             data-tour="nav-settings"
+            title={collapsed ? "Settings" : undefined}
             className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-colors ${
-              pathname.startsWith("/settings")
-                ? "bg-white/10 text-white"
-                : "text-white/60 hover:bg-white/5 hover:text-white/90"
-            }`}
+              collapsed ? "lg:justify-center lg:px-0" : ""
+            } ${pathname.startsWith("/settings") ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white/90"}`}
           >
             {pathname.startsWith("/settings") && (
               <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-akani-gold" />
             )}
             <SettingsIcon active={pathname.startsWith("/settings")} />
-            Settings
+            <span className={collapsed ? "lg:hidden" : ""}>Settings</span>
           </Link>
         </nav>
         <div className="border-t border-white/10 p-3">
-          <div className="mb-2 flex items-center gap-2.5 px-2">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-akani-gold text-xs font-bold text-akani-navy">
-              {userName.slice(0, 1).toUpperCase()}
-            </span>
-            <div className="min-w-0">
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={`mb-2 hidden w-full items-center gap-2 rounded-md py-2 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white lg:flex ${
+              collapsed ? "justify-center px-0" : "px-3"
+            }`}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className={`shrink-0 transition-transform ${collapsed ? "rotate-180" : ""}`}
+            >
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M9 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+            </svg>
+            {!collapsed && "Collapse"}
+          </button>
+
+          <div className={`mb-2 flex items-center gap-2.5 px-2 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
+            <UserAvatar name={userName} avatarUrl={avatarUrl} />
+            <div className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
               <p className="truncate text-sm font-medium text-white">{userName}</p>
               <p className="truncate text-xs capitalize text-white/50">{role}</p>
             </div>
@@ -139,19 +185,32 @@ export function AppShell({
           <button
             type="button"
             data-tour="whats-new"
+            title={collapsed ? "What's new" : undefined}
             onClick={() => window.dispatchEvent(new Event("akani:start-tour"))}
-            className="mb-1 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white"
+            className={`mb-1 flex w-full items-center gap-2 rounded-md py-2 text-left text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white ${
+              collapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"
+            }`}
           >
             <span className="text-akani-gold" aria-hidden="true">
               ✦
             </span>
-            What&apos;s new
+            <span className={collapsed ? "lg:hidden" : ""}>What&apos;s new</span>
           </button>
-          <SignOutButton userName={userName} role={role} />
+          {/* Two renders, CSS-switched by breakpoint/collapsed state (mirroring the
+             logo above): SignOutButton's icon-vs-text choice is made at mount, so it
+             can't itself respond to a media query the way a plain className can. */}
+          <div className={collapsed ? "lg:hidden" : ""}>
+            <SignOutButton userName={userName} role={role} />
+          </div>
+          {collapsed && (
+            <div className="hidden lg:flex lg:justify-center">
+              <SignOutButton userName={userName} role={role} compact />
+            </div>
+          )}
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <TopHeader title={pageTitle} userName={userName} onMenuClick={() => setNavOpen(true)} />
+        <TopHeader title={pageTitle} userName={userName} avatarUrl={avatarUrl} onMenuClick={() => setNavOpen(true)} />
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</div>
         </main>

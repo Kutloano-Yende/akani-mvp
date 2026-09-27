@@ -7,7 +7,16 @@ import { signOut } from "@/app/(app)/actions";
 // If the server never answers, don't leave people stuck on "Signing out…".
 const STUCK_AFTER_MS = 10_000;
 
-export function SignOutButton({ userName, role }: { userName: string; role: string }) {
+export function SignOutButton({
+  userName,
+  role,
+  compact = false,
+}: {
+  userName: string;
+  role: string;
+  /** Icon only (no "Sign out" label) — for the collapsed sidebar. */
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,9 +90,21 @@ export function SignOutButton({ userName, role }: { userName: string; role: stri
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white"
+        title={compact ? "Sign out" : undefined}
+        className={`flex items-center gap-2 rounded-md text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white ${
+          compact ? "h-9 w-9 justify-center" : "w-full px-3 py-2 text-left"
+        }`}
       >
-        Sign out
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
+          <path
+            d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        {compact ? <span className="sr-only">Sign out</span> : "Sign out"}
       </button>
 
       {open &&

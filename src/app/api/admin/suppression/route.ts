@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
@@ -17,11 +18,11 @@ export async function POST(request: Request) {
   const normalizedEmail = email.trim().toLowerCase();
   const supabase = await createClient();
 
-  const { error } = await supabase.from("suppression_list").insert({
+  const { error } = await supabase.from("suppression_list").insert(withServerTenant({
     email: normalizedEmail,
     reason: reason || null,
     created_by: check.userId,
-  });
+  }));
 
   if (error) {
     if (error.code === "23505") {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkProspectAccess } from "@/lib/auth/prospect-access";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 
 /**
  * Records that a prospect became a paying client. Deliberately minimal:
@@ -61,14 +62,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: prospectError.message }, { status: 500 });
   }
 
-  await supabase.from("activities").insert({
+  await supabase.from("activities").insert(withServerTenant({
     prospect_id: prospectId,
     user_id: user.id,
     type: "CONVERSION_REPORTED",
     description: trimmedNotes
       ? `Reported as a paying client — ${trimmedNotes}`
       : "Reported as a paying client",
-  });
+  }));
 
   return NextResponse.json({ conversion });
 }

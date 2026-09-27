@@ -22,6 +22,8 @@ const ACTION_LABELS: Record<string, string> = {
   POPIA_ERASURE_COMPLETED: "Erased subject data",
   PROSPECTS_EXPORTED: "Exported prospects",
   AUDIT_LOGS_EXPORTED: "Exported audit logs",
+  AVATAR_UPDATED: "Updated profile picture",
+  AVATAR_REMOVED: "Removed profile picture",
 };
 
 export default async function AuditLogsPage({

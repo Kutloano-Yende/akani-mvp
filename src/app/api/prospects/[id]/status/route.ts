@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkProspectAccess } from "@/lib/auth/prospect-access";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 import type { Enums, TablesUpdate } from "@/types/database";
 
 const VALID_STATUSES: Enums<"prospect_status">[] = [
@@ -68,14 +69,14 @@ export async function PATCH(
     );
   }
 
-  await supabase.from("activities").insert({
+  await supabase.from("activities").insert(withServerTenant({
     prospect_id: id,
     user_id: user.id,
     type: "STATUS_CHANGED",
     description: trimmedNote
       ? `Status changed to ${status} — ${trimmedNote}`
       : `Status changed to ${status}`,
-  });
+  }));
 
   return NextResponse.json({ prospect });
 }

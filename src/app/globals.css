@@ -57,10 +57,18 @@ body {
  */
 [data-login-theme="dark"] {
   background-color: var(--color-akani-navy-dark);
-  --akani-logo-mark-bg: #ffffff;
-  --akani-logo-mark-fg: #07124c;
-  --akani-logo-wordmark: #ffffff;
-  --akani-logo-tagline: #a9b1c9;
+}
+/* AkaniLogo renders both the light- and dark-ink image for a toggleable
+   panel (see akani-logo.tsx) and lets this attribute pick which one shows,
+   the same way every other login-panel element swaps colors here. */
+.login-logo-dark {
+  display: none;
+}
+[data-login-theme="dark"] .login-logo-light {
+  display: none;
+}
+[data-login-theme="dark"] .login-logo-dark {
+  display: block;
 }
 [data-login-theme="dark"] .login-heading {
   color: #ffffff;

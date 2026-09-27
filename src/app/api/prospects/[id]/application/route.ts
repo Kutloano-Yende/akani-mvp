@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkProspectAccess } from "@/lib/auth/prospect-access";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 
 export async function POST(
   request: Request,
@@ -50,12 +51,12 @@ export async function POST(
     return NextResponse.json({ error: prospectError.message }, { status: 500 });
   }
 
-  await supabase.from("activities").insert({
+  await supabase.from("activities").insert(withServerTenant({
     prospect_id: prospectId,
     user_id: user.id,
     type: "APPLICATION_STARTED",
     description: trimmedNotes ? `Application started — ${trimmedNotes}` : "Application started",
-  });
+  }));
 
   return NextResponse.json({ application });
 }

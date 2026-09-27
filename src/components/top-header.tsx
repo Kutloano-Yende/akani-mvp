@@ -1,13 +1,16 @@
 import { HeaderSearch } from "@/components/header-search";
 import { NotificationsMenu } from "@/components/notifications-menu";
+import { UserAvatar } from "@/components/user-avatar";
 
 export function TopHeader({
   title,
   userName,
+  avatarUrl,
   onMenuClick,
 }: {
   title: string;
   userName: string;
+  avatarUrl?: string | null;
   onMenuClick?: () => void;
 }) {
   return (
@@ -35,9 +38,7 @@ export function TopHeader({
         <HeaderSearch />
         <NotificationsMenu />
 
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-akani-navy text-xs font-bold text-white">
-          {userName.slice(0, 1).toUpperCase()}
-        </span>
+        <UserAvatar name={userName} avatarUrl={avatarUrl} tone="navy" />
       </div>
     </header>
   );

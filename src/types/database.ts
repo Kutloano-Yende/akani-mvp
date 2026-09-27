@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -19,6 +21,7 @@ export type Database = {
           id: string
           metadata: Json | null
           prospect_id: string
+          tenant_id: string
           type: string
           user_id: string | null
         }
@@ -28,6 +31,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           prospect_id: string
+          tenant_id: string
           type: string
           user_id?: string | null
         }
@@ -37,22 +41,30 @@ export type Database = {
           id?: string
           metadata?: Json | null
           prospect_id?: string
+          tenant_id?: string
           type?: string
           user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "activities_prospect_id_fkey"
-            columns: ["prospect_id"]
+            foreignKeyName: "act_tenant_prospect_fk"
+            columns: ["tenant_id", "prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
-            referencedColumns: ["id"]
+            referencedColumns: ["tenant_id", "id"]
           },
           {
-            foreignKeyName: "activities_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "act_tenant_user_fk"
+            columns: ["tenant_id", "user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "activities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -152,6 +164,7 @@ export type Database = {
           id: string
           ip_address: string | null
           metadata: Json | null
+          tenant_id: string | null
           user_agent: string | null
           user_id: string | null
         }
@@ -163,6 +176,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          tenant_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -174,16 +188,24 @@ export type Database = {
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          tenant_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "audit_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_tenant_user_fk"
+            columns: ["tenant_id", "user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["tenant_id", "id"]
           },
         ]
       }
@@ -283,6 +305,7 @@ export type Database = {
           replied_at: string | null
           sent_at: string | null
           status: Database["public"]["Enums"]["campaign_prospect_status"]
+          tenant_id: string
           unsubscribe_token: string
         }
         Insert: {
@@ -297,6 +320,7 @@ export type Database = {
           replied_at?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["campaign_prospect_status"]
+          tenant_id: string
           unsubscribe_token?: string
         }
         Update: {
@@ -311,22 +335,30 @@ export type Database = {
           replied_at?: string | null
           sent_at?: string | null
           status?: Database["public"]["Enums"]["campaign_prospect_status"]
+          tenant_id?: string
           unsubscribe_token?: string
         }
         Relationships: [
           {
-            foreignKeyName: "campaign_prospects_campaign_id_fkey"
-            columns: ["campaign_id"]
+            foreignKeyName: "campaign_prospects_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: "campaigns"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "campaign_prospects_prospect_id_fkey"
-            columns: ["prospect_id"]
+            foreignKeyName: "cp_tenant_campaign_fk"
+            columns: ["tenant_id", "campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "cp_tenant_prospect_fk"
+            columns: ["tenant_id", "prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
-            referencedColumns: ["id"]
+            referencedColumns: ["tenant_id", "id"]
           },
         ]
       }
@@ -341,6 +373,7 @@ export type Database = {
           started_at: string | null
           status: Database["public"]["Enums"]["campaign_status"]
           template_id: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -353,6 +386,7 @@ export type Database = {
           started_at?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -365,21 +399,29 @@ export type Database = {
           started_at?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "campaigns_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "campaigns_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_tenant_creator_fk"
+            columns: ["tenant_id", "created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -395,13 +437,16 @@ export type Database = {
           id: string
           industry: string | null
           name: string
-          opportunity_level: Database["public"]["Enums"]["opportunity_level"] | null
+          opportunity_level:
+            | Database["public"]["Enums"]["opportunity_level"]
+            | null
           opportunity_score: number | null
           phone: string | null
           province: string | null
           registration_number: string | null
           revenue_range: string | null
           source: string | null
+          tenant_id: string
           updated_at: string
           website: string | null
         }
@@ -415,13 +460,16 @@ export type Database = {
           id?: string
           industry?: string | null
           name: string
-          opportunity_level?: Database["public"]["Enums"]["opportunity_level"] | null
+          opportunity_level?:
+            | Database["public"]["Enums"]["opportunity_level"]
+            | null
           opportunity_score?: number | null
           phone?: string | null
           province?: string | null
           registration_number?: string | null
           revenue_range?: string | null
           source?: string | null
+          tenant_id: string
           updated_at?: string
           website?: string | null
         }
@@ -435,17 +483,28 @@ export type Database = {
           id?: string
           industry?: string | null
           name?: string
-          opportunity_level?: Database["public"]["Enums"]["opportunity_level"] | null
+          opportunity_level?:
+            | Database["public"]["Enums"]["opportunity_level"]
+            | null
           opportunity_score?: number | null
           phone?: string | null
           province?: string | null
           registration_number?: string | null
           revenue_range?: string | null
           source?: string | null
+          tenant_id?: string
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
@@ -459,6 +518,7 @@ export type Database = {
           last_name: string | null
           phone: string | null
           source: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -472,6 +532,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           source?: string | null
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -485,14 +546,22 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           source?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "contacts_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: "contacts_tenant_company_fk"
+            columns: ["tenant_id", "company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "contacts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -733,6 +802,18 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          user_id: string
+        }
+        Insert: {
+          user_id: string
+        }
+        Update: {
+          user_id?: string
+        }
+        Relationships: []
+      }
       popia_requests: {
         Row: {
           completed_at: string | null
@@ -792,27 +873,44 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           id: string
           name: string
           role: Database["public"]["Enums"]["user_role"]
+          sidebar_collapsed: boolean
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           id: string
           name: string
           role?: Database["public"]["Enums"]["user_role"]
+          sidebar_collapsed?: boolean
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           id?: string
           name?: string
           role?: Database["public"]["Enums"]["user_role"]
+          sidebar_collapsed?: boolean
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prospects: {
         Row: {
@@ -827,6 +925,7 @@ export type Database = {
           qualification_status: string | null
           qualified_at: string | null
           status: Database["public"]["Enums"]["prospect_status"]
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -841,6 +940,7 @@ export type Database = {
           qualification_status?: string | null
           qualified_at?: string | null
           status?: Database["public"]["Enums"]["prospect_status"]
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -855,21 +955,29 @@ export type Database = {
           qualification_status?: string | null
           qualified_at?: string | null
           status?: Database["public"]["Enums"]["prospect_status"]
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "prospects_assigned_to_fkey"
-            columns: ["assigned_to"]
+            foreignKeyName: "prospects_tenant_assignee_fk"
+            columns: ["tenant_id", "assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["tenant_id", "id"]
           },
           {
-            foreignKeyName: "prospects_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: true
+            foreignKeyName: "prospects_tenant_company_fk"
+            columns: ["tenant_id", "company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "prospects_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -883,6 +991,7 @@ export type Database = {
           phone: string | null
           reason: string | null
           source: string | null
+          tenant_id: string
         }
         Insert: {
           created_at?: string
@@ -892,6 +1001,7 @@ export type Database = {
           phone?: string | null
           reason?: string | null
           source?: string | null
+          tenant_id: string
         }
         Update: {
           created_at?: string
@@ -901,16 +1011,51 @@ export type Database = {
           phone?: string | null
           reason?: string | null
           source?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "suppression_list_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "suppression_list_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "suppression_tenant_creator_fk"
+            columns: ["tenant_id", "created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["tenant_id", "id"]
+          },
         ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          status: string
+          suspended_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          status?: string
+          suspended_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          status?: string
+          suspended_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -924,10 +1069,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      answer_permission: {
+        Args: { p_answer: string; p_token: string }
+        Returns: Json
+      }
       book_slot: { Args: { p_start: string; p_token: string }; Returns: Json }
       booking_page_data: { Args: { p_token: string }; Returns: Json }
       cancel_booking: { Args: { p_token: string }; Returns: Json }
-      lead_claim_due: { Args: { p_limit?: number; p_secret: string }; Returns: Json }
+      current_tenant_id: { Args: never; Returns: string }
+      current_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_platform_admin: { Args: never; Returns: boolean }
+      lead_claim_due: {
+        Args: { p_limit?: number; p_secret: string }
+        Returns: Json
+      }
       lead_intake: {
         Args: {
           p_company: string
@@ -953,14 +1111,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      answer_permission: {
-        Args: { p_answer: string; p_token: string }
-        Returns: Json
-      }
-      current_user_role: {
-        Args: never
-        Returns: Database["public"]["Enums"]["user_role"]
-      }
       unsubscribe_by_token: { Args: { p_token: string }; Returns: boolean }
     }
     Enums: {
@@ -985,13 +1135,141 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database["public"]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-export type Tables<T extends keyof DefaultSchema["Tables"]> =
-  DefaultSchema["Tables"][T]["Row"]
-export type TablesInsert<T extends keyof DefaultSchema["Tables"]> =
-  DefaultSchema["Tables"][T]["Insert"]
-export type TablesUpdate<T extends keyof DefaultSchema["Tables"]> =
-  DefaultSchema["Tables"][T]["Update"]
-export type Enums<T extends keyof DefaultSchema["Enums"]> =
-  DefaultSchema["Enums"][T]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      application_status: ["submitted", "approved", "rejected"],
+      campaign_prospect_status: ["pending", "sent", "opened", "replied"],
+      campaign_status: ["draft", "active", "completed"],
+      conversion_status: ["pending", "confirmed", "rejected"],
+      opportunity_level: ["low", "medium", "high"],
+      prospect_status: [
+        "identified",
+        "qualified",
+        "contacted",
+        "interested",
+        "application",
+        "won",
+        "lost",
+      ],
+      user_role: ["admin", "manager", "sales"],
+    },
+  },
+} as const

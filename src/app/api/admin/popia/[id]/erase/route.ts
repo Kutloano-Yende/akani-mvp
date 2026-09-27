@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { logAudit } from "@/lib/audit";
 import { findSubjectRecords, normalizeEmail } from "@/lib/popia";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 
 /**
  * Erasure removes the person's identifying details but keeps the business
@@ -68,12 +69,12 @@ export async function POST(
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { error: suppressError } = await supabase.from("suppression_list").insert({
+  const { error: suppressError } = await supabase.from("suppression_list").insert(withServerTenant({
     email,
     reason: "POPIA erasure request",
     source: "popia",
     created_by: check.userId,
-  });
+  }));
   // 23505 = already suppressed, which is exactly the state we want.
   if (suppressError && suppressError.code !== "23505") {
     return NextResponse.json({ error: suppressError.message }, { status: 500 });

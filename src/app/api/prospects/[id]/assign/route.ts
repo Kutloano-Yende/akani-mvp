@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { logAudit } from "@/lib/audit";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 
 export async function PATCH(
   request: Request,
@@ -40,12 +41,12 @@ export async function PATCH(
     return NextResponse.json({ error: error?.message ?? "Prospect not found" }, { status: 404 });
   }
 
-  await supabase.from("activities").insert({
+  await supabase.from("activities").insert(withServerTenant({
     prospect_id: prospectId,
     user_id: check.userId,
     type: "ASSIGNED",
     description: assigneeId ? `Assigned to ${assigneeName}` : "Unassigned",
-  });
+  }));
 
   await logAudit(supabase, {
     action: "PROSPECT_ASSIGNED",
