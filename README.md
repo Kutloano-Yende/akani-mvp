@@ -279,15 +279,18 @@ same reply for repeats so it can't be used to discover who is on file.
 ## In-app assistant
 
 A chat bubble in the bottom-right corner of every signed-in page, powered by
-Claude Haiku 4.5. It only helps people find their way around the app —
+Gemini 2.5 Flash. It only helps people find their way around the app —
 answers "where do I..." / "how do I..." questions from a written description
 of the app's pages (`src/lib/assistant/system-prompt.ts`). It has no database
 access, so it can't see anyone's actual prospects, leads or numbers, and it
 can't perform any action.
 
-- `ANTHROPIC_API_KEY` — from [console.anthropic.com](https://console.anthropic.com).
+- `GEMINI_API_KEY` — a free-tier key from [aistudio.google.com](https://aistudio.google.com/apikey).
   Without it the assistant says so instead of the person hitting a broken
-  chat. Pay-per-use; there is no ongoing free tier.
+  chat. Google's free tier has its own rate limits (separate from this app's
+  own 20-messages-a-minute-per-person limit below); if traffic ever needs
+  more than the free tier allows, Google AI Studio can attach billing to the
+  same key.
 
 Each person is limited to 20 messages a minute
 (`src/app/api/assistant/chat/route.ts`). To change what it knows about the
