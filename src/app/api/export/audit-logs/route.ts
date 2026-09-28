@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { requireRole } from "@/lib/auth/require-role";
+import { requirePlatformAdmin } from "@/lib/auth/require-role";
 import { logAudit } from "@/lib/audit";
 import { toCsv, csvResponse } from "@/lib/csv";
 
 const MAX_ROWS = 5000;
 
 export async function GET() {
-  const check = await requireRole(["admin"]);
+  const check = await requirePlatformAdmin();
   if (!check.authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status: check.status });
   }

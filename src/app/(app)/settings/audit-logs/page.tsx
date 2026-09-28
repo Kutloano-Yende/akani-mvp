@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireRole } from "@/lib/auth/require-role";
+import { requirePlatformAdmin } from "@/lib/auth/require-role";
 
 const PAGE_SIZE = 50;
 
@@ -31,7 +31,7 @@ export default async function AuditLogsPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const check = await requireRole(["admin"]);
+  const check = await requirePlatformAdmin();
   if (!check.authorized) {
     redirect("/settings/security");
   }
