@@ -21,21 +21,36 @@ are still blank and only needed for features beyond Sprint 1's mock data:
 - `SUPABASE_SERVICE_ROLE_KEY` — from the Supabase dashboard → Project Settings
   → API. Only needed for admin-only server operations (none in Sprint 1 use it
   yet).
-- `COMPANYDATA_API_KEY` — the real business-data provider
-  ([CompanyData](https://companydata.com)). Until it is set, **Discover
-  Businesses** searches a built-in mock catalogue instead, so the full
-  discover → qualify → pipeline flow works without a live integration.
-  Optional: `COMPANYDATA_PAGE_SIZE` (default 10, the most a trial key allows
-  per export; paid plans allow more) and `PROVIDER_DAILY_SEARCH_LIMIT`
-  (default 60 billable calls per day across all users, so a busy day can't
-  use up the plan's credits).
+- `LUSHA_API_KEY` or `COMPANYDATA_API_KEY` — the real business-data provider
+  for **Discover Businesses**. Until one is set, Discover searches a built-in
+  mock catalogue instead, so the full discover → qualify → pipeline flow works
+  without a live integration.
 
   Business-data search is behind a `DataProvider` interface
   (`src/lib/data/types.ts`) so the Discover screen and its API route never
-  change when the provider does. `getProvider()` picks `CompanyDataProvider`
-  when the key is set, otherwise `MockProvider`.
+  change when the provider does. `getProvider()` prefers `LushaProvider` when
+  `LUSHA_API_KEY` is set; falls back to `CompanyDataProvider` if only that key
+  is set; otherwise `MockProvider`. `PROVIDER_DAILY_SEARCH_LIMIT` (default 60
+  billable calls per day across all users) applies to whichever is active.
 
-  How the CompanyData connector behaves (`src/lib/data/providers/companydata-provider.ts`):
+  **Lusha** (`src/lib/data/providers/lusha-provider.ts`) — the current
+  default. `LUSHA_API_KEY` from [dashboard.lusha.com/api](https://dashboard.lusha.com/api).
+  - Searches South Africa only (`Discover Businesses` doesn't offer other
+    countries). Uses Lusha's Prospecting Companies endpoint, which **bills
+    per result returned on every search**, not just on import — kept to a
+    modest page size (`LUSHA_PAGE_SIZE`, default 10) for that reason.
+  - Search results carry name, industry, employee count, city/province and
+    website only; phone and email come from Lusha's Enrich endpoint, called
+    once per company when you **import** it (billed separately, per revealed
+    company).
+  - Lusha's precise industry filter takes numeric ids that need a lookup call
+    to resolve from a name; the industry and keyword filters are passed as
+    free-text keywords instead — an approximation, not an exact match.
+  - No South African company registration number or street address in
+    Lusha's data — those stay blank for Lusha-sourced prospects.
+
+  **CompanyData** (`src/lib/data/providers/companydata-provider.ts`) — kept as
+  a fallback if `LUSHA_API_KEY` isn't set.
   - It searches South Africa only, and only companies that have an email.
   - It asks for full records (email, phone, website, employees, revenue,
     registration number) from the export endpoint. If the account refuses that
@@ -49,6 +64,8 @@ are still blank and only needed for features beyond Sprint 1's mock data:
     a curated set of SIC codes (`INDUSTRY_SIC_CODES`) and results are labelled
     with the industry searched. This is an approximation.
   - "Company name" matches from the start of the name, not anywhere in it.
+  - Optional: `COMPANYDATA_PAGE_SIZE` (default 10, the most a trial key allows
+    per export; paid plans allow more).
 
 ```bash
 npm run dev
