@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AkaniLogo } from "@/components/akani-logo";
+import { AssistantWidget } from "@/components/assistant-widget";
 import { SignOutButton } from "@/components/sign-out-dialog";
 import { TopHeader } from "@/components/top-header";
 import { UserAvatar } from "@/components/user-avatar";
@@ -90,6 +91,7 @@ export function AppShell({
     <div className="flex h-dvh overflow-hidden bg-akani-page-bg">
       <UpdateSkeleton />
       <UpdateManager role={role} release={release} />
+      <AssistantWidget />
       {navOpen && (
         <div
           onClick={() => setNavOpen(false)}

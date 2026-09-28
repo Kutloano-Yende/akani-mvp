@@ -276,6 +276,24 @@ The public form endpoint checks the sending site, ignores a hidden "website"
 field that bots fill in, limits each address to 5 enquiries an hour, and gives the
 same reply for repeats so it can't be used to discover who is on file.
 
+## In-app assistant
+
+A chat bubble in the bottom-right corner of every signed-in page, powered by
+Claude Haiku 4.5. It only helps people find their way around the app —
+answers "where do I..." / "how do I..." questions from a written description
+of the app's pages (`src/lib/assistant/system-prompt.ts`). It has no database
+access, so it can't see anyone's actual prospects, leads or numbers, and it
+can't perform any action.
+
+- `ANTHROPIC_API_KEY` — from [console.anthropic.com](https://console.anthropic.com).
+  Without it the assistant says so instead of the person hitting a broken
+  chat. Pay-per-use; there is no ongoing free tier.
+
+Each person is limited to 20 messages a minute
+(`src/app/api/assistant/chat/route.ts`). To change what it knows about the
+app, edit the `APP_GUIDE` text in `system-prompt.ts` — it's kept in sync by
+hand, not generated from the code.
+
 ## Not built yet
 
 - Employee-size and combined filters returning full contact details on the
