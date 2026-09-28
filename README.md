@@ -279,7 +279,7 @@ same reply for repeats so it can't be used to discover who is on file.
 ## In-app assistant
 
 A chat bubble in the bottom-right corner of every signed-in page, powered by
-Gemini 2.5 Flash. It only helps people find their way around the app —
+Gemini 3.8 Flash. It only helps people find their way around the app —
 answers "where do I..." / "how do I..." questions from a written description
 of the app's pages (`src/lib/assistant/system-prompt.ts`). It has no database
 access, so it can't see anyone's actual prospects, leads or numbers, and it

@@ -5,8 +5,9 @@ import { buildSystemPrompt } from "@/lib/assistant/system-prompt";
 
 // Google AI Studio / Gemini API — has a genuine free tier (unlike Anthropic
 // or OpenAI, which are pay-per-use only), which is why this app uses it.
-// If Google renames/retires this model, swap it here.
-const MODEL = "gemini-2.5-flash";
+// gemini-2.5-flash was retired for new accounts (confirmed against the live
+// API, which pointed here); if Google moves the model again, swap it here.
+const MODEL = "gemini-3.8-flash";
 const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 2000;
 
