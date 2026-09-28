@@ -128,6 +128,14 @@ export class LushaProvider implements DataProvider {
       }
       const body = await res.json();
       const record = Array.isArray(body?.results) ? body.results[0] : null;
+      // TEMPORARY diagnostic: confirm exactly what Lusha's live enrich
+      // response contains for phone/email before mapping, since imported
+      // companies are coming through with both null. Remove once resolved.
+      console.log(
+        "Lusha enrich raw record keys:",
+        record ? Object.keys(record) : null,
+        "phone:", record?.phone, "email:", record?.email, "has:", record?.has,
+      );
       const full = record ? mapEnriched(record) : null;
       return full ? mergeCompany(company, full) : null;
     } catch (err) {
