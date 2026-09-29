@@ -15,27 +15,18 @@ const ADMIN_TABS = [
   { href: "/settings/users", label: "Users" },
   { href: "/settings/suppression", label: "Suppression List" },
   { href: "/settings/popia", label: "POPIA" },
+  { href: "/settings/audit-logs", label: "Audit Logs" },
 ];
-
-// Not a tenant-admin capability -- platform admins only (see requirePlatformAdmin).
-const PLATFORM_ADMIN_TABS = [{ href: "/settings/audit-logs", label: "Audit Logs" }];
 
 export function SettingsNav({
   isAdmin,
   canManage,
-  isPlatformAdmin,
 }: {
   isAdmin: boolean;
   canManage: boolean;
-  isPlatformAdmin: boolean;
 }) {
   const pathname = usePathname();
-  const tabs = [
-    ...TABS,
-    ...(canManage ? MANAGER_TABS : []),
-    ...(isAdmin ? ADMIN_TABS : []),
-    ...(isPlatformAdmin ? PLATFORM_ADMIN_TABS : []),
-  ];
+  const tabs = [...TABS, ...(canManage ? MANAGER_TABS : []), ...(isAdmin ? ADMIN_TABS : [])];
 
   return (
     <div className="flex gap-1 overflow-x-auto border-b border-akani-card-border">

@@ -29,6 +29,7 @@ export function AppShell({
   avatarUrl,
   initialSidebarCollapsed,
   release,
+  isPlatformAdmin = false,
 }: {
   children: React.ReactNode;
   userName: string;
@@ -36,6 +37,7 @@ export function AppShell({
   avatarUrl?: string | null;
   initialSidebarCollapsed: boolean;
   release?: Release;
+  isPlatformAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
@@ -153,6 +155,19 @@ export function AppShell({
             <SettingsIcon active={pathname.startsWith("/settings")} />
             <span className={collapsed ? "lg:hidden" : ""}>Settings</span>
           </Link>
+
+          {isPlatformAdmin && (
+            <Link
+              href="/admin"
+              title={collapsed ? "Super Admin" : undefined}
+              className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium text-akani-gold transition-colors hover:bg-white/5 ${
+                collapsed ? "lg:justify-center lg:px-0" : ""
+              }`}
+            >
+              <ShieldIcon />
+              <span className={collapsed ? "lg:hidden" : ""}>Super Admin</span>
+            </Link>
+          )}
         </nav>
         <div className="border-t border-white/10 p-3">
           <button
@@ -305,6 +320,20 @@ function LeadsIcon({ active }: { active: boolean }) {
         strokeLinecap="round"
       />
       <path d="M8.5 10h7M8.5 13h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 3l7 3v5c0 4.5-2.9 8.3-7 9.5-4.1-1.2-7-5-7-9.5V6l7-3z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

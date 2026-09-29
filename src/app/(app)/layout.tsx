@@ -12,11 +12,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, role, avatar_url, sidebar_collapsed")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: isPlatformAdmin }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("name, role, avatar_url, sidebar_collapsed, tenants(status)")
+      .eq("id", user.id)
+      .single(),
+    supabase.rpc("is_platform_admin"),
+  ]);
+
+  // A suspended tenant's users already lose access to every RLS-protected
+  // query (current_tenant_id() returns null for them) -- this just gives
+  // them a clear reason instead of every page silently looking empty.
+  const tenantStatus = Array.isArray(profile?.tenants) ? profile.tenants[0]?.status : profile?.tenants?.status;
+  if (tenantStatus === "suspended") {
+    redirect("/account-suspended");
+  }
 
   return (
     <AppShell
@@ -24,6 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       role={profile?.role ?? "sales"}
       avatarUrl={profile?.avatar_url ?? null}
       initialSidebarCollapsed={profile?.sidebar_collapsed ?? false}
+      isPlatformAdmin={isPlatformAdmin ?? false}
     >
       {children}
     </AppShell>
