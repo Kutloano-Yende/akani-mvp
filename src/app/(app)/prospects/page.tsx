@@ -55,6 +55,12 @@ export default async function ProspectsPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-akani-text-secondary">The working prospect database.</p>
         <div data-tour="prospects-toolbar" className="flex items-center gap-3">
+        <Link
+          href="/prospects/new"
+          className="rounded-md bg-akani-gold px-3 py-1.5 text-sm font-medium text-white hover:bg-akani-gold-bright"
+        >
+          Add prospect
+        </Link>
         <a
           href={`/api/export/prospects${(() => {
             const qs = new URLSearchParams();
