@@ -1,2 +1,3 @@
 Company,Email,First Name,Last Name,Phone,Job Title,Industry,Province,City,Website
+Delete this row and the example row below before uploading,Required - the contact's email address,Optional,Optional,Optional - digits only,Optional - e.g. Procurement Manager,Optional - e.g. Construction,Optional - e.g. Gauteng,Optional,Optional - e.g. acme.co.za
 Acme Construction,jane@acme.co.za,Jane,Dlamini,0821234567,Procurement Manager,Construction,Gauteng,Johannesburg,acme.co.za

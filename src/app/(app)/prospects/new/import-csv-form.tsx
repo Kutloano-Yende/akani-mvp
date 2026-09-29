@@ -49,8 +49,9 @@ export function ImportCsvForm() {
         Last Name, Phone, Job Title, Industry, Province, City, Website — up to 150 rows per upload.{" "}
         <a href="/templates/prospect-import-template.csv" download className="font-medium text-akani-gold hover:underline">
           Download a template
-        </a>
-        .
+        </a>{" "}
+        — it has an instructions row and a filled-in example row. Delete both before adding your own data (an
+        instructions row left in by mistake is harmless: it&apos;ll just show up as one skipped row below).
       </p>
 
       <form onSubmit={handleUpload} className="mt-4 flex flex-wrap items-center gap-3">
