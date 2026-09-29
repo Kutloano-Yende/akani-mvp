@@ -40,6 +40,7 @@ export function AppShell({
   isPlatformAdmin?: boolean;
 }) {
   const pathname = usePathname();
+  const displayRole = isPlatformAdmin ? "Super Admin" : role;
   const [navOpen, setNavOpen] = useState(false);
   // Desktop-only preference (mobile always uses the full-width drawer above).
   // Starts from the server-known value so there's no flash of the wrong
@@ -196,7 +197,7 @@ export function AppShell({
             <UserAvatar name={userName} avatarUrl={avatarUrl} />
             <div className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
               <p className="truncate text-sm font-medium text-white">{userName}</p>
-              <p className="truncate text-xs capitalize text-white/50">{role}</p>
+              <p className="truncate text-xs capitalize text-white/50">{displayRole}</p>
             </div>
           </div>
           <button
@@ -217,11 +218,11 @@ export function AppShell({
              logo above): SignOutButton's icon-vs-text choice is made at mount, so it
              can't itself respond to a media query the way a plain className can. */}
           <div className={collapsed ? "lg:hidden" : ""}>
-            <SignOutButton userName={userName} role={role} />
+            <SignOutButton userName={userName} role={displayRole} />
           </div>
           {collapsed && (
             <div className="hidden lg:flex lg:justify-center">
-              <SignOutButton userName={userName} role={role} compact />
+              <SignOutButton userName={userName} role={displayRole} compact />
             </div>
           )}
         </div>
