@@ -9,7 +9,7 @@ export default async function SuperAdminUsersPage({
   const { tenant: tenantFilter } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: tenants }, usersQuery] = await Promise.all([
+  const [{ data: tenants }, usersQuery, { data: platformAdmins }] = await Promise.all([
     supabase.from("tenants").select("id, name").order("name"),
     (async () => {
       let query = supabase
@@ -19,8 +19,10 @@ export default async function SuperAdminUsersPage({
       if (tenantFilter) query = query.eq("tenant_id", tenantFilter);
       return query;
     })(),
+    supabase.from("platform_admins").select("user_id"),
   ]);
   const { data: users } = usersQuery;
+  const platformAdminIds = new Set((platformAdmins ?? []).map((p) => p.user_id));
 
   return (
     <div className="space-y-4">
@@ -68,10 +70,21 @@ export default async function SuperAdminUsersPage({
             <tbody>
               {(users ?? []).map((u) => {
                 const tenant = Array.isArray(u.tenants) ? u.tenants[0] : u.tenants;
+                const isPlatformAdmin = platformAdminIds.has(u.id);
                 return (
                   <tr key={u.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-3 font-medium text-slate-900">{u.name}</td>
-                    <td className="py-3 text-slate-600">{tenant?.name ?? "—"}</td>
+                    <td className="py-3 font-medium text-slate-900">
+                      {u.name}
+                      {isPlatformAdmin && (
+                        <span className="ml-2 rounded-full bg-akani-gold/15 px-2 py-0.5 text-xs font-semibold text-akani-gold">
+                          Super Admin
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 text-slate-600">
+                      {tenant?.name ?? "—"}
+                      {isPlatformAdmin && <span className="text-slate-400"> (also platform-wide)</span>}
+                    </td>
                     <td className="py-3 capitalize text-slate-600">{u.role}</td>
                     <td className="py-3 text-slate-500">{new Date(u.created_at).toLocaleDateString("en-ZA")}</td>
                   </tr>
