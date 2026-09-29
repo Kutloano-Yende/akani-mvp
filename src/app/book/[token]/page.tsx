@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { cancelBooking, bookSlot, getBookingPage } from "@/lib/booking/rpc";
 import { sendBookingEmails, sendCancellationEmails } from "@/lib/booking/emails";
 import { formatDateTime, generateSlots, timezoneLabel } from "@/lib/booking/slots";
@@ -117,12 +118,9 @@ export default async function BookingPage({
           </p>
           <p className="mt-3 text-sm text-akani-text-secondary">Need a different time? Choose another below, or cancel this one.</p>
           <form action={cancel} className="mt-3">
-            <button
-              type="submit"
-              className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-error hover:bg-akani-page-bg"
-            >
+            <PendingSubmitButton className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-error hover:bg-akani-page-bg">
               Cancel this call
-            </button>
+            </PendingSubmitButton>
           </form>
         </section>
       )}
@@ -148,15 +146,14 @@ export default async function BookingPage({
                 <legend className="mb-2 text-sm font-semibold text-akani-text-primary">{day.label}</legend>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                   {day.slots.map((slot) => (
-                    <button
+                    <PendingSubmitButton
                       key={slot.start}
-                      type="submit"
                       name="start"
                       value={slot.start}
                       className="rounded-md border border-akani-card-border px-3 py-2 text-sm font-medium text-akani-navy hover:border-akani-gold hover:bg-akani-page-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-akani-gold"
                     >
                       {slot.label}
-                    </button>
+                    </PendingSubmitButton>
                   ))}
                 </div>
               </fieldset>

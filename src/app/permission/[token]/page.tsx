@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
+import { PermissionButton } from "./permission-buttons";
 import { rateLimit } from "@/lib/rate-limit";
 import { getAppUrl } from "@/lib/email/provider";
 import { startLead } from "@/lib/leads/start";
@@ -93,30 +94,8 @@ export default async function PermissionPage({
         <p className="mt-2 text-sm text-akani-text-secondary">{message}</p>
         {showForm && (
           <form action={choose} className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <button
-              type="submit"
-              name="answer"
-              value="yes"
-              className={
-                suggested === "no"
-                  ? "rounded-md border-2 border-akani-navy px-5 py-2.5 text-sm font-semibold text-akani-navy hover:bg-akani-page-bg"
-                  : "rounded-md bg-akani-gold px-5 py-2.5 text-sm font-semibold text-akani-navy hover:bg-akani-gold-bright"
-              }
-            >
-              Yes, keep in touch
-            </button>
-            <button
-              type="submit"
-              name="answer"
-              value="no"
-              className={
-                suggested === "no"
-                  ? "rounded-md bg-akani-gold px-5 py-2.5 text-sm font-semibold text-akani-navy hover:bg-akani-gold-bright"
-                  : "rounded-md border-2 border-akani-navy px-5 py-2.5 text-sm font-semibold text-akani-navy hover:bg-akani-page-bg"
-              }
-            >
-              No, thanks
-            </button>
+            <PermissionButton value="yes" label="Yes, keep in touch" emphasized={suggested !== "no"} />
+            <PermissionButton value="no" label="No, thanks" emphasized={suggested === "no"} />
           </form>
         )}
       </div>

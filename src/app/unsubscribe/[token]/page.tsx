@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { BrandLogo } from "@/components/brand-logo";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { redirect } from "next/navigation";
 import { rateLimit } from "@/lib/rate-limit";
 import { TOKEN_PATTERN, unsubscribeByToken } from "@/lib/unsubscribe";
@@ -57,12 +58,9 @@ export default async function UnsubscribePage({
         <p className="mt-2 text-sm text-akani-text-secondary">{message}</p>
         {showForm && (
           <form action={confirm} className="mt-6">
-            <button
-              type="submit"
-              className="rounded-md bg-akani-navy px-5 py-2 text-sm font-medium text-white hover:bg-akani-deep-blue"
-            >
+            <PendingSubmitButton className="rounded-md bg-akani-navy px-5 py-2 text-sm font-medium text-white hover:bg-akani-deep-blue">
               Confirm unsubscribe
-            </button>
+            </PendingSubmitButton>
           </form>
         )}
       </div>
