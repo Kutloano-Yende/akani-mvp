@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { logAudit } from "@/lib/audit";
+import { getAppUrl } from "@/lib/email/provider";
 import type { Enums } from "@/types/database";
 
 /**
@@ -44,8 +46,20 @@ export async function POST(request: Request) {
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const admin = createAdminClient();
 
+  // Without an explicit redirectTo, Supabase falls back to the project's
+  // dashboard-configured Site URL, which can easily be stale (e.g. still
+  // pointing at localhost from initial setup). This must also be present in
+  // the project's Redirect URLs allow-list or Supabase ignores it.
+  const h = await headers();
+  const host = h.get("host");
+  const appUrl = getAppUrl(h.get("origin") ?? (host ? `https://${host}` : "http://localhost:3000"));
+
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { name, tenant_id: tenantId },
+    // Same shape as the password-reset flow (requestPasswordReset in
+    // login/actions.ts): an invited user needs to set a password before
+    // they have anything to sign in with, so send them to the same page.
+    redirectTo: `${appUrl}/auth/callback?next=/auth/update-password`,
   });
 
   if (error || !data.user) {

@@ -1,8 +1,10 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { getAppUrl } from "@/lib/email/provider";
 import { rateLimit } from "@/lib/rate-limit";
 
 export type ActionResult = { error: string } | void;
@@ -55,7 +57,12 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
   }
 
   const supabase = await createClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  // NEXT_PUBLIC_SITE_URL was never actually set on Vercel, so this silently
+  // fell back to localhost in production. APP_URL is the one real env var
+  // this app uses for its own public address (see getAppUrl).
+  const h = await headers();
+  const host = h.get("host");
+  const origin = getAppUrl(h.get("origin") ?? (host ? `https://${host}` : "http://localhost:3000"));
 
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/auth/update-password`,
