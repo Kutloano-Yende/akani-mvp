@@ -8,7 +8,7 @@ import { AssistantWidget } from "@/components/assistant-widget";
 import { SignOutButton } from "@/components/sign-out-dialog";
 import { TopHeader } from "@/components/top-header";
 import { UserAvatar } from "@/components/user-avatar";
-import { UpdateManager } from "@/components/whats-new/update-manager";
+import { TourManager } from "@/components/whats-new/tour-manager";
 import { UpdateSkeleton } from "@/components/whats-new/update-skeleton";
 import type { Release } from "@/lib/whats-new/tour";
 
@@ -90,7 +90,7 @@ export function AppShell({
   return (
     <div className="flex h-dvh overflow-hidden bg-akani-page-bg">
       <UpdateSkeleton />
-      <UpdateManager role={role} release={release} />
+      <TourManager role={role} release={release} />
       <AssistantWidget />
       {navOpen && (
         <div

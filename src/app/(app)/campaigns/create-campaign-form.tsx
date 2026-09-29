@@ -19,6 +19,7 @@ export function CreateCampaignForm({ templates }: { templates: Template[] }) {
     return (
       <button
         onClick={() => setOpen(true)}
+        data-tour="new-campaign"
         className="rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright"
       >
         New campaign

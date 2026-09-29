@@ -27,7 +27,7 @@ export default async function UsersSettingsPage() {
         <UsersTable profiles={profiles ?? []} currentUserId={check.userId} />
       </section>
 
-      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+      <section data-tour="invite-team" className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
         <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Invite a team member</h2>
         <p className="mb-4 text-sm text-akani-text-secondary">
           Send an invite email so someone new can set up their own account.

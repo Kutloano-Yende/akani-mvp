@@ -57,6 +57,7 @@ export default async function ProspectsPage({
         <div data-tour="prospects-toolbar" className="flex items-center gap-3">
         <Link
           href="/prospects/new"
+          data-tour="add-prospect"
           className="rounded-md bg-akani-gold px-3 py-1.5 text-sm font-medium text-white hover:bg-akani-gold-bright"
         >
           Add prospect
