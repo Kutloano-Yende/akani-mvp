@@ -35,11 +35,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email, name, and a valid role are required" }, { status: 400 });
   }
 
+  const supabase = await createClient();
+  // The invited user must land in the inviter's own tenant, never a
+  // client-chosen one. current_tenant_id() is SECURITY DEFINER and always
+  // resolves the caller's own tenant regardless of RLS shape.
+  const { data: tenantId } = await supabase.rpc("current_tenant_id");
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const admin = createAdminClient();
 
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { name },
+    data: { name, tenant_id: tenantId },
   });
 
   if (error || !data.user) {
@@ -52,7 +58,6 @@ export async function POST(request: Request) {
     await admin.from("profiles").update({ role }).eq("id", data.user.id);
   }
 
-  const supabase = await createClient();
   await logAudit(supabase, {
     action: "USER_INVITED",
     entityType: "profile",
