@@ -10,7 +10,7 @@ type Summary = {
   errors: { row: number; reason: string }[];
 };
 
-export function ImportCsvForm() {
+export function ImportFileForm() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -26,7 +26,7 @@ export function ImportCsvForm() {
     try {
       const body = new FormData();
       body.append("file", file);
-      const res = await fetch("/api/prospects/import-csv", { method: "POST", body });
+      const res = await fetch("/api/prospects/import-file", { method: "POST", body });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Couldn't process that file.");
@@ -45,10 +45,15 @@ export function ImportCsvForm() {
   return (
     <div className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
       <p className="text-sm text-akani-text-secondary">
-        Upload a CSV of companies and contacts. Columns recognized: Company (required), Email (required), First Name,
-        Last Name, Phone, Job Title, Industry, Province, City, Website — up to 150 rows per upload.{" "}
-        <a href="/templates/prospect-import-template.csv" download className="font-medium text-akani-gold hover:underline">
-          Download a template
+        Upload an Excel file (.xlsx) of companies and contacts. Columns recognized: Company (required), Email
+        (required), First Name, Last Name, Phone, Job Title, Industry, Province, City, Website — up to 150 rows per
+        upload.{" "}
+        <a
+          href="/templates/prospect-import-template.xlsx"
+          download
+          className="font-medium text-akani-gold hover:underline"
+        >
+          Download the Excel template
         </a>{" "}
         — it has an instructions row and a filled-in example row. Delete both before adding your own data (an
         instructions row left in by mistake is harmless: it&apos;ll just show up as one skipped row below).
@@ -58,7 +63,7 @@ export function ImportCsvForm() {
         <input
           ref={inputRef}
           type="file"
-          accept=".csv,text/csv"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.csv,text/csv"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           className="block text-sm text-akani-text-primary file:mr-3 file:rounded-md file:border file:border-akani-card-border file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-akani-text-primary hover:file:bg-akani-page-bg"
         />

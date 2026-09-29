@@ -1,5 +1,5 @@
 import { AddProspectForm } from "./add-prospect-form";
-import { ImportCsvForm } from "./import-csv-form";
+import { ImportFileForm } from "./import-file-form";
 
 export default function NewProspectPage() {
   return (
@@ -15,8 +15,8 @@ export default function NewProspectPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-akani-text-primary">Bulk upload from CSV</h2>
-        <ImportCsvForm />
+        <h2 className="text-sm font-semibold text-akani-text-primary">Bulk upload from Excel</h2>
+        <ImportFileForm />
       </section>
     </div>
   );

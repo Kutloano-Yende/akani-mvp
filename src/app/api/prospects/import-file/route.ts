@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { parseCsvRecords } from "@/lib/csv/parse";
+import { extractFileRecords } from "@/lib/prospects/extract-file-records";
 import { createManualProspect, validateManualRow, type ManualProspectRow } from "@/lib/prospects/manual-create";
 import type { DedupeCandidate } from "@/lib/data/dedupe";
 
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!rateLimit(`csv-import:${user.id}`, 5, 60_000).allowed) {
+  if (!rateLimit(`bulk-import:${user.id}`, 5, 60_000).allowed) {
     return NextResponse.json({ error: "Too many uploads. Wait a minute and try again." }, { status: 429 });
   }
 
@@ -70,8 +70,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "File is too large (max 2MB)" }, { status: 400 });
   }
 
-  const text = await file.text();
-  const records = parseCsvRecords(text);
+  let records: Record<string, string>[];
+  try {
+    records = await extractFileRecords(file);
+  } catch {
+    return NextResponse.json(
+      { error: "Couldn't read that file. Make sure it's a valid .xlsx or .csv file." },
+      { status: 400 },
+    );
+  }
 
   if (records.length === 0) {
     return NextResponse.json({ error: "No rows found in that file" }, { status: 400 });
@@ -113,7 +120,7 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const result = await createManualProspect(supabase, user.id, "CSV import", row, candidates);
+    const result = await createManualProspect(supabase, user.id, "Bulk import", row, candidates);
     if (!result.ok) {
       errors.push({ row: i + 2, reason: result.error });
     } else if (result.alreadyExisted) {
