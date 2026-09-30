@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { StatCard } from "@/components/stat-card";
 import { SalesChart } from "@/components/sales-chart";
 import { SalesInsightCard, type SalesInsight } from "@/components/sales-insight-card";
+import { cumulativeSparkline } from "@/lib/trend";
 
 const FUNNEL_STAGES = [
   { key: "identified", label: "Businesses Found" },
@@ -19,14 +20,16 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const [{ count: businessesFound }, { data: prospects }] = await Promise.all([
-    supabase.from("companies").select("*", { count: "exact", head: true }),
+  const [{ data: companyDates }, { data: prospects }] = await Promise.all([
+    supabase.from("companies").select("created_at"),
     supabase
       .from("prospects")
       .select("id, status, created_at, last_contacted_at, opportunity_score, companies(name, industry, province)")
       .order("created_at", { ascending: false }),
   ]);
 
+  const businessesFound = (companyDates ?? []).length;
+  const businessesFoundSparkline = cumulativeSparkline((companyDates ?? []).map((c) => ({ date: c.created_at })));
   const rows = prospects ?? [];
 
   const counts: Record<string, number> = {
@@ -139,8 +142,9 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Businesses Found"
-          value={businessesFound ?? 0}
+          value={businessesFound}
           supportingText={newThisWeek > 0 ? `+${newThisWeek} this week` : "No new activity this week"}
+          sparkline={businessesFoundSparkline}
         />
         <StatCard label="Qualified Prospects" value={qualifiedProspects} />
         <StatCard label="Applications" value={applications} />

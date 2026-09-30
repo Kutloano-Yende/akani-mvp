@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProvider } from "@/lib/data/provider";
 import { StatCard } from "@/components/stat-card";
+import { cumulativeSparkline } from "@/lib/trend";
 
 export default async function DataProviderSettingsPage() {
   const provider = getProvider();
@@ -8,7 +9,7 @@ export default async function DataProviderSettingsPage() {
   const supabase = await createClient();
 
   const [{ data: usage }, { data: recent }] = await Promise.all([
-    supabase.from("api_usage").select("credits_used, results_returned"),
+    supabase.from("api_usage").select("created_at, credits_used, results_returned"),
     supabase
       .from("api_usage")
       .select("id, created_at, results_returned, credits_used, provider, profiles(name)")
@@ -16,9 +17,16 @@ export default async function DataProviderSettingsPage() {
       .limit(10),
   ]);
 
-  const totalSearches = usage?.length ?? 0;
-  const totalCredits = (usage ?? []).reduce((sum, u) => sum + u.credits_used, 0);
-  const totalResults = (usage ?? []).reduce((sum, u) => sum + u.results_returned, 0);
+  const usageRows = usage ?? [];
+  const totalSearches = usageRows.length;
+  const totalCredits = usageRows.reduce((sum, u) => sum + u.credits_used, 0);
+  const totalResults = usageRows.reduce((sum, u) => sum + u.results_returned, 0);
+
+  const searchesSparkline = cumulativeSparkline(usageRows.map((u) => ({ date: u.created_at })));
+  const creditsSparkline = cumulativeSparkline(usageRows.map((u) => ({ date: u.created_at, value: u.credits_used })));
+  const resultsSparkline = cumulativeSparkline(
+    usageRows.map((u) => ({ date: u.created_at, value: u.results_returned })),
+  );
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -44,9 +52,9 @@ export default async function DataProviderSettingsPage() {
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Searches run" value={totalSearches} />
-        <StatCard label="Credits used" value={totalCredits} />
-        <StatCard label="Results returned" value={totalResults} />
+        <StatCard label="Searches run" value={totalSearches} sparkline={searchesSparkline} />
+        <StatCard label="Credits used" value={totalCredits} sparkline={creditsSparkline} />
+        <StatCard label="Results returned" value={totalResults} sparkline={resultsSparkline} />
       </div>
 
       <section className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">

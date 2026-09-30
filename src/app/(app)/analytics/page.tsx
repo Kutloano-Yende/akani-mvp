@@ -1,20 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/stat-card";
+import { cumulativeSparkline, weeklySums } from "@/lib/trend";
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();
 
   const [
-    { count: businessesFound },
+    { data: companyDates },
     { data: prospects },
     { data: usage },
   ] = await Promise.all([
-    supabase.from("companies").select("*", { count: "exact", head: true }),
+    supabase.from("companies").select("created_at"),
     supabase
       .from("prospects")
       .select("status, created_at, companies(industry, province)"),
-    supabase.from("api_usage").select("credits_used"),
+    supabase.from("api_usage").select("created_at, credits_used"),
   ]);
+
+  const businessesFound = (companyDates ?? []).length;
+  const businessesFoundSparkline = cumulativeSparkline((companyDates ?? []).map((c) => ({ date: c.created_at })));
 
   const rows = prospects ?? [];
   const counts: Record<string, number> = {
@@ -39,6 +43,7 @@ export default async function AnalyticsPage() {
   const conversionRate = nonLost > 0 ? (counts.won / nonLost) * 100 : 0;
 
   const creditsUsed = (usage ?? []).reduce((sum, u) => sum + u.credits_used, 0);
+  const creditsSparkline = cumulativeSparkline((usage ?? []).map((u) => ({ date: u.created_at, value: u.credits_used })));
 
   const byIndustry = tally(rows, (p) => company(p)?.industry);
   const byProvince = tally(rows, (p) => company(p)?.province);
@@ -48,6 +53,10 @@ export default async function AnalyticsPage() {
   const now = Date.now();
   const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
   const newThisMonth = rows.filter((p) => new Date(p.created_at).getTime() >= thirtyDaysAgo).length;
+  // Per-week counts (not cumulative) -- this stat is itself a rolling
+  // 30-day window, so the sparkline shows whether sourcing is speeding up
+  // or slowing down, not a running total.
+  const newProspectsSparkline = weeklySums(rows.map((p) => ({ date: p.created_at })));
 
   return (
     <div className="space-y-8">
@@ -56,8 +65,8 @@ export default async function AnalyticsPage() {
       <section>
         <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Sourcing</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Businesses discovered" value={businessesFound ?? 0} />
-          <StatCard label="New prospects (30 days)" value={newThisMonth} />
+          <StatCard label="Businesses discovered" value={businessesFound} sparkline={businessesFoundSparkline} />
+          <StatCard label="New prospects (30 days)" value={newThisMonth} sparkline={newProspectsSparkline} />
           <StatCard label="Qualified prospects" value={qualifiedOrLater} />
         </div>
       </section>
@@ -78,7 +87,7 @@ export default async function AnalyticsPage() {
           <StatCard label="Qualification rate" value={`${qualificationRate.toFixed(0)}%`} />
           <StatCard label="Application rate" value={`${applicationRate.toFixed(0)}%`} />
           <StatCard label="Conversion rate" value={`${conversionRate.toFixed(0)}%`} />
-          <StatCard label="Credits used" value={creditsUsed} />
+          <StatCard label="Credits used" value={creditsUsed} sparkline={creditsSparkline} />
         </div>
       </section>
 
