@@ -14,17 +14,16 @@ const DEFAULT: TenantAppearance = { chartStyle: null, layoutStyle: null };
  * "no preference, keep each component's own current default", not "bar"/
  * "grouped" literally, so an unbranded tenant's pages render exactly as
  * they did before this existed.
+ *
+ * One RPC call (current_tenant_appearance(), a SECURITY DEFINER function
+ * joining profiles->tenants in a single round trip), not an RPC to resolve
+ * tenant_id followed by a separate select -- the two-round-trip version
+ * measurably added to page load time across Dashboard/Analytics/Data
+ * Provider/Super Admin Overview, all of which call this.
  */
 export async function getTenantAppearance(supabase: SupabaseClient<Database>): Promise<TenantAppearance> {
-  const { data: tenantId } = await supabase.rpc("current_tenant_id");
-  if (!tenantId) return DEFAULT;
-
-  const { data: tenant } = await supabase
-    .from("tenants")
-    .select("allow_custom_branding, chart_style, layout_style")
-    .eq("id", tenantId)
-    .single();
-
+  const { data } = await supabase.rpc("current_tenant_appearance");
+  const tenant = data?.[0];
   if (!tenant?.allow_custom_branding) return DEFAULT;
 
   return {

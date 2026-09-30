@@ -66,12 +66,16 @@ export function BrandingLogoUpload({ logoUrl }: { logoUrl: string | null }) {
     <div className="space-y-3">
       {error && <div className="rounded-md bg-akani-error-bg px-3 py-2 text-sm text-akani-error">{error}</div>}
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-32 items-center justify-center rounded-md border border-akani-card-border bg-akani-page-bg p-2">
+        {/* Matches exactly how the sidebar renders it (app-shell.tsx): a
+            fixed square, cropped with object-cover, on the sidebar's own
+            dark background -- so what's previewed here is what's actually
+            shown, not an uncropped guess. */}
+        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-md bg-akani-navy">
           {shown ? (
             // eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, no fixed dimensions
-            <img src={shown} alt="" className="max-h-full max-w-full object-contain" />
+            <img src={shown} alt="" className="h-full w-full object-cover" />
           ) : (
-            <span className="text-xs text-akani-text-muted">No logo</span>
+            <span className="text-xs text-white/50">No logo</span>
           )}
         </div>
         <div className="flex gap-2">
@@ -95,7 +99,10 @@ export function BrandingLogoUpload({ logoUrl }: { logoUrl: string | null }) {
           )}
         </div>
       </div>
-      <p className="text-xs text-akani-text-muted">JPEG, PNG, WebP or SVG, up to 3MB.</p>
+      <p className="text-xs text-akani-text-muted">
+        JPEG, PNG, WebP or SVG, up to 3MB. Cropped to a square in the sidebar, so a wide or non-square image gets its
+        center cropped in — a roughly square image works best.
+      </p>
       <input
         ref={inputRef}
         type="file"

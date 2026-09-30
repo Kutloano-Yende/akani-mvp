@@ -120,16 +120,19 @@ export function AppShell({
           navOpen ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "lg:w-[76px]" : "lg:w-60"}`}
       >
-        <div className={`flex h-16 items-center ${collapsed ? "lg:justify-center lg:px-0 px-5" : "px-5"}`}>
+        <div className={`flex h-16 items-center gap-2.5 ${collapsed ? "lg:justify-center lg:px-0 px-5" : "px-5"}`}>
           {brandLogoUrl ? (
-            // Custom tenant logo: a single image, scaled by CSS, rather than
-            // AkaniLogo's fixed set of pre-cropped Akani PNGs.
-            // eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, same as UserAvatar
-            <img
-              src={brandLogoUrl}
-              alt=""
-              className={`max-w-full object-contain ${collapsed ? "hidden h-8 lg:block" : "h-9"}`}
-            />
+            // Custom tenant logo: cropped to a fixed square (object-cover),
+            // not AkaniLogo's fixed set of pre-cropped Akani PNGs. A
+            // consistent square "icon mark" crop is the safe default for an
+            // arbitrary uploaded image -- an uncropped photo just floats
+            // oddly on the sidebar's flat background, no matter its own
+            // aspect ratio. One crop works at every sidebar width, unlike
+            // AkaniLogo's separate compact/icon variants.
+            <span className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-white/10">
+              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, same as UserAvatar */}
+              <img src={brandLogoUrl} alt="" className="h-full w-full object-cover" />
+            </span>
           ) : (
             <>
               <span className={collapsed ? "lg:hidden" : ""}>

@@ -1094,6 +1094,14 @@ export type Database = {
       book_slot: { Args: { p_start: string; p_token: string }; Returns: Json }
       booking_page_data: { Args: { p_token: string }; Returns: Json }
       cancel_booking: { Args: { p_token: string }; Returns: Json }
+      current_tenant_appearance: {
+        Args: never
+        Returns: {
+          allow_custom_branding: boolean
+          chart_style: string
+          layout_style: string
+        }[]
+      }
       current_tenant_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never
