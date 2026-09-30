@@ -36,11 +36,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // CHECK constraint) -- these values are about to go straight into a
   // <style> tag, so never trust that without checking it directly.
   const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+  // A platform admin's own profile still belongs to a tenant (today, always
+  // Akani's), so without this check a tenant customising its own branding
+  // would re-skin the super admin's view too -- the platform admin's UI
+  // must stay the fixed Akani look no matter what any tenant, including
+  // their own, has configured.
+  const applyTenantBranding = !isPlatformAdmin && tenant?.allow_custom_branding;
   const brandPrimaryColor =
-    tenant?.allow_custom_branding && HEX_COLOR.test(tenant.brand_primary_color ?? "") ? tenant.brand_primary_color : null;
+    applyTenantBranding && HEX_COLOR.test(tenant.brand_primary_color ?? "") ? tenant.brand_primary_color : null;
   const brandAccentColor =
-    tenant?.allow_custom_branding && HEX_COLOR.test(tenant.brand_accent_color ?? "") ? tenant.brand_accent_color : null;
-  const brandLogoUrl = tenant?.allow_custom_branding ? tenant.brand_logo_url : null;
+    applyTenantBranding && HEX_COLOR.test(tenant.brand_accent_color ?? "") ? tenant.brand_accent_color : null;
+  const brandLogoUrl = applyTenantBranding ? tenant.brand_logo_url : null;
 
   return (
     <>
