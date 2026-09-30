@@ -1,5 +1,6 @@
 import { renderBrandedEmail } from "@/lib/email/branded";
 import { localDate, zonedTimeToUtc } from "@/lib/booking/slots";
+import { leadReplyToAddress } from "./reply-to";
 
 // One instant reply, then three follow-ups. Gaps are in days after the email
 // that was just sent: about 1, 3 and 6 days after the lead arrived.
@@ -94,5 +95,5 @@ export function buildLeadEmail(
     logoUrl: `${appUrl}/email/akani-logo.png`,
   });
 
-  return { subject, html, text, bookingUrl, unsubscribeUrl };
+  return { subject, html, text, bookingUrl, unsubscribeUrl, replyTo: leadReplyToAddress(lead.token, env) };
 }

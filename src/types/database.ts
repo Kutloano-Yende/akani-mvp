@@ -1125,6 +1125,10 @@ export type Database = {
         }
         Returns: Json
       }
+      lead_record_reply_ack: {
+        Args: { p_error: string; p_ok: boolean; p_token: string }
+        Returns: undefined
+      }
       lead_record_send: {
         Args: {
           p_error: string
@@ -1137,6 +1141,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      lead_reply_received: { Args: { p_token: string }; Returns: Json }
       unsubscribe_by_token: { Args: { p_token: string }; Returns: boolean }
     }
     Enums: {

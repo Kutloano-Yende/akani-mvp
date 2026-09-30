@@ -25,6 +25,7 @@ export async function sendLeadEmail(
     text: email.text,
     html: email.html,
     unsubscribeUrl: email.unsubscribeUrl,
+    replyTo: email.replyTo,
   });
 
   await recordLeadSend({

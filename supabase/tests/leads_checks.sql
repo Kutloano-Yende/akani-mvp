@@ -12,7 +12,7 @@ update profiles set role = 'manager' where id = 'aaaaaaaa-3333-4000-8000-0000000
 
 do $$
 declare
-  r jsonb; n int; t1 uuid; t2 uuid; l1 uuid; l2 uuid;
+  r jsonb; n int; t1 uuid; t2 uuid; t3 uuid; l1 uuid; l2 uuid; l3 uuid;
   tz text; day_offset int; sat_offset int; good timestamptz; d date;
 begin
   select timezone into tz from booking_settings;
@@ -164,6 +164,58 @@ begin
   reset role;
   select count(*) into n from audit_logs where action = 'UNSUBSCRIBED' and entity_id = l2::text;
   assert n = 1, 'a repeat unsubscribe writes no extra audit row';
+
+  -- Reply detection --------------------------------------------------------------
+  set local role anon;
+  r := lead_intake('test-secret', 'website', 'Third Lead', 'third@test.local', null, null, null);
+  l3 := (r->>'lead_id')::uuid; t3 := (r->>'token')::uuid;
+
+  r := lead_reply_received('00000000-0000-4000-8000-000000000000');
+  assert not (r->>'ok')::boolean and r->>'reason' = 'not_found', 'an unknown token cannot record a reply';
+
+  r := lead_reply_received(t3);
+  assert (r->>'ok')::boolean and (r->>'ack_needed')::boolean, 'a new lead needs an acknowledgment';
+  assert r->>'email' = 'third@test.local', 'the reply payload carries the lead''s email';
+  reset role;
+  select count(*) into n from leads where id = l3 and status = 'replied' and next_action_at is null;
+  assert n = 1, 'a reply stops the lead''s follow-up sequence';
+  select count(*) into n from audit_logs where action = 'LEAD_REPLY_DETECTED' and entity_id = l3::text;
+  assert n = 1, 'the reply is audited';
+  set local role anon;
+
+  r := lead_reply_received(t3);
+  assert (r->>'ok')::boolean and not (r->>'ack_needed')::boolean, 'a second reply from the same lead needs no second acknowledgment';
+  reset role;
+  select count(*) into n from audit_logs where action = 'LEAD_REPLY_DETECTED' and entity_id = l3::text;
+  assert n = 1, 'a repeat reply writes no extra audit row';
+  set local role anon;
+
+  -- A lead already past the active drip (booked, in this case) is left alone.
+  r := lead_reply_received(t1);
+  assert (r->>'ok')::boolean and not (r->>'ack_needed')::boolean, 'a booked lead''s reply needs no acknowledgment';
+  reset role;
+  select count(*) into n from leads where id = l1 and status = 'booked';
+  assert n = 1, 'a booked lead''s status is not downgraded by a reply';
+  set local role anon;
+
+  perform lead_record_reply_ack(t3, true, null);
+  reset role;
+  select count(*) into n from lead_emails where lead_id = l3 and step = 0 and status = 'sent';
+  assert n = 1, 'the acknowledgment send is recorded';
+  select count(*) into n from audit_logs where action = 'LEAD_REPLY_ACK_SENT' and entity_id = l3::text;
+  assert n = 1, 'the acknowledgment is audited';
+  set local role anon;
+
+  -- A later failure upserts the same row rather than adding a second one.
+  perform lead_record_reply_ack(t3, false, 'provider down');
+  reset role;
+  select count(*) into n from lead_emails where lead_id = l3 and step = 0;
+  assert n = 1, 'the acknowledgment record is a single upserted row, not a second one';
+  select count(*) into n from lead_emails where lead_id = l3 and step = 0 and status = 'failed';
+  assert n = 1, 'the upsert reflects the latest outcome';
+  set local role anon;
+
+  perform lead_record_reply_ack('00000000-0000-4000-8000-000000000000', true, null);
 end $$;
 
 -- Staff permissions ------------------------------------------------------------------------

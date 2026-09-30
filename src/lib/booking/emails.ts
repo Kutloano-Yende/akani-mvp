@@ -69,6 +69,37 @@ export function buildHostNotification(booked: BookedSlot, appUrl: string, env: R
   return { subject, html, text };
 }
 
+// Tells the team a lead replied to a follow-up email, so someone follows up
+// personally -- the drip has already been stopped and the lead already got
+// the fixed acknowledgment by the time this is sent.
+export function buildReplyNotification(
+  lead: { name: string | null; email: string; company: string | null },
+  appUrl: string,
+  env: Record<string, string | undefined> = process.env,
+) {
+  const who = lead.name || lead.email;
+  const subject = `Lead replied: ${who}${lead.company ? ` (${lead.company})` : ""}`;
+
+  const details = [
+    `${who} replied to a follow-up email.`,
+    `Email: ${lead.email}`,
+    ...(lead.company ? [`Company: ${lead.company}`] : []),
+    `They've already had our automatic "thanks for your reply" note -- please follow up personally.`,
+  ].join("\n");
+
+  const { html, text } = renderBrandedEmail({
+    subject,
+    bodyText: details,
+    buttons: [{ label: "Open leads", url: `${appUrl}/leads`, style: "primary" }],
+    reason: "You're receiving this because you're the host for Akani call bookings.",
+    unsubscribeUrl: null,
+    senderName: env.EMAIL_SENDER_NAME || "Akani BEE Ratings",
+    logoUrl: `${appUrl}/email/akani-logo.png`,
+  });
+
+  return { subject, html, text };
+}
+
 // Sends the lead's confirmation (with the invite attached) and the team notice.
 // A delivery problem never undoes the booking itself, which is already saved.
 export async function sendBookingEmails(booked: BookedSlot, token: string, appUrl: string) {

@@ -27,6 +27,9 @@ export const ACTION_LABELS: Record<string, string> = {
   TENANT_BRANDING_LOGO_UPDATED: "Updated brand logo",
   TENANT_BRANDING_LOGO_REMOVED: "Removed brand logo",
   TENANT_APPEARANCE_UPDATED: "Updated chart/layout preferences",
+  LEAD_REPLY_DETECTED: "Lead reply detected",
+  LEAD_REPLY_ACK_SENT: "Sent reply acknowledgment",
+  LEAD_REPLY_ACK_FAILED: "Reply acknowledgment failed",
 };
 
 export type AuditLogRow = {

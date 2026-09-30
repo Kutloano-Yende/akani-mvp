@@ -208,7 +208,8 @@ domains.
 ```bash
 npm test                     # unit tests (vitest): CSV export safety, template
                              # rendering, send planning/suppression, rate limiting,
-                             # dedupe, prospect ownership, unsubscribe tokens
+                             # dedupe, prospect ownership, unsubscribe tokens,
+                             # inbound webhook signature verification
 npm run typecheck && npm run lint
 ```
 
@@ -256,10 +257,19 @@ A lead comes from the **website form** (or from a company saying yes to a
 permission email). Within seconds they get a branded reply with a **Choose a
 time** link; then up to three follow-ups, about 1, 3 and 6 days after they
 arrived, on weekday mornings only. The emails stop as soon as the lead books a
-call, is marked replied or closed by staff, or unsubscribes. The last email says
-it is the last. Follow-ups never go to cold campaign contacts, only to people who
-contacted Akani or said yes (POPIA limits unsolicited marketing to one approach
-until someone opts in).
+call, replies, is marked replied or closed by staff, or unsubscribes. The last
+email says it is the last. Follow-ups never go to cold campaign contacts, only
+to people who contacted Akani or said yes (POPIA limits unsolicited marketing
+to one approach until someone opts in).
+
+**A reply is detected automatically** if `LEAD_REPLY_DOMAIN` is configured
+(below): each lead email's Reply-To carries a per-lead address, and Resend's
+Inbound webhook (`/api/webhooks/resend/inbound`) tells the app when someone
+replies to it. The lead is marked replied and the remaining follow-ups are
+cancelled, exactly as if staff had clicked "Mark replied." The lead also gets
+one fixed, non-AI acknowledgment ("Thanks for your reply, someone will be in
+touch shortly") and `booking_settings.host_email` gets a notice to follow up
+personally. No AI-generated content is ever sent back to a lead.
 
 - **Leads** (sidebar) lists everyone with their progress and upcoming calls.
 - **Settings → Booking** (managers and admins) sets working days, hours, call
@@ -283,6 +293,14 @@ Setup (all values go in `.env.local` and your host's environment):
 - `APP_URL`, `RESEND_API_KEY`, `EMAIL_FROM` — as under Email sending above.
   Until real sending is configured, lead emails are held (not pretended sent)
   and go out once it is.
+- `LEAD_REPLY_DOMAIN` — optional. A receiving subdomain (e.g.
+  `reply.akanibee.co.za`) configured as an Inbound domain in Resend, with its
+  own DNS MX record. Without it, replies are never detected automatically and
+  leads must still be marked replied by hand.
+- `RESEND_WEBHOOK_SECRET` — the signing secret from that Inbound webhook's
+  config in the Resend dashboard (`whsec_...`). Required alongside
+  `LEAD_REPLY_DOMAIN` for reply detection to work; the webhook route refuses
+  requests without it.
 
 The follow-up run is scheduled **once a day (about 08:00 South African time)**,
 which is the most a Vercel Hobby plan allows; follow-ups are days apart, so
