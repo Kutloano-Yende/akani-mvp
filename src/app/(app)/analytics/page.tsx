@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/stat-card";
 import { cumulativeSparkline, weeklySums } from "@/lib/trend";
+import { getTenantAppearance } from "@/lib/tenant-appearance";
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();
@@ -9,12 +10,14 @@ export default async function AnalyticsPage() {
     { data: companyDates },
     { data: prospects },
     { data: usage },
+    { chartStyle, layoutStyle },
   ] = await Promise.all([
     supabase.from("companies").select("created_at"),
     supabase
       .from("prospects")
       .select("status, created_at, companies(industry, province)"),
     supabase.from("api_usage").select("created_at, credits_used"),
+    getTenantAppearance(supabase),
   ]);
 
   const businessesFound = (companyDates ?? []).length;
@@ -58,38 +61,65 @@ export default async function AnalyticsPage() {
   // or slowing down, not a running total.
   const newProspectsSparkline = weeklySums(rows.map((p) => ({ date: p.created_at })));
 
+  const cs = chartStyle ?? "line";
+  const sourcingCards = [
+    <StatCard
+      key="businesses-discovered"
+      label="Businesses discovered"
+      value={businessesFound}
+      sparkline={businessesFoundSparkline}
+      chartStyle={cs}
+    />,
+    <StatCard
+      key="new-prospects"
+      label="New prospects (30 days)"
+      value={newThisMonth}
+      sparkline={newProspectsSparkline}
+      chartStyle={cs}
+    />,
+    <StatCard key="qualified-prospects" label="Qualified prospects" value={qualifiedOrLater} />,
+  ];
+  const conversionCards = [
+    <StatCard key="contacted" label="Contacted" value={counts.contacted} />,
+    <StatCard key="interested" label="Interested" value={counts.interested} />,
+    <StatCard key="applications" label="Applications" value={applicationOrLater} />,
+    <StatCard key="paying-clients" label="Paying clients" value={counts.won} accent />,
+  ];
+  const performanceCards = [
+    <StatCard key="qualification-rate" label="Qualification rate" value={`${qualificationRate.toFixed(0)}%`} />,
+    <StatCard key="application-rate" label="Application rate" value={`${applicationRate.toFixed(0)}%`} />,
+    <StatCard key="conversion-rate" label="Conversion rate" value={`${conversionRate.toFixed(0)}%`} />,
+    <StatCard key="credits-used" label="Credits used" value={creditsUsed} sparkline={creditsSparkline} chartStyle={cs} />,
+  ];
+
   return (
     <div className="space-y-8">
       <p className="text-sm text-akani-text-secondary">Is the system working, and where.</p>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Sourcing</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Businesses discovered" value={businessesFound} sparkline={businessesFoundSparkline} />
-          <StatCard label="New prospects (30 days)" value={newThisMonth} sparkline={newProspectsSparkline} />
-          <StatCard label="Qualified prospects" value={qualifiedOrLater} />
+      {layoutStyle === "grid" ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {sourcingCards}
+          {conversionCards}
+          {performanceCards}
         </div>
-      </section>
+      ) : (
+        <>
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Sourcing</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{sourcingCards}</div>
+          </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Conversion</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <StatCard label="Contacted" value={counts.contacted} />
-          <StatCard label="Interested" value={counts.interested} />
-          <StatCard label="Applications" value={applicationOrLater} />
-          <StatCard label="Paying clients" value={counts.won} accent />
-        </div>
-      </section>
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Conversion</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">{conversionCards}</div>
+          </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Performance</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <StatCard label="Qualification rate" value={`${qualificationRate.toFixed(0)}%`} />
-          <StatCard label="Application rate" value={`${applicationRate.toFixed(0)}%`} />
-          <StatCard label="Conversion rate" value={`${conversionRate.toFixed(0)}%`} />
-          <StatCard label="Credits used" value={creditsUsed} sparkline={creditsSparkline} />
-        </div>
-      </section>
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-akani-text-primary">Performance</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">{performanceCards}</div>
+          </section>
+        </>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <BreakdownCard title="Prospects by industry" data={byIndustry} />

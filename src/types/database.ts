@@ -1036,8 +1036,10 @@ export type Database = {
           brand_accent_color: string | null
           brand_logo_url: string | null
           brand_primary_color: string | null
+          chart_style: string | null
           created_at: string
           id: string
+          layout_style: string | null
           name: string
           slug: string
           status: string
@@ -1048,8 +1050,10 @@ export type Database = {
           brand_accent_color?: string | null
           brand_logo_url?: string | null
           brand_primary_color?: string | null
+          chart_style?: string | null
           created_at?: string
           id?: string
+          layout_style?: string | null
           name: string
           slug: string
           status?: string
@@ -1060,8 +1064,10 @@ export type Database = {
           brand_accent_color?: string | null
           brand_logo_url?: string | null
           brand_primary_color?: string | null
+          chart_style?: string | null
           created_at?: string
           id?: string
+          layout_style?: string | null
           name?: string
           slug?: string
           status?: string

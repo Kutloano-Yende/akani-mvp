@@ -5,6 +5,7 @@ import { StatCard } from "@/components/stat-card";
 import { SalesChart } from "@/components/sales-chart";
 import { SalesInsightCard, type SalesInsight } from "@/components/sales-insight-card";
 import { cumulativeSparkline } from "@/lib/trend";
+import { getTenantAppearance } from "@/lib/tenant-appearance";
 
 const FUNNEL_STAGES = [
   { key: "identified", label: "Businesses Found" },
@@ -20,12 +21,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const [{ data: companyDates }, { data: prospects }] = await Promise.all([
+  const [{ data: companyDates }, { data: prospects }, { chartStyle }] = await Promise.all([
     supabase.from("companies").select("created_at"),
     supabase
       .from("prospects")
       .select("id, status, created_at, last_contacted_at, opportunity_score, companies(name, industry, province)")
       .order("created_at", { ascending: false }),
+    getTenantAppearance(supabase),
   ]);
 
   const businessesFound = (companyDates ?? []).length;
@@ -145,6 +147,7 @@ export default async function DashboardPage() {
           value={businessesFound}
           supportingText={newThisWeek > 0 ? `+${newThisWeek} this week` : "No new activity this week"}
           sparkline={businessesFoundSparkline}
+          chartStyle={chartStyle ?? "line"}
         />
         <StatCard label="Qualified Prospects" value={qualifiedProspects} />
         <StatCard label="Applications" value={applications} />
@@ -154,7 +157,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm lg:col-span-2">
           <h2 className="mb-4 text-sm font-semibold text-akani-text-primary">New prospects per week</h2>
-          <SalesChart data={weeks} />
+          <SalesChart data={weeks} variant={chartStyle ?? "bar"} />
         </div>
         <SalesInsightCard insights={insights} />
       </div>

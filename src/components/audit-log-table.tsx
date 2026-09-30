@@ -26,6 +26,7 @@ export const ACTION_LABELS: Record<string, string> = {
   TENANT_BRANDING_COLORS_UPDATED: "Updated brand colors",
   TENANT_BRANDING_LOGO_UPDATED: "Updated brand logo",
   TENANT_BRANDING_LOGO_REMOVED: "Removed brand logo",
+  TENANT_APPEARANCE_UPDATED: "Updated chart/layout preferences",
 };
 
 export type AuditLogRow = {

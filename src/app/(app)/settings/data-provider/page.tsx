@@ -2,19 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { getProvider } from "@/lib/data/provider";
 import { StatCard } from "@/components/stat-card";
 import { cumulativeSparkline } from "@/lib/trend";
+import { getTenantAppearance } from "@/lib/tenant-appearance";
 
 export default async function DataProviderSettingsPage() {
   const provider = getProvider();
   const isLive = provider.name !== "Mock Catalogue";
   const supabase = await createClient();
 
-  const [{ data: usage }, { data: recent }] = await Promise.all([
+  const [{ data: usage }, { data: recent }, { chartStyle }] = await Promise.all([
     supabase.from("api_usage").select("created_at, credits_used, results_returned"),
     supabase
       .from("api_usage")
       .select("id, created_at, results_returned, credits_used, provider, profiles(name)")
       .order("created_at", { ascending: false })
       .limit(10),
+    getTenantAppearance(supabase),
   ]);
 
   const usageRows = usage ?? [];
@@ -52,9 +54,14 @@ export default async function DataProviderSettingsPage() {
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Searches run" value={totalSearches} sparkline={searchesSparkline} />
-        <StatCard label="Credits used" value={totalCredits} sparkline={creditsSparkline} />
-        <StatCard label="Results returned" value={totalResults} sparkline={resultsSparkline} />
+        <StatCard label="Searches run" value={totalSearches} sparkline={searchesSparkline} chartStyle={chartStyle ?? "line"} />
+        <StatCard label="Credits used" value={totalCredits} sparkline={creditsSparkline} chartStyle={chartStyle ?? "line"} />
+        <StatCard
+          label="Results returned"
+          value={totalResults}
+          sparkline={resultsSparkline}
+          chartStyle={chartStyle ?? "line"}
+        />
       </div>
 
       <section className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">

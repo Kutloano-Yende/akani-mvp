@@ -13,6 +13,7 @@ export function StatCard({
   delta,
   sparkline,
   accent,
+  chartStyle = "line",
 }: {
   label: string;
   value: number | string;
@@ -21,6 +22,7 @@ export function StatCard({
   /** Real historical values, oldest first, ending at (or near) the current value. */
   sparkline?: number[];
   accent?: boolean;
+  chartStyle?: "bar" | "line";
 }) {
   return (
     <div className="rounded-xl border border-akani-card-border bg-white p-5 shadow-sm">
@@ -41,7 +43,7 @@ export function StatCard({
           </span>
         )}
       </div>
-      {sparkline && sparkline.length >= 2 && <Sparkline values={sparkline} />}
+      {sparkline && sparkline.length >= 2 && <Sparkline values={sparkline} style={chartStyle} />}
       {supportingText && (
         <p className="mt-1 text-xs text-akani-text-muted">{supportingText}</p>
       )}
@@ -50,10 +52,26 @@ export function StatCard({
 }
 
 // 12-point sparkline: the history in a muted hue, the most recent period
-// picked out in the accent color, per the stat-tile convention.
-function Sparkline({ values }: { values: number[] }) {
+// picked out in the accent color, per the stat-tile convention. "bar" mode
+// (sparkbars) is the same data and color language, as thin columns instead
+// of a line.
+function Sparkline({ values, style }: { values: number[]; style: "bar" | "line" }) {
   const width = 100;
   const height = 28;
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      className="mt-3 h-7 w-full"
+      aria-hidden="true"
+    >
+      {style === "bar" ? <SparkBars values={values} width={width} height={height} /> : <SparkLine values={values} width={width} height={height} />}
+    </svg>
+  );
+}
+
+function SparkLine({ values, width, height }: { values: number[]; width: number; height: number }) {
   const pad = 3;
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -69,12 +87,7 @@ function Sparkline({ values }: { values: number[] }) {
   const [lastX, lastY] = points[points.length - 1];
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="none"
-      className="mt-3 h-7 w-full"
-      aria-hidden="true"
-    >
+    <>
       <path
         d={path}
         fill="none"
@@ -93,6 +106,35 @@ function Sparkline({ values }: { values: number[] }) {
         className="stroke-akani-gold"
       />
       <circle cx={lastX} cy={lastY} r="2.5" className="fill-akani-gold" />
-    </svg>
+    </>
+  );
+}
+
+function SparkBars({ values, width, height }: { values: number[]; width: number; height: number }) {
+  const min = Math.min(0, ...values);
+  const max = Math.max(...values, 1);
+  const span = max - min || 1;
+  const gap = 1.5;
+  const barWidth = (width - gap * (values.length - 1)) / values.length;
+
+  return (
+    <>
+      {values.map((v, i) => {
+        const barHeight = Math.max(((v - min) / span) * height, v > min ? 1.5 : 0);
+        const x = i * (barWidth + gap);
+        const isLast = i === values.length - 1;
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={height - barHeight}
+            width={barWidth}
+            height={barHeight}
+            rx="1"
+            className={isLast ? "fill-akani-gold" : "fill-akani-card-border"}
+          />
+        );
+      })}
+    </>
   );
 }
