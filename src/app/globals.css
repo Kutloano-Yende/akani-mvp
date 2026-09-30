@@ -3,6 +3,20 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Tenant-brandable pair; defaults to Akani's own colors. A tenant with
+     allow_custom_branding overrides these two via inline style on
+     AppShell's root element (see app-shell.tsx) -- because the @theme
+     entries below reference these with var(), not a literal, every
+     akani-navy and akani-gold utility across the whole app (buttons,
+     badges, the sidebar, everything) follows automatically. Checked the
+     compiled CSS to confirm this indirection survives Tailwind's "@theme
+     inline", not assumed -- see the migration/plan this was built from. */
+  --brand-primary: #07124c;
+  --brand-primary-dark: #02062b;
+  --brand-primary-deep: #0a155a;
+  --brand-accent: #d6a000;
+  --brand-accent-bright: #ecb100;
+  --brand-accent-light: #f2c23a;
 }
 
 @theme inline {
@@ -11,13 +25,14 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Akani brand palette */
-  --color-akani-navy: #07124c;
-  --color-akani-navy-dark: #02062b;
-  --color-akani-deep-blue: #0a155a;
-  --color-akani-gold: #d6a000;
-  --color-akani-gold-bright: #ecb100;
-  --color-akani-gold-light: #f2c23a;
+  /* Akani brand palette -- the navy/gold pair is tenant-brandable (see
+     :root above); every other token below is fixed for every tenant. */
+  --color-akani-navy: var(--brand-primary);
+  --color-akani-navy-dark: var(--brand-primary-dark);
+  --color-akani-deep-blue: var(--brand-primary-deep);
+  --color-akani-gold: var(--brand-accent);
+  --color-akani-gold-bright: var(--brand-accent-bright);
+  --color-akani-gold-light: var(--brand-accent-light);
   --color-akani-bg: #f3f6fb;
   --color-akani-muted: #697084;
   --color-akani-border: #cfd5df;

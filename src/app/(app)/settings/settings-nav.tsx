@@ -18,15 +18,24 @@ const ADMIN_TABS = [
   { href: "/settings/audit-logs", label: "Audit Logs" },
 ];
 
+const BRANDING_TAB = [{ href: "/settings/branding", label: "Branding" }];
+
 export function SettingsNav({
   isAdmin,
   canManage,
+  canBrand,
 }: {
   isAdmin: boolean;
   canManage: boolean;
+  canBrand: boolean;
 }) {
   const pathname = usePathname();
-  const tabs = [...TABS, ...(canManage ? MANAGER_TABS : []), ...(isAdmin ? ADMIN_TABS : [])];
+  const tabs = [
+    ...TABS,
+    ...(canManage ? MANAGER_TABS : []),
+    ...(isAdmin ? ADMIN_TABS : []),
+    ...(isAdmin && canBrand ? BRANDING_TAB : []),
+  ];
 
   return (
     <div className="flex gap-1 overflow-x-auto border-b border-akani-card-border">

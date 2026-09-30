@@ -37,6 +37,7 @@ export function AppShell({
   initialSidebarCollapsed,
   release,
   isPlatformAdmin = false,
+  brandLogoUrl,
 }: {
   children: React.ReactNode;
   userName: string;
@@ -45,6 +46,7 @@ export function AppShell({
   initialSidebarCollapsed: boolean;
   release?: Release;
   isPlatformAdmin?: boolean;
+  brandLogoUrl?: string | null;
 }) {
   const pathname = usePathname();
   const displayRole = isPlatformAdmin ? "Super Admin" : role;
@@ -119,13 +121,26 @@ export function AppShell({
         } ${collapsed ? "lg:w-[76px]" : "lg:w-60"}`}
       >
         <div className={`flex h-16 items-center ${collapsed ? "lg:justify-center lg:px-0 px-5" : "px-5"}`}>
-          <span className={collapsed ? "lg:hidden" : ""}>
-            <AkaniLogo variant="dark" size="sm" compact />
-          </span>
-          {collapsed && (
-            <span className="hidden lg:block">
-              <AkaniLogo variant="dark" size="sm" icon />
-            </span>
+          {brandLogoUrl ? (
+            // Custom tenant logo: a single image, scaled by CSS, rather than
+            // AkaniLogo's fixed set of pre-cropped Akani PNGs.
+            // eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, same as UserAvatar
+            <img
+              src={brandLogoUrl}
+              alt=""
+              className={`max-w-full object-contain ${collapsed ? "hidden h-8 lg:block" : "h-9"}`}
+            />
+          ) : (
+            <>
+              <span className={collapsed ? "lg:hidden" : ""}>
+                <AkaniLogo variant="dark" size="sm" compact />
+              </span>
+              {collapsed && (
+                <span className="hidden lg:block">
+                  <AkaniLogo variant="dark" size="sm" icon />
+                </span>
+              )}
+            </>
           )}
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">

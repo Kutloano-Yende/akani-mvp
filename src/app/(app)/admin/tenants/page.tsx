@@ -9,13 +9,14 @@ export type TenantRow = {
   status: "active" | "suspended";
   created_at: string;
   userCount: number;
+  allowCustomBranding: boolean;
 };
 
 export default async function TenantsPage() {
   const supabase = await createClient();
   const { data: tenants } = await supabase
     .from("tenants")
-    .select("id, name, slug, status, created_at")
+    .select("id, name, slug, status, created_at, allow_custom_branding")
     .order("created_at", { ascending: false });
 
   const rows: TenantRow[] = await Promise.all(
@@ -24,7 +25,12 @@ export default async function TenantsPage() {
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .eq("tenant_id", t.id);
-      return { ...t, status: t.status as "active" | "suspended", userCount: count ?? 0 };
+      return {
+        ...t,
+        status: t.status as "active" | "suspended",
+        userCount: count ?? 0,
+        allowCustomBranding: t.allow_custom_branding,
+      };
     }),
   );
 

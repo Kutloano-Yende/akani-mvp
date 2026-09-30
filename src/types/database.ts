@@ -1032,6 +1032,10 @@ export type Database = {
       }
       tenants: {
         Row: {
+          allow_custom_branding: boolean
+          brand_accent_color: string | null
+          brand_logo_url: string | null
+          brand_primary_color: string | null
           created_at: string
           id: string
           name: string
@@ -1040,6 +1044,10 @@ export type Database = {
           suspended_at: string | null
         }
         Insert: {
+          allow_custom_branding?: boolean
+          brand_accent_color?: string | null
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
           created_at?: string
           id?: string
           name: string
@@ -1048,6 +1056,10 @@ export type Database = {
           suspended_at?: string | null
         }
         Update: {
+          allow_custom_branding?: boolean
+          brand_accent_color?: string | null
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
           created_at?: string
           id?: string
           name?: string
