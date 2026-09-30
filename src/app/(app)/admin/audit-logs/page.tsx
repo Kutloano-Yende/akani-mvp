@@ -24,10 +24,10 @@ export default async function SuperAdminAuditLogsPage({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
         <div className="mb-4">
-          <h2 className="mb-1 text-sm font-semibold text-slate-900">Audit log</h2>
-          <p className="text-sm text-slate-600">A record of security-relevant actions across every tenant.</p>
+          <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Audit log</h2>
+          <p className="text-sm text-akani-text-secondary">A record of security-relevant actions across every tenant.</p>
         </div>
         <AuditLogTable logs={logs ?? []} page={page} totalPages={totalPages} basePath="/admin/audit-logs" />
       </section>

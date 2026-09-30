@@ -30,16 +30,16 @@ export default async function TenantsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-1 text-sm font-semibold text-slate-900">Create a tenant</h2>
-        <p className="mb-4 text-sm text-slate-600">
+      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+        <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Create a tenant</h2>
+        <p className="mb-4 text-sm text-akani-text-secondary">
           Creates the tenant and sends its first admin an invite in one step.
         </p>
         <CreateTenantForm />
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold text-slate-900">All tenants</h2>
+      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-sm font-semibold text-akani-text-primary">All tenants</h2>
         <TenantList tenants={rows} />
       </section>
     </div>

@@ -22,6 +22,13 @@ const NAV_ITEMS = [
   { href: "/analytics", label: "Analytics", icon: AnalyticsIcon, tour: "nav-analytics" },
 ];
 
+const SUPER_ADMIN_ITEMS = [
+  { href: "/admin", label: "Overview", icon: ShieldIcon },
+  { href: "/admin/tenants", label: "Tenants", icon: TenantsIcon },
+  { href: "/admin/users", label: "All Users", icon: UsersIcon },
+  { href: "/admin/audit-logs", label: "Audit Logs", icon: AuditIcon },
+];
+
 export function AppShell({
   children,
   userName,
@@ -88,7 +95,11 @@ export function AppShell({
     const section = item.href;
     return pathname === section || pathname.startsWith(section + "/");
   });
-  const pageTitle = activeItem?.label ?? (pathname.startsWith("/settings") ? "Settings" : "Akani");
+  const activeAdminItem = SUPER_ADMIN_ITEMS.find((item) => pathname === item.href);
+  const pageTitle =
+    activeItem?.label ??
+    activeAdminItem?.label ??
+    (pathname.startsWith("/settings") ? "Settings" : pathname.startsWith("/admin") ? "Super Admin" : "Akani");
 
   return (
     <div className="flex h-dvh overflow-hidden bg-akani-page-bg">
@@ -158,16 +169,36 @@ export function AppShell({
           </Link>
 
           {isPlatformAdmin && (
-            <Link
-              href="/admin"
-              title={collapsed ? "Super Admin" : undefined}
-              className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium text-akani-gold transition-colors hover:bg-white/5 ${
-                collapsed ? "lg:justify-center lg:px-0" : ""
-              }`}
-            >
-              <ShieldIcon />
-              <span className={collapsed ? "lg:hidden" : ""}>Super Admin</span>
-            </Link>
+            <>
+              <div className="my-3 border-t border-white/10" />
+              <p
+                className={`px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-akani-gold/70 ${
+                  collapsed ? "lg:hidden" : ""
+                }`}
+              >
+                Super Admin
+              </p>
+              {SUPER_ADMIN_ITEMS.map((item) => {
+                const active = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-colors ${
+                      collapsed ? "lg:justify-center lg:px-0" : ""
+                    } ${active ? "bg-akani-gold/15 text-akani-gold" : "text-white/60 hover:bg-white/5 hover:text-akani-gold/80"}`}
+                  >
+                    {active && (
+                      <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-akani-gold" />
+                    )}
+                    <Icon />
+                    <span className={collapsed ? "lg:hidden" : ""}>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </>
           )}
         </nav>
         <div className="border-t border-white/10 p-3">
@@ -335,6 +366,44 @@ function ShieldIcon() {
         strokeLinejoin="round"
       />
       <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TenantsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M15 21v-9a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v9"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M7 7h2M7 11h2M7 15h2M18 14h.01M18 17h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="10" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M17.5 3.6a3.5 3.5 0 0 1 0 6.8M22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function AuditIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M9 8h6M9 12h6M9 16h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }

@@ -26,17 +26,19 @@ export default async function SuperAdminUsersPage({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="mb-1 text-sm font-semibold text-slate-900">All users</h2>
-            <p className="text-sm text-slate-600">Every user across every tenant. Read-only here.</p>
+            <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">All users</h2>
+            <p className="text-sm text-akani-text-secondary">Every user across every tenant. Read-only here.</p>
           </div>
           <div className="flex flex-wrap gap-1.5 text-sm">
             <Link
               href="/admin/users"
               className={`rounded-md px-3 py-1 font-medium ${
-                !tenantFilter ? "bg-slate-900 text-white" : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                !tenantFilter
+                  ? "bg-akani-navy text-white"
+                  : "border border-akani-card-border text-akani-text-primary hover:bg-akani-page-bg"
               }`}
             >
               All
@@ -47,8 +49,8 @@ export default async function SuperAdminUsersPage({
                 href={`/admin/users?tenant=${t.id}`}
                 className={`rounded-md px-3 py-1 font-medium ${
                   tenantFilter === t.id
-                    ? "bg-slate-900 text-white"
-                    : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    ? "bg-akani-navy text-white"
+                    : "border border-akani-card-border text-akani-text-primary hover:bg-akani-page-bg"
                 }`}
               >
                 {t.name}
@@ -60,7 +62,7 @@ export default async function SuperAdminUsersPage({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
+              <tr className="border-b border-akani-card-border text-akani-text-muted">
                 <th className="py-2 font-medium">Name</th>
                 <th className="py-2 font-medium">Tenant</th>
                 <th className="py-2 font-medium">Role</th>
@@ -72,8 +74,8 @@ export default async function SuperAdminUsersPage({
                 const tenant = Array.isArray(u.tenants) ? u.tenants[0] : u.tenants;
                 const isPlatformAdmin = platformAdminIds.has(u.id);
                 return (
-                  <tr key={u.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-3 font-medium text-slate-900">
+                  <tr key={u.id} className="border-b border-akani-card-border last:border-0">
+                    <td className="py-3 font-medium text-akani-text-primary">
                       {u.name}
                       {isPlatformAdmin && (
                         <span className="ml-2 rounded-full bg-akani-gold/15 px-2 py-0.5 text-xs font-semibold text-akani-gold">
@@ -81,18 +83,18 @@ export default async function SuperAdminUsersPage({
                         </span>
                       )}
                     </td>
-                    <td className="py-3 text-slate-600">
+                    <td className="py-3 text-akani-text-secondary">
                       {tenant?.name ?? "—"}
-                      {isPlatformAdmin && <span className="text-slate-400"> (also platform-wide)</span>}
+                      {isPlatformAdmin && <span className="text-akani-text-muted"> (also platform-wide)</span>}
                     </td>
-                    <td className="py-3 capitalize text-slate-600">{u.role}</td>
-                    <td className="py-3 text-slate-500">{new Date(u.created_at).toLocaleDateString("en-ZA")}</td>
+                    <td className="py-3 capitalize text-akani-text-secondary">{u.role}</td>
+                    <td className="py-3 text-akani-text-muted">{new Date(u.created_at).toLocaleDateString("en-ZA")}</td>
                   </tr>
                 );
               })}
               {(users ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-slate-500">
+                  <td colSpan={4} className="py-6 text-center text-akani-text-muted">
                     No users found.
                   </td>
                 </tr>

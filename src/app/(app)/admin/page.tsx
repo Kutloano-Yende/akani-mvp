@@ -22,7 +22,7 @@ export default async function SuperAdminOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-slate-600">Platform-wide totals across every tenant.</p>
+      <p className="text-sm text-akani-text-secondary">Platform-wide totals across every tenant.</p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Tenants"

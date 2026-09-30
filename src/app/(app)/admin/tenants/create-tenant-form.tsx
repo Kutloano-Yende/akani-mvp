@@ -47,7 +47,7 @@ export function CreateTenantForm() {
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Company name</span>
+        <span className="text-sm font-medium text-akani-text-primary">Company name</span>
         <input
           type="text"
           required
@@ -58,7 +58,7 @@ export function CreateTenantForm() {
         />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Tenant admin name</span>
+        <span className="text-sm font-medium text-akani-text-primary">Tenant admin name</span>
         <input
           type="text"
           required
@@ -68,7 +68,7 @@ export function CreateTenantForm() {
         />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Tenant admin email</span>
+        <span className="text-sm font-medium text-akani-text-primary">Tenant admin email</span>
         <input
           type="email"
           required
@@ -80,11 +80,13 @@ export function CreateTenantForm() {
 
       <div className="sm:col-span-3">
         {error && <div className="mb-3 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-        {success && <div className="mb-3 rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{success}</div>}
+        {success && (
+          <div className="mb-3 rounded-md bg-akani-success-bg px-4 py-3 text-sm text-akani-success">{success}</div>
+        )}
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-slate-900 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 disabled:opacity-60"
+          className="rounded-md bg-akani-gold px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
         >
           {submitting ? "Creating…" : "Create tenant"}
         </button>

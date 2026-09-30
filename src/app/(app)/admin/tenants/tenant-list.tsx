@@ -38,7 +38,7 @@ export function TenantList({ tenants }: { tenants: TenantRow[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-slate-500">
+            <tr className="border-b border-akani-card-border text-akani-text-muted">
               <th className="py-2 font-medium">Name</th>
               <th className="py-2 font-medium">Slug</th>
               <th className="py-2 font-medium">Status</th>
@@ -49,26 +49,26 @@ export function TenantList({ tenants }: { tenants: TenantRow[] }) {
           </thead>
           <tbody>
             {tenants.map((t) => (
-              <tr key={t.id} className="border-b border-slate-100 last:border-0">
-                <td className="py-3 font-medium text-slate-900">{t.name}</td>
-                <td className="py-3 text-slate-500">{t.slug}</td>
+              <tr key={t.id} className="border-b border-akani-card-border last:border-0">
+                <td className="py-3 font-medium text-akani-text-primary">{t.name}</td>
+                <td className="py-3 text-akani-text-muted">{t.slug}</td>
                 <td className="py-3">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      t.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                      t.status === "active" ? "bg-akani-success-bg text-akani-success" : "bg-red-50 text-red-700"
                     }`}
                   >
                     {t.status}
                   </span>
                 </td>
-                <td className="py-3 text-slate-600">{t.userCount}</td>
-                <td className="py-3 text-slate-500">{new Date(t.created_at).toLocaleDateString("en-ZA")}</td>
+                <td className="py-3 text-akani-text-secondary">{t.userCount}</td>
+                <td className="py-3 text-akani-text-muted">{new Date(t.created_at).toLocaleDateString("en-ZA")}</td>
                 <td className="py-3 text-right">
                   <button
                     type="button"
                     onClick={() => toggleStatus(t)}
                     disabled={pending === t.id}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                    className="rounded-md border border-akani-card-border px-3 py-1.5 text-xs font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-60"
                   >
                     {pending === t.id ? "Working…" : t.status === "active" ? "Suspend" : "Reactivate"}
                   </button>
@@ -77,7 +77,7 @@ export function TenantList({ tenants }: { tenants: TenantRow[] }) {
             ))}
             {tenants.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-slate-500">
+                <td colSpan={6} className="py-6 text-center text-akani-text-muted">
                   No tenants yet.
                 </td>
               </tr>
