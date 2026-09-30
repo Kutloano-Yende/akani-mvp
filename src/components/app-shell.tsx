@@ -122,17 +122,26 @@ export function AppShell({
       >
         <div className={`flex h-16 items-center gap-2.5 ${collapsed ? "lg:justify-center lg:px-0 px-5" : "px-5"}`}>
           {brandLogoUrl ? (
-            // Custom tenant logo: cropped to a fixed square (object-cover),
-            // not AkaniLogo's fixed set of pre-cropped Akani PNGs. A
-            // consistent square "icon mark" crop is the safe default for an
-            // arbitrary uploaded image -- an uncropped photo just floats
-            // oddly on the sidebar's flat background, no matter its own
-            // aspect ratio. One crop works at every sidebar width, unlike
-            // AkaniLogo's separate compact/icon variants.
-            <span className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-white/10">
-              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, same as UserAvatar */}
-              <img src={brandLogoUrl} alt="" className="h-full w-full object-cover" />
-            </span>
+            // Custom tenant logo: cropped with object-cover (an uncropped
+            // photo at its own aspect ratio just floats oddly on the
+            // sidebar's flat background), sized to match AkaniLogo's two
+            // real slots instead of one small square -- its "compact"
+            // crop is ~130x39, not square, so a 36x36 box read as much
+            // smaller/less prominent than the wordmark it replaces.
+            <>
+              <span
+                className={`h-10 w-32 shrink-0 overflow-hidden rounded-md bg-white/10 ${collapsed ? "lg:hidden" : ""}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, same as UserAvatar */}
+                <img src={brandLogoUrl} alt="" className="h-full w-full object-cover" />
+              </span>
+              {collapsed && (
+                <span className="hidden h-9 w-9 shrink-0 overflow-hidden rounded-md bg-white/10 lg:block">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, same as UserAvatar */}
+                  <img src={brandLogoUrl} alt="" className="h-full w-full object-cover" />
+                </span>
+              )}
+            </>
           ) : (
             <>
               <span className={collapsed ? "lg:hidden" : ""}>

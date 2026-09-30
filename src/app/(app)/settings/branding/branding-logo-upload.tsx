@@ -66,11 +66,11 @@ export function BrandingLogoUpload({ logoUrl }: { logoUrl: string | null }) {
     <div className="space-y-3">
       {error && <div className="rounded-md bg-akani-error-bg px-3 py-2 text-sm text-akani-error">{error}</div>}
       <div className="flex items-center gap-4">
-        {/* Matches exactly how the sidebar renders it (app-shell.tsx): a
-            fixed square, cropped with object-cover, on the sidebar's own
-            dark background -- so what's previewed here is what's actually
-            shown, not an uncropped guess. */}
-        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-md bg-akani-navy">
+        {/* Matches exactly how the expanded sidebar renders it
+            (app-shell.tsx): the same size, cropped with object-cover, on
+            the sidebar's own dark background -- so what's previewed here
+            is what's actually shown, not an uncropped guess. */}
+        <div className="flex h-10 w-32 items-center justify-center overflow-hidden rounded-md bg-akani-navy">
           {shown ? (
             // eslint-disable-next-line @next/next/no-img-element -- dynamic Supabase Storage URL, no fixed dimensions
             <img src={shown} alt="" className="h-full w-full object-cover" />
@@ -100,8 +100,8 @@ export function BrandingLogoUpload({ logoUrl }: { logoUrl: string | null }) {
         </div>
       </div>
       <p className="text-xs text-akani-text-muted">
-        JPEG, PNG, WebP or SVG, up to 3MB. Cropped to a square in the sidebar, so a wide or non-square image gets its
-        center cropped in — a roughly square image works best.
+        JPEG, PNG, WebP or SVG, up to 3MB. Cropped to a wide banner in the sidebar (like the default Akani logo), so a
+        wide, horizontal logo on a flat background works best — a tall or square logo will have its sides cropped in.
       </p>
       <input
         ref={inputRef}
