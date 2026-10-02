@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
+import { getActiveImpersonation } from "@/lib/impersonation";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/login");
   }
 
-  const [{ data: profile }, { data: isPlatformAdmin }] = await Promise.all([
+  const [{ data: profile }, { data: isPlatformAdmin }, impersonation] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -21,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .eq("id", user.id)
       .single(),
     supabase.rpc("is_platform_admin"),
+    getActiveImpersonation(),
   ]);
 
   const tenant = Array.isArray(profile?.tenants) ? profile.tenants[0] : profile?.tenants;
@@ -68,6 +70,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         initialSidebarCollapsed={profile?.sidebar_collapsed ?? false}
         isPlatformAdmin={isPlatformAdmin ?? false}
         brandLogoUrl={brandLogoUrl}
+        impersonation={impersonation}
       >
         {children}
       </AppShell>

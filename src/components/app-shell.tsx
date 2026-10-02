@@ -6,11 +6,13 @@ import { useEffect, useState } from "react";
 import { AkaniLogo } from "@/components/akani-logo";
 import { AssistantWidget } from "@/components/assistant-widget";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { SignOutButton } from "@/components/sign-out-dialog";
 import { TopHeader } from "@/components/top-header";
 import { UserAvatar } from "@/components/user-avatar";
 import { TourManager } from "@/components/whats-new/tour-manager";
 import { UpdateSkeleton } from "@/components/whats-new/update-skeleton";
+import type { ActiveImpersonation } from "@/lib/impersonation";
 import type { Release } from "@/lib/whats-new/tour";
 
 const NAV_ITEMS = [
@@ -39,6 +41,7 @@ export function AppShell({
   release,
   isPlatformAdmin = false,
   brandLogoUrl,
+  impersonation = null,
 }: {
   children: React.ReactNode;
   userName: string;
@@ -48,6 +51,7 @@ export function AppShell({
   release?: Release;
   isPlatformAdmin?: boolean;
   brandLogoUrl?: string | null;
+  impersonation?: ActiveImpersonation | null;
 }) {
   const pathname = usePathname();
   const displayRole = isPlatformAdmin ? "Super Admin" : role;
@@ -105,7 +109,9 @@ export function AppShell({
     (pathname.startsWith("/settings") ? "Settings" : pathname.startsWith("/admin") ? "Super Admin" : "Akani");
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-akani-page-bg">
+    <div className="flex h-dvh flex-col overflow-hidden bg-akani-page-bg">
+      {impersonation && <ImpersonationBanner {...impersonation} />}
+      <div className="flex flex-1 overflow-hidden">
       <UpdateSkeleton />
       <TourManager role={role} release={release} />
       <AssistantWidget />
@@ -292,6 +298,7 @@ export function AppShell({
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</div>
         </main>
+      </div>
       </div>
     </div>
   );

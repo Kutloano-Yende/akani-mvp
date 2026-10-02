@@ -30,6 +30,8 @@ export const ACTION_LABELS: Record<string, string> = {
   LEAD_REPLY_DETECTED: "Lead reply detected",
   LEAD_REPLY_ACK_SENT: "Sent reply acknowledgment",
   LEAD_REPLY_ACK_FAILED: "Reply acknowledgment failed",
+  IMPERSONATION_STARTED: "Started impersonating a user",
+  IMPERSONATION_ENDED: "Ended impersonation",
 };
 
 export type AuditLogRow = {

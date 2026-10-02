@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { ImpersonateButton } from "./impersonate-button";
 
 export default async function SuperAdminUsersPage({
   searchParams,
@@ -30,7 +31,9 @@ export default async function SuperAdminUsersPage({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">All users</h2>
-            <p className="text-sm text-akani-text-secondary">Every user across every tenant. Read-only here.</p>
+            <p className="text-sm text-akani-text-secondary">
+              Every user across every tenant. Impersonate a regular user to see and act exactly as they would.
+            </p>
           </div>
           <div className="flex flex-wrap gap-1.5 text-sm">
             <Link
@@ -67,6 +70,7 @@ export default async function SuperAdminUsersPage({
                 <th className="py-2 font-medium">Tenant</th>
                 <th className="py-2 font-medium">Role</th>
                 <th className="py-2 font-medium">Joined</th>
+                <th className="py-2 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -89,12 +93,15 @@ export default async function SuperAdminUsersPage({
                     </td>
                     <td className="py-3 capitalize text-akani-text-secondary">{u.role}</td>
                     <td className="py-3 text-akani-text-muted">{new Date(u.created_at).toLocaleDateString("en-ZA")}</td>
+                    <td className="py-3">
+                      {!isPlatformAdmin && <ImpersonateButton userId={u.id} name={u.name} />}
+                    </td>
                   </tr>
                 );
               })}
               {(users ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-akani-text-muted">
+                  <td colSpan={5} className="py-6 text-center text-akani-text-muted">
                     No users found.
                   </td>
                 </tr>
