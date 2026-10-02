@@ -658,6 +658,51 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          created_at: string
+          email_sent: boolean
+          id: string
+          message: string
+          page_path: string | null
+          submitted_by: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_sent?: boolean
+          id?: string
+          message: string
+          page_path?: string | null
+          submitted_by: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_sent?: boolean
+          id?: string
+          message?: string
+          page_path?: string | null
+          submitted_by?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_emails: {
         Row: {
           error: string | null

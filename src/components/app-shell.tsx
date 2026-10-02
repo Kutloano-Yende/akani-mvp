@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AkaniLogo } from "@/components/akani-logo";
 import { AssistantWidget } from "@/components/assistant-widget";
+import { FeedbackWidget } from "@/components/feedback-widget";
 import { SignOutButton } from "@/components/sign-out-dialog";
 import { TopHeader } from "@/components/top-header";
 import { UserAvatar } from "@/components/user-avatar";
@@ -108,6 +109,7 @@ export function AppShell({
       <UpdateSkeleton />
       <TourManager role={role} release={release} />
       <AssistantWidget />
+      <FeedbackWidget />
       {navOpen && (
         <div
           onClick={() => setNavOpen(false)}
