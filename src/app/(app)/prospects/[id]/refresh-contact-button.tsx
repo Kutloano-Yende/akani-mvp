@@ -28,17 +28,28 @@ export function RefreshContactButton({ prospectId }: { prospectId: string }) {
   }
 
   return (
-    <div className="mt-3 border-t border-akani-card-border pt-3">
+    <div className="mt-3 rounded-md bg-akani-warning-bg p-3">
+      <p className="text-xs font-medium text-akani-warning">
+        Missing contact details — this company may just not have been looked up yet.
+      </p>
       <button
         type="button"
         onClick={run}
         disabled={loading}
-        className="w-full rounded-md border border-akani-card-border px-3 py-1.5 text-xs font-medium text-akani-text-primary transition hover:bg-akani-page-bg disabled:opacity-50"
+        className="mt-2 w-full rounded-md bg-akani-gold px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-akani-gold-bright disabled:opacity-60"
       >
         {loading ? "Checking…" : "Refresh contact details"}
       </button>
-      {result && <p className="mt-1 text-xs text-akani-text-muted">{result}</p>}
-      {error && <p className="mt-1 text-xs text-akani-error">{error}</p>}
+      {result && (
+        <p className="mt-2 rounded-md bg-white px-2.5 py-1.5 text-xs font-medium text-akani-text-primary">
+          {result}
+        </p>
+      )}
+      {error && (
+        <p className="mt-2 rounded-md bg-akani-error-bg px-2.5 py-1.5 text-xs font-medium text-akani-error">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
