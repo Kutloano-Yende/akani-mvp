@@ -221,6 +221,15 @@ export default async function ProspectDetailPage({
               <Detail label="Employees" value={company.employee_count} />
               <Detail label="Revenue" value={company.revenue_range} />
               <Detail label="Website" value={company.website} />
+              {/* The company-level email/phone a provider returns (no named
+                  person attached) -- distinct from the Contacts card above,
+                  which only lists people from the contacts table. Campaign
+                  sending already falls back to this when there's no named
+                  contact (see planRecipients in src/lib/email/plan.ts); this
+                  just makes that same email visible here instead of only in
+                  the database. */}
+              <Detail label="Email" value={company.email} />
+              <Detail label="Phone" value={company.phone} />
               <Detail label="Address" value={company.address} />
             </dl>
           </section>
