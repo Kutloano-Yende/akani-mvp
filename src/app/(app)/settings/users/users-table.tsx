@@ -12,6 +12,7 @@ type Profile = {
   name: string;
   role: Role;
   created_at: string;
+  email: string | null;
 };
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -84,6 +85,7 @@ export function UsersTable({
         <thead>
           <tr className="border-b border-akani-card-border text-akani-text-muted">
             <th className="py-2 font-medium">Name</th>
+            <th className="hidden sm:table-cell py-2 font-medium">Email</th>
             <th className="py-2 font-medium">Role</th>
             <th className="hidden sm:table-cell py-2 font-medium">Joined</th>
             <th className="py-2 font-medium"></th>
@@ -98,6 +100,7 @@ export function UsersTable({
                   <span className="ml-2 text-xs text-akani-text-muted">(you)</span>
                 )}
               </td>
+              <td className="hidden sm:table-cell py-3 text-akani-text-secondary">{profile.email ?? "—"}</td>
               <td className="py-3">
                 <Select
                   aria-label={`Role for ${profile.name}`}

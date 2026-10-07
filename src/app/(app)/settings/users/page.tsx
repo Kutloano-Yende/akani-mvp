@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
+import { fetchUserEmails } from "@/lib/auth/user-emails";
 import { UsersTable } from "./users-table";
 import { InviteUserForm } from "./invite-user-form";
 
@@ -11,10 +12,12 @@ export default async function UsersSettingsPage() {
   }
 
   const supabase = await createClient();
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, name, role, created_at")
-    .order("created_at", { ascending: true });
+  const [{ data: profiles }, emailsByUserId] = await Promise.all([
+    supabase.from("profiles").select("id, name, role, created_at").order("created_at", { ascending: true }),
+    fetchUserEmails(),
+  ]);
+
+  const profilesWithEmail = (profiles ?? []).map((p) => ({ ...p, email: emailsByUserId.get(p.id) ?? null }));
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -24,7 +27,7 @@ export default async function UsersSettingsPage() {
           Manage roles for everyone with access to Akani. Admins can see and manage suppression
           lists, audit logs, and other team members.
         </p>
-        <UsersTable profiles={profiles ?? []} currentUserId={check.userId} />
+        <UsersTable profiles={profilesWithEmail} currentUserId={check.userId} />
       </section>
 
       <section data-tour="invite-team" className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">

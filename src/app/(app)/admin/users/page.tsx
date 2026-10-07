@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { fetchUserEmails } from "@/lib/auth/user-emails";
 import { ImpersonateButton } from "./impersonate-button";
 import { UserStatusActions } from "./user-status-actions";
 
@@ -11,19 +12,21 @@ export default async function SuperAdminUsersPage({
   const { tenant: tenantFilter } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: tenants }, usersQuery, { data: platformAdmins }, { data: userData }] = await Promise.all([
-    supabase.from("tenants").select("id, name").order("name"),
-    (async () => {
-      let query = supabase
-        .from("profiles")
-        .select("id, name, role, status, created_at, tenant_id, tenants(name)")
-        .order("created_at", { ascending: false });
-      if (tenantFilter) query = query.eq("tenant_id", tenantFilter);
-      return query;
-    })(),
-    supabase.from("platform_admins").select("user_id"),
-    supabase.auth.getUser(),
-  ]);
+  const [{ data: tenants }, usersQuery, { data: platformAdmins }, { data: userData }, emailsByUserId] =
+    await Promise.all([
+      supabase.from("tenants").select("id, name").order("name"),
+      (async () => {
+        let query = supabase
+          .from("profiles")
+          .select("id, name, role, status, created_at, tenant_id, tenants(name)")
+          .order("created_at", { ascending: false });
+        if (tenantFilter) query = query.eq("tenant_id", tenantFilter);
+        return query;
+      })(),
+      supabase.from("platform_admins").select("user_id"),
+      supabase.auth.getUser(),
+      fetchUserEmails(),
+    ]);
   const { data: users } = usersQuery;
   const platformAdminIds = new Set((platformAdmins ?? []).map((p) => p.user_id));
   const platformAdminCount = platformAdminIds.size;
@@ -71,6 +74,7 @@ export default async function SuperAdminUsersPage({
             <thead>
               <tr className="border-b border-akani-card-border text-akani-text-muted">
                 <th className="py-2 font-medium">Name</th>
+                <th className="py-2 font-medium">Email</th>
                 <th className="py-2 font-medium">Tenant</th>
                 <th className="py-2 font-medium">Role</th>
                 <th className="py-2 font-medium">Joined</th>
@@ -103,6 +107,7 @@ export default async function SuperAdminUsersPage({
                         </span>
                       )}
                     </td>
+                    <td className="py-3 text-akani-text-secondary">{emailsByUserId.get(u.id) || "—"}</td>
                     <td className="py-3 text-akani-text-secondary">
                       {tenant?.name ?? "—"}
                       {isPlatformAdmin && <span className="text-akani-text-muted"> (also platform-wide)</span>}
@@ -125,7 +130,7 @@ export default async function SuperAdminUsersPage({
               })}
               {(users ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-akani-text-muted">
+                  <td colSpan={6} className="py-6 text-center text-akani-text-muted">
                     No users found.
                   </td>
                 </tr>
