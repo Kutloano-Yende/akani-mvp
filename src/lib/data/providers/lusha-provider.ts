@@ -14,6 +14,18 @@ const str = (v: unknown): string | null => {
 };
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
+// Confirmed against a real production enrich response, 2026-10-07: despite
+// the docs' prose implying a flat "phone"/"email", the actual company
+// object carries plural arrays -- phones: [{ number }], emails: [{ email }]
+// -- so reading r.phone/r.email (singular) silently returned undefined for
+// every company. Takes the first entry; Lusha doesn't document a sort order
+// for "best" contact, so first is as good a default as any.
+const firstArrayField = (arr: unknown, key: string): string | null => {
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+  const first = arr[0] as Record<string, unknown> | undefined;
+  return str(first?.[key] ?? null);
+};
+
 // Verified against Lusha's V3 API docs (docs.lusha.com/apis/openapi/prospecting)
 // and its mock server, 2026-09-28.
 export function buildFilters(params: ProviderSearchParams) {
@@ -65,9 +77,9 @@ export function mapPreview(raw: unknown): ProviderCompany | null {
   };
 }
 
-// Maps a V3EnrichedCompany (Enrich Companies result). phone/email are part of
-// the base (non-premium) response — confirmed in the docs and against Lusha's
-// mock server, not assumed. Location isn't repeated here, so mergeCompany
+// Maps a V3EnrichedCompany (Enrich Companies result). phone/email come from
+// the base (non-premium) response — confirmed against a real production
+// response, not assumed. Location isn't repeated here, so mergeCompany
 // keeps the province/city already known from the search step.
 export function mapEnriched(raw: unknown): ProviderCompany | null {
   const r = raw as Record<string, unknown>;
@@ -88,8 +100,8 @@ export function mapEnriched(raw: unknown): ProviderCompany | null {
     employeeCount: num(employeeCount?.exact) ?? num(employeeCount?.max) ?? num(employeeCount?.min),
     revenueRange: null,
     website: str(r.domain),
-    phone: str(r.phone),
-    email: str(r.email),
+    phone: firstArrayField(r.phones, "number"),
+    email: firstArrayField(r.emails, "email"),
     address: null,
     // Company-level enrich doesn't return a named person; Lusha has a
     // separate Contacts API for that, not wired up here.
@@ -128,14 +140,6 @@ export class LushaProvider implements DataProvider {
       }
       const body = await res.json();
       const record = Array.isArray(body?.results) ? body.results[0] : null;
-      // TEMPORARY diagnostic: confirm exactly what Lusha's live enrich
-      // response contains for phone/email before mapping, since imported
-      // companies are coming through with both null. Remove once resolved.
-      console.log(
-        "Lusha enrich raw record keys:",
-        record ? Object.keys(record) : null,
-        "phone:", record?.phone, "email:", record?.email, "has:", record?.has,
-      );
       const full = record ? mapEnriched(record) : null;
       return full ? mergeCompany(company, full) : null;
     } catch (err) {

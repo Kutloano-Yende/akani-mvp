@@ -14,14 +14,19 @@ const preview = {
   has: ["phones", "emails"],
 };
 
+// phones/emails shape confirmed against a REAL production enrich response,
+// 2026-10-07 -- the docs/mock-server example above used singular "phone"/
+// "email" strings, which turned out not to match what the live API actually
+// sends (plural arrays), and every production import silently got null
+// contact details as a result. See the git history for the bug this fixed.
 const enriched = {
   id: "16303253",
   name: "Lusha",
   domain: "www.lusha.com",
   employeeCount: { exact: 364, min: 201, max: 500 },
   industry: "Technology, Information & Media",
-  phone: "(480) 729-6394",
-  email: "info@lusha.com",
+  phones: [{ number: "(480) 729-6394" }],
+  emails: [{ email: "info@lusha.com" }],
 };
 
 describe("buildFilters", () => {
@@ -107,5 +112,10 @@ describe("mapEnriched", () => {
 
   it("returns null without an id or name", () => {
     expect(mapEnriched({})).toBeNull();
+  });
+
+  it("leaves phone/email null when a company has no entries in those arrays", () => {
+    const c = mapEnriched({ ...enriched, phones: [], emails: undefined });
+    expect(c).toMatchObject({ phone: null, email: null });
   });
 });
