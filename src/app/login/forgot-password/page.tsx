@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { AkaniLogo } from "@/components/akani-logo";
 import { requestPasswordReset, type ActionResult } from "../actions";
 
 export default function ForgotPasswordPage() {
@@ -16,42 +17,39 @@ export default function ForgotPasswordPage() {
   const submitted = state !== undefined;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-akani-page-bg px-4">
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">Reset your password</h1>
-        <p className="mb-6 text-sm text-slate-500">
+        <div className="mb-6 flex justify-center">
+          <AkaniLogo size="sm" />
+        </div>
+        <h1 className="mb-1 text-center text-xl font-semibold text-akani-text-primary">Reset your password</h1>
+        <p className="mb-6 text-center text-sm text-akani-text-muted">
           We&apos;ll email you a link to reset your password.
         </p>
 
         {submitted ? (
-          <div className="rounded-md bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+          <div className="rounded-md bg-akani-success-bg px-3 py-3 text-sm text-akani-success">
             If an account exists for that email, a reset link is on its way.
           </div>
         ) : (
-          <form action={formAction} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <form action={formAction} className="space-y-4 rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="email" className="block text-sm font-medium text-akani-text-primary">
                 Email
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              />
+              <input id="email" name="email" type="email" required className="input mt-1" />
             </div>
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+              className="w-full rounded-md bg-akani-navy px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-akani-deep-blue disabled:opacity-60"
             >
               {pending ? "Sending…" : "Send reset link"}
             </button>
           </form>
         )}
 
-        <Link href="/login" className="mt-4 block text-center text-sm font-medium text-emerald-700 hover:text-emerald-800">
+        <Link href="/login" className="mt-4 block text-center text-sm font-medium text-akani-gold hover:underline">
           Back to sign in
         </Link>
       </div>
