@@ -4,7 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
-import { getAppUrl } from "@/lib/email/provider";
+import { getAppUrl, sendEmail, sendingUnavailable } from "@/lib/email/provider";
+import { buildPasswordResetEmail } from "@/lib/auth/password-reset-email";
 import { rateLimit } from "@/lib/rate-limit";
 
 export type ActionResult = { error: string } | void;
@@ -56,7 +57,6 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
     return;
   }
 
-  const supabase = await createClient();
   // NEXT_PUBLIC_SITE_URL was never actually set on Vercel, so this silently
   // fell back to localhost in production. APP_URL is the one real env var
   // this app uses for its own public address (see getAppUrl).
@@ -64,9 +64,30 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
   const host = h.get("host");
   const origin = getAppUrl(h.get("origin") ?? (host ? `https://${host}` : "http://localhost:3000"));
 
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/auth/update-password`,
-  });
+  // Sent through Akani's own branded pipeline, same as invites, instead of
+  // Supabase's default-styled reset email. generateLink needs the
+  // service-role key and errors for an email with no account; both cases
+  // are swallowed here so this never reveals whether an address is
+  // registered -- the caller always shows the same generic message either way.
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      const admin = createAdminClient();
+      const { data } = await admin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo: `${origin}/auth/callback?next=/auth/update-password` },
+      });
+      if (data?.properties?.action_link && !sendingUnavailable()) {
+        const resetEmail = buildPasswordResetEmail(data.properties.action_link, origin);
+        await sendEmail({ to: email, subject: resetEmail.subject, html: resetEmail.html, text: resetEmail.text });
+      }
+    } catch (err) {
+      console.error("Password reset email failed", err);
+    }
+  } else {
+    console.error("Password reset requested but SUPABASE_SERVICE_ROLE_KEY is not configured.");
+  }
 
   // Always report success, whether or not the email exists, to avoid
   // leaking which addresses are registered.
