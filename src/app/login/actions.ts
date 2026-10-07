@@ -1,12 +1,13 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { getAppUrl, sendEmail, sendingUnavailable } from "@/lib/email/provider";
 import { buildPasswordResetEmail } from "@/lib/auth/password-reset-email";
 import { rateLimit } from "@/lib/rate-limit";
+import { LAST_ACTIVITY_COOKIE } from "@/lib/idle-timeout";
 
 export type ActionResult = { error: string } | void;
 
@@ -29,11 +30,38 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: "Incorrect email or password." };
   }
+
+  // An admin may have suspended this account -- check before letting the
+  // session stand, the same way the middleware checks on every later
+  // request (see src/lib/supabase/middleware.ts).
+  if (signInData.user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", signInData.user.id)
+      .maybeSingle();
+    if (profile?.status === "suspended") {
+      await supabase.auth.signOut();
+      return { error: "Your account has been suspended. Contact an administrator." };
+    }
+  }
+
+  // Baseline for the idle-timeout feature -- without this there'd be a gap
+  // from sign-in until the first mouse move before any last_activity value
+  // exists at all (see src/components/idle-timeout-manager.tsx).
+  const cookieStore = await cookies();
+  cookieStore.set(LAST_ACTIVITY_COOKIE, Date.now().toString(), {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24,
+  });
 
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 

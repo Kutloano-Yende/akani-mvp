@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ImpersonateButton } from "./impersonate-button";
+import { UserStatusActions } from "./user-status-actions";
 
 export default async function SuperAdminUsersPage({
   searchParams,
@@ -10,20 +11,23 @@ export default async function SuperAdminUsersPage({
   const { tenant: tenantFilter } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: tenants }, usersQuery, { data: platformAdmins }] = await Promise.all([
+  const [{ data: tenants }, usersQuery, { data: platformAdmins }, { data: userData }] = await Promise.all([
     supabase.from("tenants").select("id, name").order("name"),
     (async () => {
       let query = supabase
         .from("profiles")
-        .select("id, name, role, created_at, tenant_id, tenants(name)")
+        .select("id, name, role, status, created_at, tenant_id, tenants(name)")
         .order("created_at", { ascending: false });
       if (tenantFilter) query = query.eq("tenant_id", tenantFilter);
       return query;
     })(),
     supabase.from("platform_admins").select("user_id"),
+    supabase.auth.getUser(),
   ]);
   const { data: users } = usersQuery;
   const platformAdminIds = new Set((platformAdmins ?? []).map((p) => p.user_id));
+  const platformAdminCount = platformAdminIds.size;
+  const currentUserId = userData.user?.id;
 
   return (
     <div className="space-y-4">
@@ -77,6 +81,13 @@ export default async function SuperAdminUsersPage({
               {(users ?? []).map((u) => {
                 const tenant = Array.isArray(u.tenants) ? u.tenants[0] : u.tenants;
                 const isPlatformAdmin = platformAdminIds.has(u.id);
+                const isSelf = u.id === currentUserId;
+                const isLastPlatformAdmin = isPlatformAdmin && platformAdminCount <= 1;
+                const disabledReason = isSelf
+                  ? "You can't do this to your own account"
+                  : isLastPlatformAdmin
+                    ? "This is the last remaining platform admin"
+                    : undefined;
                 return (
                   <tr key={u.id} className="border-b border-akani-card-border last:border-0">
                     <td className="py-3 font-medium text-akani-text-primary">
@@ -84,6 +95,11 @@ export default async function SuperAdminUsersPage({
                       {isPlatformAdmin && (
                         <span className="ml-2 rounded-full bg-akani-gold/15 px-2 py-0.5 text-xs font-semibold text-akani-gold">
                           Super Admin
+                        </span>
+                      )}
+                      {u.status === "suspended" && (
+                        <span className="ml-2 rounded-full bg-akani-error-bg px-2 py-0.5 text-xs font-semibold text-akani-error">
+                          Suspended
                         </span>
                       )}
                     </td>
@@ -94,7 +110,15 @@ export default async function SuperAdminUsersPage({
                     <td className="py-3 capitalize text-akani-text-secondary">{u.role}</td>
                     <td className="py-3 text-akani-text-muted">{new Date(u.created_at).toLocaleDateString("en-ZA")}</td>
                     <td className="py-3">
-                      {!isPlatformAdmin && <ImpersonateButton userId={u.id} name={u.name} />}
+                      <div className="flex flex-col items-end gap-1.5">
+                        {!isPlatformAdmin && <ImpersonateButton userId={u.id} name={u.name} />}
+                        <UserStatusActions
+                          userId={u.id}
+                          name={u.name}
+                          status={u.status === "suspended" ? "suspended" : "active"}
+                          disabledReason={disabledReason}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );

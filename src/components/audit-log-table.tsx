@@ -32,6 +32,10 @@ export const ACTION_LABELS: Record<string, string> = {
   LEAD_REPLY_ACK_FAILED: "Reply acknowledgment failed",
   IMPERSONATION_STARTED: "Started impersonating a user",
   IMPERSONATION_ENDED: "Ended impersonation",
+  SESSION_EXPIRED: "Signed out (inactivity)",
+  USER_SUSPENDED: "Suspended user",
+  USER_REACTIVATED: "Reactivated user",
+  USER_DELETED: "Deleted user",
 };
 
 export type AuditLogRow = {

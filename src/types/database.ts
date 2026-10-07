@@ -969,6 +969,8 @@ export type Database = {
           name: string
           role: Database["public"]["Enums"]["user_role"]
           sidebar_collapsed: boolean
+          status: string
+          suspended_at: string | null
           tenant_id: string | null
           updated_at: string
         }
@@ -979,6 +981,8 @@ export type Database = {
           name: string
           role?: Database["public"]["Enums"]["user_role"]
           sidebar_collapsed?: boolean
+          status?: string
+          suspended_at?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
@@ -989,6 +993,8 @@ export type Database = {
           name?: string
           role?: Database["public"]["Enums"]["user_role"]
           sidebar_collapsed?: boolean
+          status?: string
+          suspended_at?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
@@ -1170,6 +1176,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_user_status: {
+        Args: { new_status: string; target_user_id: string }
+        Returns: undefined
+      }
       admin_update_user_role: {
         Args: {
           new_role: Database["public"]["Enums"]["user_role"]
@@ -1233,6 +1243,7 @@ export type Database = {
       }
       lead_reply_received: { Args: { p_token: string }; Returns: Json }
       unsubscribe_by_token: { Args: { p_token: string }; Returns: boolean }
+      user_has_history: { Args: { target_user_id: string }; Returns: boolean }
     }
     Enums: {
       application_status: "submitted" | "approved" | "rejected"

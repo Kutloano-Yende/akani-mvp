@@ -6,12 +6,18 @@ import { AkaniLogo } from "@/components/akani-logo";
 import { SecurityCard } from "@/components/security-card";
 import { SalesNetworkVisual } from "@/components/sales-network-visual";
 
+const REASON_NOTICES: Record<string, { message: string; tone: "info" | "error" }> = {
+  idle: { message: "You were signed out after a period of inactivity.", tone: "info" },
+  suspended: { message: "Your account has been suspended. Contact an administrator.", tone: "error" },
+};
+
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; reason?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, reason } = await searchParams;
+  const notice = reason ? REASON_NOTICES[reason] : undefined;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0b0f1a] p-4 sm:p-8">
@@ -32,6 +38,17 @@ export default async function LoginPage({
             <p className="login-subtext mt-1 text-sm text-akani-muted">
               Sign in to your Akani Sales Intelligent System
             </p>
+
+            {notice && (
+              <div
+                role="alert"
+                className={`mt-4 rounded-md px-3 py-2 text-sm ${
+                  notice.tone === "error" ? "bg-akani-error-bg text-akani-error" : "bg-akani-info-bg text-akani-info"
+                }`}
+              >
+                {notice.message}
+              </div>
+            )}
 
             <div className="mt-4">
               <LoginForm next={next ?? "/dashboard"} />
