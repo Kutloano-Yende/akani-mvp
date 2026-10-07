@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python reference implementation (porting source for the OSM discovery
+# provider) -- not part of this app, not meant to be committed here.
+/sa-business-lead-finder/

@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ProviderCompany } from "@/lib/data/provider";
 import { OpportunityBadge } from "@/components/status-badge";
 import { Select } from "@/components/select";
+import { INDUSTRIES, PROVINCES } from "@/lib/constants/sa-regions";
 
 type SearchResult = ProviderCompany & {
   opportunityScore: number;
@@ -13,28 +14,6 @@ type SearchResult = ProviderCompany & {
   alreadyImported: boolean;
   possibleDuplicateOf: string | null;
 };
-
-const INDUSTRIES = [
-  "Construction",
-  "Manufacturing",
-  "Engineering",
-  "Facilities Management",
-  "Transport & Logistics",
-  "Retail",
-  "Agriculture",
-];
-
-const PROVINCES = [
-  "Gauteng",
-  "Western Cape",
-  "KwaZulu-Natal",
-  "Eastern Cape",
-  "Free State",
-  "Mpumalanga",
-  "North West",
-  "Limpopo",
-  "Northern Cape",
-];
 
 export function DiscoverForm() {
   const [filters, setFilters] = useState({
@@ -47,20 +26,29 @@ export function DiscoverForm() {
   });
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<"auto" | "osm" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState<string | null>(null);
   const [imported, setImported] = useState<Set<string>>(new Set());
 
-  async function handleSearch(e: React.FormEvent) {
+  async function handleSearch(e: React.FormEvent, mode: "auto" | "osm") {
     e.preventDefault();
-    setLoading(true);
+    if (loadingProvider) return;
     setError(null);
+    // OpenStreetMap's public search needs a province to stay fast and
+    // reliable (confirmed against the real API: a whole-country query
+    // times out) -- check client-side first so this doesn't cost a round
+    // trip, though the server enforces the same rule.
+    if (mode === "osm" && !filters.province) {
+      setError("Pick a province to search OpenStreetMap — a nationwide search isn't reliable on the free public service.");
+      return;
+    }
+    setLoadingProvider(mode);
     try {
       const res = await fetch("/api/data-provider/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(filters),
+        body: JSON.stringify({ ...filters, provider: mode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -74,7 +62,7 @@ export function DiscoverForm() {
       setError("Search failed. Check your connection and try again.");
       setResults(null);
     } finally {
-      setLoading(false);
+      setLoadingProvider(null);
     }
   }
 
@@ -102,7 +90,7 @@ export function DiscoverForm() {
   return (
     <div className="space-y-6">
       <form
-        onSubmit={handleSearch}
+        onSubmit={(e) => e.preventDefault()}
         className="grid grid-cols-1 gap-4 rounded-xl border border-akani-card-border bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3"
       >
         <Field label="Industry">
@@ -131,6 +119,10 @@ export function DiscoverForm() {
             className="input"
             placeholder="e.g. Johannesburg"
           />
+          <p className="mt-1 text-xs text-akani-text-muted">
+            For OpenStreetMap, this narrows results after they come back rather than the search itself — small
+            places aren&apos;t always mapped precisely enough to filter on directly.
+          </p>
         </Field>
 
         <Field label="Employees (min)">
@@ -165,13 +157,22 @@ export function DiscoverForm() {
           />
         </Field>
 
-        <div className="sm:col-span-2 lg:col-span-3">
+        <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
           <button
-            type="submit"
-            disabled={loading}
+            type="button"
+            onClick={(e) => handleSearch(e, "auto")}
+            disabled={loadingProvider !== null}
             className="rounded-md bg-akani-gold px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
           >
-            {loading ? "Searching…" : "Find businesses"}
+            {loadingProvider === "auto" ? "Searching…" : "Find businesses"}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => handleSearch(e, "osm")}
+            disabled={loadingProvider !== null}
+            className="rounded-md border border-akani-card-border px-5 py-2 text-sm font-medium text-akani-text-primary shadow-sm hover:bg-akani-page-bg disabled:opacity-60"
+          >
+            {loadingProvider === "osm" ? "Searching…" : "Search OpenStreetMap (free)"}
           </button>
         </div>
       </form>
@@ -189,6 +190,9 @@ export function DiscoverForm() {
           <div className="border-b border-akani-card-border px-6 py-4">
             <h2 className="text-sm font-semibold text-akani-text-primary">
               {results.length} result{results.length === 1 ? "" : "s"}
+              {results[0]?.source && (
+                <span className="ml-2 font-normal text-akani-text-muted">· Source: {results[0].source}</span>
+              )}
             </h2>
           </div>
           <div className="overflow-x-auto">
@@ -200,6 +204,7 @@ export function DiscoverForm() {
                 <th className="hidden md:table-cell px-4 py-3 font-medium sm:px-6">Province</th>
                 <th className="hidden lg:table-cell px-4 py-3 font-medium sm:px-6">Phone</th>
                 <th className="hidden lg:table-cell px-4 py-3 font-medium sm:px-6">Email</th>
+                <th className="hidden lg:table-cell px-4 py-3 font-medium sm:px-6">Website</th>
                 <th className="px-4 py-3 sm:px-6 font-medium">Opportunity</th>
                 <th className="px-4 py-3 sm:px-6 font-medium"></th>
               </tr>
@@ -224,6 +229,20 @@ export function DiscoverForm() {
                     <td className="hidden md:table-cell px-6 py-3 text-akani-text-secondary">{r.province}</td>
                     <td className="hidden lg:table-cell px-6 py-3 text-akani-text-secondary">{r.phone ?? "—"}</td>
                     <td className="hidden lg:table-cell px-6 py-3 text-akani-text-secondary">{r.email ?? "—"}</td>
+                    <td className="hidden lg:table-cell px-6 py-3 text-akani-text-secondary">
+                      {r.website ? (
+                        <a
+                          href={r.website.startsWith("http") ? r.website : `https://${r.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-akani-gold hover:underline"
+                        >
+                          {r.website}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="px-4 py-3 sm:px-6">
                       <OpportunityBadge level={r.opportunityLevel} />
                     </td>
@@ -249,7 +268,7 @@ export function DiscoverForm() {
               })}
               {results.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-akani-text-muted">
+                  <td colSpan={8} className="px-6 py-8 text-center text-akani-text-muted">
                     No businesses matched those filters. Try widening your search.
                   </td>
                 </tr>

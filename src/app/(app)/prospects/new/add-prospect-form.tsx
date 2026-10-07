@@ -3,28 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Select } from "@/components/select";
-
-const INDUSTRIES = [
-  "Construction",
-  "Manufacturing",
-  "Engineering",
-  "Facilities Management",
-  "Transport & Logistics",
-  "Retail",
-  "Agriculture",
-];
-
-const PROVINCES = [
-  "Gauteng",
-  "Western Cape",
-  "KwaZulu-Natal",
-  "Eastern Cape",
-  "Free State",
-  "Mpumalanga",
-  "North West",
-  "Limpopo",
-  "Northern Cape",
-];
+import { INDUSTRIES, PROVINCES } from "@/lib/constants/sa-regions";
 
 const EMPTY_FORM = {
   companyName: "",

@@ -1,4 +1,5 @@
 import type { DataProvider, ProviderCompany, ProviderSearchParams } from "../types";
+import { PROVINCES } from "@/lib/constants/sa-regions";
 
 const SOURCE = "CompanyData";
 const DEFAULT_BASE_URL = "https://app.companydata.com";
@@ -94,10 +95,6 @@ export function formatRevenue(zar: number | null): string | null {
   return "R250m+";
 }
 
-const PROVINCES = [
-  "Gauteng", "Western Cape", "KwaZulu-Natal", "Eastern Cape", "Free State",
-  "Mpumalanga", "North West", "Limpopo", "Northern Cape",
-];
 const PROVINCE_BY_KEY = new Map(PROVINCES.map((p) => [p.toLowerCase().replace(/[^a-z]/g, ""), p]));
 
 // The API spells provinces its own way ("Kwazulu-natal"); use the same names as

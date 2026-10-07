@@ -67,6 +67,48 @@ are still blank and only needed for features beyond Sprint 1's mock data:
   - Optional: `COMPANYDATA_PAGE_SIZE` (default 10, the most a trial key allows
     per export; paid plans allow more).
 
+  **OpenStreetMap** (`src/lib/data/providers/osm-provider.ts`) — a free,
+  always-available source, separate from the Lusha/CompanyData/Mock
+  selection above. It's reached only when explicitly chosen (the "Search
+  OpenStreetMap (free)" button on Discover Businesses), never silently —
+  with `LUSHA_API_KEY` configured, Lusha stays the default, OSM is there to
+  broaden coverage, not replace it.
+  - Needs no API key and works with zero configuration. Optional
+    `OVERPASS_URL` overrides the public instance
+    (`https://overpass-api.de/api/interpreter`) if you run your own. That
+    public instance is a **shared resource**, not a per-account quota like
+    Lusha/CompanyData — its documented guideline is under 10,000
+    queries/day, under 1GB/day, under 10 minutes of aggregate processing
+    time. It's also, in practice, intermittently overloaded; searches that
+    time out show a "busy, try again" message rather than failing hard.
+  - A province is **required** to search (confirmed against the real API:
+    a whole-country query reliably times out), and at least one of
+    industry or keyword is required alongside it. City is applied only as
+    a filter on the results that come back, not sent to Overpass itself —
+    small South African places often don't have a clean enough OSM
+    boundary for that to work reliably.
+  - Industry coverage is uneven: strong for Retail and Construction
+    (`src/lib/data/providers/osm/query.ts`'s `INDUSTRY_OSM_TAGS` leans on
+    OSM's `craft=`/`shop=` tags, which map well onto tradespeople and
+    shops), weak for Manufacturing/Engineering/Facilities
+    Management/Transport & Logistics — OSM's tagging vocabulary is
+    consumer/POI-centric, not built for B2B classification.
+  - No South African company registration number from OSM, so duplicate
+    detection for OSM-sourced companies relies entirely on name matching
+    (see `src/lib/data/dedupe.ts`), not the stronger registration-number
+    check other providers get.
+  - Email/phone enrichment (only run once a result is actually imported,
+    same billing-conscious pattern as Lusha/CompanyData) tries, in order:
+    (1) OSM's own `contact:email`/`email` tags, if present in the search
+    result already; (2) a narrow scrape of the business's own website —
+    the homepage plus up to two same-domain pages whose URL looks
+    contact-related, collecting only clearly public addresses like
+    `info@`/`sales@`/`contact@` (never a named individual's address,
+    never general crawling); (3) optionally, `HUNTER_API_KEY` — only used
+    when the scrape finds nothing, and **entirely optional**: OSM search
+    and the website scrape both work correctly with no Hunter key
+    configured at all.
+
 ```bash
 npm run dev
 ```

@@ -1,0 +1,120 @@
+import type { DataProvider, ProviderCompany, ProviderSearchParams } from "../types";
+import { buildQuery } from "./osm/query";
+import { parseElements } from "./osm/parse";
+import { findPublicEmails } from "./osm/website-scraper";
+import { domainSearch, verifyEmail } from "./osm/hunter";
+
+const SOURCE = "OpenStreetMap";
+const DEFAULT_OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+
+/**
+ * Thrown for a bad search request (missing province, missing
+ * industry/keyword) -- distinguished from a transport/server failure so
+ * the API route can surface this specific, actionable message instead of
+ * the generic "provider unavailable" fallback it uses for everything else.
+ */
+export class OsmValidationError extends Error {}
+
+export class OsmProvider implements DataProvider {
+  readonly name = SOURCE;
+
+  constructor(
+    private readonly overpassUrl: string = DEFAULT_OVERPASS_URL,
+    private readonly hunterApiKey?: string,
+  ) {}
+
+  async search(params: ProviderSearchParams): Promise<ProviderCompany[]> {
+    const built = buildQuery(params);
+    if (!built.ok) throw new OsmValidationError(built.error);
+
+    const res = await fetch(this.overpassUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `data=${encodeURIComponent(built.query)}`,
+      signal: AbortSignal.timeout(35_000),
+    });
+    if (!res.ok) this.fail(res.status, await this.errorDetail(res));
+
+    const body = await res.json().catch(() => null);
+    if (!body) throw new Error("OpenStreetMap returned an unreadable response.");
+
+    let companies = parseElements(body);
+
+    // City isn't reliable as an Overpass-level filter (confirmed against
+    // the real API: named small-place areas often don't resolve) -- only
+    // ever applied here, against whatever city tag came back.
+    if (params.city) {
+      const needle = params.city.trim().toLowerCase();
+      companies = companies.filter((c) => c.city?.toLowerCase().includes(needle));
+    }
+
+    return companies;
+  }
+
+  /**
+   * Ports sa_leads/pipeline.py's enrich_lead precedence exactly: try the
+   * website scrape first (prefer a generic-classified email); only if
+   * that finds nothing AND Hunter is configured, fall back to Hunter's
+   * domain search; verify via Hunter only as an internal confidence
+   * check -- an email that fails verification is simply not used, rather
+   * than persisting a status field nothing downstream reads. Enrichment
+   * failure must never break the import, so every external call here is
+   * wrapped and swallowed.
+   */
+  async enrich(company: ProviderCompany): Promise<ProviderCompany | null> {
+    if (!company.website) return company;
+
+    let email: string | null = null;
+
+    try {
+      const found = await findPublicEmails(company.website);
+      found.sort((a, b) => (a.type === "generic" ? 0 : 1) - (b.type === "generic" ? 0 : 1));
+      if (found.length > 0) email = found[0].email;
+    } catch (err) {
+      console.warn("OpenStreetMap website scrape failed", err);
+    }
+
+    if (!email && this.hunterApiKey) {
+      try {
+        const domain = new URL(company.website.startsWith("http") ? company.website : `https://${company.website}`).hostname.replace(/^www\./, "");
+        if (domain) {
+          const emails = await domainSearch(this.hunterApiKey, domain);
+          const candidate = emails.find((e) => e.type === "generic") ?? emails[0];
+          if (candidate?.value) email = candidate.value;
+        }
+      } catch (err) {
+        console.warn("Hunter domain search failed", err);
+      }
+    }
+
+    if (email && this.hunterApiKey) {
+      try {
+        const { status } = await verifyEmail(this.hunterApiKey, email);
+        if (status && status !== "valid" && status !== "accept_all") {
+          // Low-confidence result -- don't hand back an email we have
+          // reason to think is bad.
+          email = null;
+        }
+      } catch (err) {
+        console.warn("Hunter email verification failed", err);
+      }
+    }
+
+    return { ...company, email: email ?? company.email };
+  }
+
+  private async errorDetail(res: Response): Promise<string> {
+    const text = await res.text().catch(() => "");
+    // Overpass error responses are an HTML page, not JSON -- pull out the
+    // one line that actually says what went wrong, if present.
+    const match = text.match(/<strong[^>]*>Error<\/strong>:\s*([^<]+)/i);
+    return (match?.[1] ?? res.statusText).trim();
+  }
+
+  private fail(status: number, detail: string): never {
+    if (status === 504 || status === 429 || /too busy|timeout/i.test(detail)) {
+      throw new Error(`OpenStreetMap is busy right now — try a narrower search or try again shortly. (${detail})`);
+    }
+    throw new Error(`OpenStreetMap search failed: ${status} ${detail}`);
+  }
+}

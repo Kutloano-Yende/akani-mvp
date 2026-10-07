@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getProvider, scoreOpportunity, type ProviderCompany } from "@/lib/data/provider";
+import { scoreOpportunity, type ProviderCompany } from "@/lib/data/provider";
+import { resolveProviderFor } from "@/lib/data/get-provider";
 import { dailyLimitReached } from "@/lib/data/usage";
 import { rateLimit } from "@/lib/rate-limit";
 import { findDuplicate } from "@/lib/data/dedupe";
@@ -64,7 +65,10 @@ export async function POST(request: Request) {
     // Search results can carry only basic details (name and location). For a
     // company being newly imported, fetch its full record so the prospect has
     // contact details — one billable lookup, and only for companies actually chosen.
-    const provider = getProvider();
+    // resolveProviderFor (not getProvider directly) so this works correctly
+    // for an OSM-sourced company too, not just whichever paid provider is
+    // currently configured.
+    const provider = resolveProviderFor(company.source);
     if (
       provider.enrich &&
       company.source === provider.name &&

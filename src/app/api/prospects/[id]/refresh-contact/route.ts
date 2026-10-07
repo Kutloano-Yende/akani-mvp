@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getProvider, scoreOpportunity, type ProviderCompany } from "@/lib/data/provider";
+import { scoreOpportunity, type ProviderCompany } from "@/lib/data/provider";
+import { resolveProviderFor } from "@/lib/data/get-provider";
 import { mergeCompany } from "@/lib/data/providers/companydata-provider";
 import { dailyLimitReached } from "@/lib/data/usage";
 import { rateLimit } from "@/lib/rate-limit";
@@ -41,7 +42,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Company not found" }, { status: 404 });
   }
 
-  const provider = getProvider();
+  const provider = resolveProviderFor(company.source ?? "");
   if (!provider.enrich || company.source !== provider.name) {
     return NextResponse.json(
       { error: `${company.source ?? "This source"} doesn't support refreshing contact details.` },
