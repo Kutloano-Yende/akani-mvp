@@ -76,7 +76,9 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
       const { data } = await admin.auth.admin.generateLink({
         type: "recovery",
         email,
-        options: { redirectTo: `${origin}/auth/callback?next=/auth/update-password` },
+        // Straight to the page, not via /auth/callback: see the comment on
+        // the equivalent invite link in invite-user.ts for why.
+        options: { redirectTo: `${origin}/auth/update-password` },
       });
       if (data?.properties?.action_link && !sendingUnavailable()) {
         const resetEmail = buildPasswordResetEmail(data.properties.action_link, origin);

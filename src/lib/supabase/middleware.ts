@@ -3,7 +3,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { getSupabaseEnv } from "./env";
 
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/unsubscribe", "/api/unsubscribe", "/permission", "/privacy", "/terms", "/contact-support", "/api/version", "/book", "/api/public", "/api/cron", "/api/webhooks"];
+// /auth/update-password is public for a real reason, not an oversight: a
+// recovery/invite link lands here with the session in a URL *hash*
+// fragment (GoTrue's only option for an admin-minted link -- there's no
+// PKCE verifier anywhere for it to exchange a `code` against). The server
+// never sees a hash, so the page itself has to read it client-side and
+// call setSession() before any session cookie exists -- which can't
+// happen if middleware already redirected the request to /login first.
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/auth/update-password", "/unsubscribe", "/api/unsubscribe", "/permission", "/privacy", "/terms", "/contact-support", "/api/version", "/book", "/api/public", "/api/cron", "/api/webhooks"];
 
 export async function updateSession(request: NextRequest) {
   // Every request passes through here, so a missing variable would otherwise

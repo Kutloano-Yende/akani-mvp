@@ -28,7 +28,12 @@ export async function inviteUser(
     email: params.email,
     options: {
       data: { name: params.name, tenant_id: params.tenantId },
-      redirectTo: `${appUrl}/auth/callback?next=/auth/update-password`,
+      // Straight to the page, not via /auth/callback: this is an admin-minted
+      // link, so GoTrue can only hand back the session as a URL *hash*
+      // fragment (no PKCE verifier exists for a `code` exchange) -- the
+      // callback route's server-side exchangeCodeForSession can't do
+      // anything with that. /auth/update-password reads the hash itself.
+      redirectTo: `${appUrl}/auth/update-password`,
     },
   });
   if (error) return { data: { user: null }, error: { message: error.message } };
