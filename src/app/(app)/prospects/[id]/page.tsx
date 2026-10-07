@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge, OpportunityBadge } from "@/components/status-badge";
 import { StatusActions } from "./status-actions";
 import { AssignProspect } from "./assign-prospect";
+import { RefreshContactButton } from "./refresh-contact-button";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canModifyProspect } from "@/lib/auth/prospect-access";
 
@@ -232,6 +233,9 @@ export default async function ProspectDetailPage({
               <Detail label="Phone" value={company.phone} />
               <Detail label="Address" value={company.address} />
             </dl>
+            {canAct && company.source && (!company.email || !company.phone) && (
+              <RefreshContactButton prospectId={prospect.id} />
+            )}
           </section>
 
           <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">

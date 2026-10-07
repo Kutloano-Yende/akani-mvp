@@ -36,6 +36,7 @@ export const ACTION_LABELS: Record<string, string> = {
   USER_SUSPENDED: "Suspended user",
   USER_REACTIVATED: "Reactivated user",
   USER_DELETED: "Deleted user",
+  CONTACT_REFRESHED: "Refreshed contact details",
 };
 
 export type AuditLogRow = {
