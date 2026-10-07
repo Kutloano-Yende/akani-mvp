@@ -29,7 +29,16 @@ export class OsmProvider implements DataProvider {
 
     const res = await fetch(this.overpassUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        // Overpass's public instance rejects requests with no identifiable
+        // client (406 Not Acceptable) -- confirmed in production: every
+        // manual curl test during development set this explicitly and
+        // never hit the issue, but Node's native fetch sends no
+        // User-Agent by default, and every real deployed request failed
+        // with 406 until this was added.
+        "User-Agent": "Akani-Discovery/0.1 (South African business discovery, https://akani-mvp.vercel.app)",
+      },
       body: `data=${encodeURIComponent(built.query)}`,
       signal: AbortSignal.timeout(35_000),
     });
