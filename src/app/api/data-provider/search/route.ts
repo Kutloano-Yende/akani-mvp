@@ -113,10 +113,18 @@ export async function POST(request: Request) {
     scored.length > 0 &&
     scored.every((r) => !r.email && !r.phone && !r.website);
 
-  return NextResponse.json({
-    results: scored,
-    notice: limitedDetail
-      ? "These results show company name and location only. Your data plan didn't return contact details for this search; a simpler search (fewer filters) may."
-      : null,
-  });
+  // Geoapify's search step structurally never returns contact fields --
+  // confirmed directly, not an occasional data-plan limitation like
+  // Lusha/CompanyData can have -- so this fires on every single Geoapify
+  // search with results, and "a simpler search may help" would be actively
+  // wrong (no filter combination changes this). Explain the real mechanism
+  // instead: contact details are looked up separately once a company is
+  // actually imported.
+  const notice = !limitedDetail
+    ? null
+    : provider.name === "Geoapify"
+      ? "These results show company name and location only — Geoapify looks up phone, email, and website separately, once you add a company to the pipeline."
+      : "These results show company name and location only. Your data plan didn't return contact details for this search; a simpler search (fewer filters) may.";
+
+  return NextResponse.json({ results: scored, notice });
 }
