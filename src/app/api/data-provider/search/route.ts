@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getProvider, scoreOpportunity } from "@/lib/data/provider";
-import { getOsmProvider } from "@/lib/data/get-provider";
+import { getGeoapifyProvider } from "@/lib/data/get-provider";
 import { OsmValidationError } from "@/lib/data/providers/osm-provider";
+import { GeoapifyValidationError } from "@/lib/data/providers/geoapify-provider";
 import { findDuplicate } from "@/lib/data/dedupe";
 import { rateLimit } from "@/lib/rate-limit";
 import { dailyLimitReached, dailyProviderLimit, MOCK_PROVIDER_NAME } from "@/lib/data/usage";
@@ -30,10 +31,12 @@ export async function POST(request: Request) {
 
   const body = await request.json();
 
-  // "osm" is an explicit opt-in to the free OpenStreetMap source,
-  // independent of whichever paid provider is configured -- "auto" (the
-  // default) is today's unchanged getProvider() selection.
-  const provider = body.provider === "osm" ? getOsmProvider() : getProvider();
+  // "geoapify" is an explicit opt-in to the Geoapify discovery source
+  // (replaced "osm" -- see get-provider.ts for why), independent of
+  // whichever paid provider is configured -- "auto" (the default, and
+  // what a stale "osm" value from an old client now safely falls
+  // through to) is today's unchanged getProvider() selection.
+  const provider = body.provider === "geoapify" ? getGeoapifyProvider() : getProvider();
 
   if (await dailyLimitReached(supabase, provider.name)) {
     return NextResponse.json(
@@ -53,7 +56,7 @@ export async function POST(request: Request) {
       city: body.city || undefined,
     });
   } catch (err) {
-    if (err instanceof OsmValidationError) {
+    if (err instanceof GeoapifyValidationError || err instanceof OsmValidationError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
     console.error(`${provider.name} search failed`, err);

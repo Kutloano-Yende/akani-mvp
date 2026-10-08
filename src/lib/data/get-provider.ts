@@ -3,9 +3,11 @@ import { MockProvider } from "./providers/mock-provider";
 import { CompanyDataProvider } from "./providers/companydata-provider";
 import { LushaProvider } from "./providers/lusha-provider";
 import { OsmProvider } from "./providers/osm-provider";
+import { GeoapifyProvider } from "./providers/geoapify-provider";
 
 let cached: DataProvider | null = null;
 let cachedOsm: DataProvider | null = null;
+let cachedGeoapify: DataProvider | null = null;
 
 /**
  * Returns the configured business-data provider. Lusha is preferred when
@@ -34,13 +36,16 @@ export function getProvider(): DataProvider {
 }
 
 /**
- * The OpenStreetMap provider is deliberately NOT part of getProvider()'s
- * fallback chain -- unlike Lusha/CompanyData/Mock, it needs no API key, so
- * if it were added as a further fallback it would simply never run in
- * production (LUSHA_API_KEY is already configured there). It's reached
- * only when a caller explicitly asks for it, via the `provider: "osm"`
- * param on /api/data-provider/search -- a separate, always-available
- * source to broaden coverage, not a backup for when the paid ones are down.
+ * The OpenStreetMap provider is kept in place but is no longer reachable
+ * from Discover Businesses' UI or the search route's `provider` param --
+ * the free public Overpass instance proved unreliable in production
+ * (confirmed directly, and in OSM's own docs: "do not expect high
+ * reliability", "commercial use should use self-hosted or paid Overpass
+ * servers") and has been replaced by getGeoapifyProvider() below. This
+ * function stays exported, and OsmProvider stays imported, specifically
+ * so resolveProviderFor() can still correctly route any company that was
+ * already imported from OpenStreetMap before the switch -- removing this
+ * would silently break "Refresh contact details" for those rows.
  */
 export function getOsmProvider(): DataProvider {
   if (cachedOsm) return cachedOsm;
@@ -49,13 +54,27 @@ export function getOsmProvider(): DataProvider {
 }
 
 /**
+ * Geoapify is the current free-tier discovery source -- a commercial,
+ * SLA-backed API (unlike the public Overpass instance it replaced), reached
+ * only via an explicit `provider: "geoapify"` opt-in, never silently
+ * replacing Lusha/CompanyData when they're configured.
+ */
+export function getGeoapifyProvider(): DataProvider {
+  if (cachedGeoapify) return cachedGeoapify;
+  cachedGeoapify = new GeoapifyProvider(process.env.GEOAPIFY_API_KEY ?? "", process.env.HUNTER_API_KEY || undefined);
+  return cachedGeoapify;
+}
+
+/**
  * Picks the right provider instance for a company that already exists
  * (import-time enrich, "Refresh contact details") based on which provider
- * originally sourced it -- getProvider() alone would be wrong here for an
- * OSM-sourced company, since it always returns whichever paid provider is
- * currently configured, regardless of where this particular company
- * actually came from.
+ * originally sourced it -- getProvider() alone would be wrong here for a
+ * Geoapify- or OpenStreetMap-sourced company, since it always returns
+ * whichever paid provider is currently configured, regardless of where
+ * this particular company actually came from.
  */
 export function resolveProviderFor(source: string): DataProvider {
-  return source === getOsmProvider().name ? getOsmProvider() : getProvider();
+  if (source === getGeoapifyProvider().name) return getGeoapifyProvider();
+  if (source === getOsmProvider().name) return getOsmProvider();
+  return getProvider();
 }

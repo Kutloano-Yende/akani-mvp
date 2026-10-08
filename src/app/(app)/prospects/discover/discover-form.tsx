@@ -26,21 +26,21 @@ export function DiscoverForm() {
   });
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [loadingProvider, setLoadingProvider] = useState<"auto" | "osm" | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<"auto" | "geoapify" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState<string | null>(null);
   const [imported, setImported] = useState<Set<string>>(new Set());
 
-  async function handleSearch(e: React.FormEvent, mode: "auto" | "osm") {
+  async function handleSearch(e: React.FormEvent, mode: "auto" | "geoapify") {
     e.preventDefault();
     if (loadingProvider) return;
     setError(null);
-    // OpenStreetMap's public search needs a province to stay fast and
-    // reliable (confirmed against the real API: a whole-country query
-    // times out) -- check client-side first so this doesn't cost a round
-    // trip, though the server enforces the same rule.
-    if (mode === "osm" && !filters.province) {
-      setError("Pick a province to search OpenStreetMap — a nationwide search isn't reliable on the free public service.");
+    // Geoapify's categories param is required by the API, and a province
+    // keeps the search scoped to a sensible bounding box -- check
+    // client-side first so this doesn't cost a round trip, though the
+    // server enforces the same rule.
+    if (mode === "geoapify" && (!filters.province || !filters.industry)) {
+      setError("Pick a province and an industry to search Geoapify — both are required.");
       return;
     }
     setLoadingProvider(mode);
@@ -120,8 +120,8 @@ export function DiscoverForm() {
             placeholder="e.g. Johannesburg"
           />
           <p className="mt-1 text-xs text-akani-text-muted">
-            For OpenStreetMap, this narrows results after they come back rather than the search itself — small
-            places aren&apos;t always mapped precisely enough to filter on directly.
+            For Geoapify, this narrows results after they come back rather than the search itself — small places
+            aren&apos;t always mapped precisely enough to filter on directly.
           </p>
         </Field>
 
@@ -168,18 +168,15 @@ export function DiscoverForm() {
           </button>
           <button
             type="button"
-            onClick={(e) => handleSearch(e, "osm")}
+            onClick={(e) => handleSearch(e, "geoapify")}
             disabled={loadingProvider !== null}
             className="rounded-md border border-akani-card-border px-5 py-2 text-sm font-medium text-akani-text-primary shadow-sm hover:bg-akani-page-bg disabled:opacity-60"
           >
-            {loadingProvider === "osm" ? "Searching…" : "Search OpenStreetMap (free)"}
+            {loadingProvider === "geoapify" ? "Searching…" : "Search Geoapify"}
           </button>
         </div>
-        {loadingProvider === "osm" && (
-          <p className="text-xs text-akani-text-muted sm:col-span-2 lg:col-span-3">
-            Checking OpenStreetMap&apos;s free public service — this usually takes a few seconds, up to about 15 at
-            most.
-          </p>
+        {loadingProvider === "geoapify" && (
+          <p className="text-xs text-akani-text-muted sm:col-span-2 lg:col-span-3">Searching Geoapify…</p>
         )}
       </form>
 

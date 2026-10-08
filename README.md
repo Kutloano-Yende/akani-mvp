@@ -67,20 +67,40 @@ are still blank and only needed for features beyond Sprint 1's mock data:
   - Optional: `COMPANYDATA_PAGE_SIZE` (default 10, the most a trial key allows
     per export; paid plans allow more).
 
-  **OpenStreetMap** (`src/lib/data/providers/osm-provider.ts`) — a free,
-  always-available source, separate from the Lusha/CompanyData/Mock
-  selection above. It's reached only when explicitly chosen (the "Search
-  OpenStreetMap (free)" button on Discover Businesses), never silently —
-  with `LUSHA_API_KEY` configured, Lusha stays the default, OSM is there to
-  broaden coverage, not replace it.
+  **OpenStreetMap** (`src/lib/data/providers/osm-provider.ts`) — **kept in
+  the codebase but no longer reachable from Discover Businesses' UI or the
+  search API's `provider` param**, replaced below by Geoapify after two
+  days of production testing showed the free public Overpass instance is
+  genuinely unreliable. Not deleted on purpose: `resolveProviderFor()` in
+  `src/lib/data/get-provider.ts` still routes any already-imported
+  OpenStreetMap-sourced company to this provider, so "Refresh contact
+  details" keeps working for those rows.
   - Needs no API key and works with zero configuration. Optional
     `OVERPASS_URL` overrides the public instance
     (`https://overpass-api.de/api/interpreter`) if you run your own. That
     public instance is a **shared resource**, not a per-account quota like
-    Lusha/CompanyData — its documented guideline is under 10,000
-    queries/day, under 1GB/day, under 10 minutes of aggregate processing
-    time. It's also, in practice, intermittently overloaded; searches that
-    time out show a "busy, try again" message rather than failing hard.
+    Lusha/CompanyData. Its own usage guideline for an app (not a one-off
+    script) works out to roughly 100 queries/day — Akani's existing
+    `PROVIDER_DAILY_SEARCH_LIMIT` (default 60, shared across every
+    provider's own count) already fits under that.
+  - **Reliability is genuinely outside Akani's control here.** Confirmed
+    directly against the real API, and in OSM's own documentation
+    ([wiki.openstreetmap.org/wiki/Overpass_API](https://wiki.openstreetmap.org/wiki/Overpass_API)):
+    *"Nowadays this server is overloaded — be mindful of that, do not
+    overconsume resources and do not expect high reliability"* and
+    *"Commercial use should use self-hosted or paid Overpass servers."*
+    Akani is commercial, and deliberately does **not** do either of
+    those — this provider is treated as a free, best-effort, opportunistic
+    bonus source on top of Lusha/CompanyData, not something relied on.
+    Searches that fail show a "busy, try again" message rather than
+    failing hard; a single 15-second-bounded attempt with no retry (tried
+    one, reverted it — the public instance's bad patches run sustained,
+    not brief, so retrying mostly just made people wait longer for the
+    same failure). If reliability ever needs to improve, OSM's own
+    guidance points at self-hosting or a paid Overpass provider
+    (Geofabrik, TracesTrack, and others exist) — neither has been
+    evaluated; this is a deliberate "leave it as free/best-effort for
+    now" decision, not an oversight.
   - A province is **required** to search (confirmed against the real API:
     a whole-country query reliably times out), and at least one of
     industry or keyword is required alongside it. City is applied only as
@@ -108,6 +128,43 @@ are still blank and only needed for features beyond Sprint 1's mock data:
     when the scrape finds nothing, and **entirely optional**: OSM search
     and the website scrape both work correctly with no Hunter key
     configured at all.
+
+  **Geoapify** (`src/lib/data/providers/geoapify-provider.ts`) — the
+  current free-tier discovery source, reached only via the "Search
+  Geoapify" button, never silently replacing Lusha/CompanyData.
+  - `GEOAPIFY_API_KEY` from [myprojects.geoapify.com](https://myprojects.geoapify.com/).
+    Free tier: 3,000 requests/day — vastly more generous than Overpass's
+    own ~100/day guidance for a free public instance, and backed by an
+    actual commercial SLA instead of a best-effort shared resource.
+  - **Why this exists alongside OpenStreetMap, which already shipped**:
+    the switch is about reliability, not richer data. **Honest caveat**:
+    Geoapify's own Place Details docs say contact data is *"returned by
+    the API only if it's present in the OpenStreetMap database"* —
+    Geoapify's underlying data source is OpenStreetMap too, so contact-field
+    coverage will likely resemble OSM's own sparsity. The real win is a
+    paid, SLA-backed API instead of an overloaded free one, not more
+    complete listings.
+  - Province is **required** (`filter=rect:...` bounding box, from
+    `PROVINCE_BBOX` in `src/lib/constants/sa-regions.ts`) **and** industry
+    is **required** (Geoapify's `categories` param is mandatory — unlike
+    OpenStreetMap there's no industry-or-keyword either/or). City is
+    applied only as a filter on results that come back, same reasoning as
+    OpenStreetMap.
+  - No exact category exists in Geoapify's taxonomy for
+    Construction/Manufacturing/Engineering/Transport & Logistics — each
+    Discover industry maps to the closest available category keys
+    (`INDUSTRY_GEOAPIFY_CATEGORIES` in `src/lib/data/providers/geoapify/places.ts`),
+    the same kind of approximation as CompanyData's SIC codes and
+    OpenStreetMap's tags.
+  - Contact enrichment, run only once a result is imported: (1) Geoapify's
+    Place Details API (`contact.email`/`contact.phone`/`website`, looked
+    up by the stored `place_id`); (2) a scrape of the business's own
+    website — reusing the exact same code the OpenStreetMap provider uses;
+    (3) optionally, `HUNTER_API_KEY` — entirely optional, same as for
+    OpenStreetMap.
+  - Geoapify doesn't document whether a `place_id` is safe to store and
+    look up again long-term. If a stored one ever stops resolving,
+    "Refresh contact details" degrades to a clean error, not a crash.
 
 ```bash
 npm run dev
