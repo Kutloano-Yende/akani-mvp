@@ -79,17 +79,37 @@ describe("OsmProvider.search", () => {
     expect(results.map((r) => r.name)).toEqual(["In Joburg"]);
   });
 
-  it("maps a 504/busy response to a friendly message", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        ok: false,
-        status: 504,
-        text: async () => `<strong style="color:#FF0000">Error</strong>: runtime error: timeout. The server is probably too busy to handle your request.`,
-      }) as Response),
-    );
+  it("maps a 504/busy response to a friendly message after exhausting the retry", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 504,
+      text: async () => `<strong style="color:#FF0000">Error</strong>: runtime error: timeout. The server is probably too busy to handle your request.`,
+    }) as Response);
+    vi.stubGlobal("fetch", fetchMock);
     const provider = new OsmProvider();
     await expect(provider.search({ province: "Gauteng", industry: "Retail" })).rejects.toThrow(/busy/i);
+    // One attempt, one retry -- not more, not fewer.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("succeeds on the retry when the first attempt fails transiently", async () => {
+    let calls = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        calls += 1;
+        if (calls === 1) return { ok: false, status: 504, text: async () => "busy" } as Response;
+        return {
+          ok: true,
+          json: async () => ({ elements: [{ type: "way", id: 1, tags: { name: "Recovered Co", shop: "trade" } }] }),
+        } as Response;
+      }),
+    );
+    const provider = new OsmProvider();
+    const results = await provider.search({ province: "Gauteng", industry: "Retail" });
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Recovered Co");
+    expect(calls).toBe(2);
   });
 
   it("handles a malformed (non-JSON) success response without crashing", async () => {
