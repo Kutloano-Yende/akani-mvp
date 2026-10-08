@@ -79,7 +79,7 @@ describe("OsmProvider.search", () => {
     expect(results.map((r) => r.name)).toEqual(["In Joburg"]);
   });
 
-  it("maps a 504/busy response to a friendly message after exhausting the retry", async () => {
+  it("maps a 504/busy response to a friendly message on the first failure -- no retry", async () => {
     const fetchMock = vi.fn(async () => ({
       ok: false,
       status: 504,
@@ -88,28 +88,10 @@ describe("OsmProvider.search", () => {
     vi.stubGlobal("fetch", fetchMock);
     const provider = new OsmProvider();
     await expect(provider.search({ province: "Gauteng", industry: "Retail" })).rejects.toThrow(/busy/i);
-    // One attempt, one retry -- not more, not fewer.
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("succeeds on the retry when the first attempt fails transiently", async () => {
-    let calls = 0;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => {
-        calls += 1;
-        if (calls === 1) return { ok: false, status: 504, text: async () => "busy" } as Response;
-        return {
-          ok: true,
-          json: async () => ({ elements: [{ type: "way", id: 1, tags: { name: "Recovered Co", shop: "trade" } }] }),
-        } as Response;
-      }),
-    );
-    const provider = new OsmProvider();
-    const results = await provider.search({ province: "Gauteng", industry: "Retail" });
-    expect(results).toHaveLength(1);
-    expect(results[0].name).toBe("Recovered Co");
-    expect(calls).toBe(2);
+    // A retry was tried and reverted (see osm-provider.ts) -- a single
+    // bounded attempt is what keeps this fast, which matters more here
+    // than a marginal chance of a retry succeeding.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("handles a malformed (non-JSON) success response without crashing", async () => {

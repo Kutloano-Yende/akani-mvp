@@ -98,7 +98,7 @@ export function buildQuery(params: ProviderSearchParams): QueryResult {
     })
     .join("\n");
 
-  const query = `[out:json][timeout:20];
+  const query = `[out:json][timeout:12];
 area["ISO3166-2"="${isoCode}"]->.za;
 (
 ${clauses}

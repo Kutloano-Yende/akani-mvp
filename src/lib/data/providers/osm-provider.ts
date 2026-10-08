@@ -27,7 +27,7 @@ export class OsmProvider implements DataProvider {
     const built = buildQuery(params);
     if (!built.ok) throw new OsmValidationError(built.error);
 
-    const res = await this.fetchWithRetry(built.query);
+    const res = await this.fetchOverpass(built.query);
     if (!res.ok) this.fail(res.status, await this.errorDetail(res));
 
     const body = await res.json().catch(() => null);
@@ -98,42 +98,28 @@ export class OsmProvider implements DataProvider {
     return { ...company, email: email ?? company.email };
   }
 
-  // Confirmed against the real public instance during development: it's
-  // prone to multi-minute stretches of overload, not just single blips --
-  // so this one retry won't fix a sustained bad patch, but it's a cheap,
-  // real improvement for the more common case of a brief hiccup. Each
-  // attempt gets a generous enough budget to actually see Overpass's own
-  // response (success or its own timeout page, both typically arrive
-  // well under 25s) rather than our own AbortSignal firing first; two
-  // attempts plus the gap stays safely under typical serverless function
-  // time limits.
-  private async fetchWithRetry(query: string): Promise<Response> {
-    const headers = {
-      "Content-Type": "application/x-www-form-urlencoded",
-      // Overpass's public instance rejects requests with no identifiable
-      // client (406 Not Acceptable) -- confirmed in production: every
-      // manual curl test during development set this explicitly and
-      // never hit the issue, but Node's native fetch sends no
-      // User-Agent by default, and every real deployed request failed
-      // with 406 until this was added.
-      "User-Agent": "Akani-Discovery/0.1 (South African business discovery, https://akani-mvp.vercel.app)",
-    };
-
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const res = await fetch(this.overpassUrl, {
-          method: "POST",
-          headers,
-          body: `data=${encodeURIComponent(query)}`,
-          signal: AbortSignal.timeout(25_000),
-        });
-        if (res.ok || attempt === 2) return res;
-      } catch (err) {
-        if (attempt === 2) throw err;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 2_000));
-    }
-    throw new Error("OpenStreetMap request failed.");
+  // No retry -- tried one (with a 25s-per-attempt budget) and reverted it:
+  // confirmed over two days of testing that the public instance's bad
+  // patches are sustained, not brief blips, so a retry mostly just made
+  // people wait up to 52s for the same failure. A single, tightly-bounded
+  // attempt gets a real answer (success or failure) back fast, which
+  // matters more here than a marginal chance of a retry succeeding.
+  private async fetchOverpass(query: string): Promise<Response> {
+    return fetch(this.overpassUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        // Overpass's public instance rejects requests with no identifiable
+        // client (406 Not Acceptable) -- confirmed in production: every
+        // manual curl test during development set this explicitly and
+        // never hit the issue, but Node's native fetch sends no
+        // User-Agent by default, and every real deployed request failed
+        // with 406 until this was added.
+        "User-Agent": "Akani-Discovery/0.1 (South African business discovery, https://akani-mvp.vercel.app)",
+      },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: AbortSignal.timeout(15_000),
+    });
   }
 
   private async errorDetail(res: Response): Promise<string> {

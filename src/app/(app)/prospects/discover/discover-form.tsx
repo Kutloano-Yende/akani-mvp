@@ -175,6 +175,12 @@ export function DiscoverForm() {
             {loadingProvider === "osm" ? "Searching…" : "Search OpenStreetMap (free)"}
           </button>
         </div>
+        {loadingProvider === "osm" && (
+          <p className="text-xs text-akani-text-muted sm:col-span-2 lg:col-span-3">
+            Checking OpenStreetMap&apos;s free public service — this usually takes a few seconds, up to about 15 at
+            most.
+          </p>
+        )}
       </form>
 
       {error && (
