@@ -96,7 +96,10 @@ export async function runAssistantTurn(opts: {
     contents = [
       ...contents,
       { role: "model", parts: [{ functionCall: { name: first.name, args: first.args ?? {} } }] },
-      { role: "function", parts: [{ functionResponse: { name: first.name, response } }] },
+      // Gemini rejects a separate "function" role (confirmed against the
+      // live API: "Role 'function' is not supported") -- the result goes
+      // back as a "user" turn carrying a functionResponse part instead.
+      { role: "user", parts: [{ functionResponse: { name: first.name, response } }] },
     ];
   }
 

@@ -6,7 +6,7 @@ export type GeminiPart =
   | { functionCall: { name: string; args: Record<string, unknown> } }
   | { functionResponse: { name: string; response: unknown } };
 
-export type GeminiContent = { role: "user" | "model" | "function"; parts: GeminiPart[] };
+export type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
 
 export type GeminiEvent = { text?: string; functionCall?: { name: string; args: Record<string, unknown> } };
 
