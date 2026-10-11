@@ -6,15 +6,7 @@ import { SalesChart } from "@/components/sales-chart";
 import { SalesInsightCard, type SalesInsight } from "@/components/sales-insight-card";
 import { cumulativeSparkline } from "@/lib/trend";
 import { getTenantAppearance } from "@/lib/tenant-appearance";
-
-const FUNNEL_STAGES = [
-  { key: "identified", label: "Businesses Found" },
-  { key: "qualified", label: "Qualified" },
-  { key: "contacted", label: "Contacted" },
-  { key: "interested", label: "Interested" },
-  { key: "application", label: "Application" },
-  { key: "won", label: "Paying Client" },
-] as const;
+import { FUNNEL_STAGES } from "@/lib/pipeline-stages";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

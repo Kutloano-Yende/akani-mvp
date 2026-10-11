@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { buildSystemPrompt } from "@/lib/assistant/system-prompt";
+import { runAssistantTurn } from "@/lib/assistant/tool-loop";
+import type { GeminiContent } from "@/lib/assistant/gemini";
 
-// Google AI Studio / Gemini API — has a genuine free tier (unlike Anthropic
-// or OpenAI, which are pay-per-use only), which is why this app uses it.
-// gemini-2.5-flash was retired for new accounts (confirmed against the live
-// API, which pointed here); if Google moves the model again, swap it here.
-const MODEL = "gemini-3.8-flash";
 const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 2000;
 
@@ -23,10 +20,12 @@ function isChatMessage(m: unknown): m is ChatMessage {
 }
 
 /**
- * Streams a reply from the in-app guide assistant. The assistant has no
- * database access (see system-prompt.ts) — this route's only job is to
- * authenticate the caller, rate-limit them, and relay text out of Gemini's
- * SSE stream as plain text chunks.
+ * Streams a reply from the in-app guide assistant. For plain guidance
+ * questions this is a single streaming call, same as before. For questions
+ * that need real data, the model can call a small set of tools (see
+ * src/lib/assistant/tools.ts) -- each one queries through this request's
+ * own Supabase session client, so RLS does all the tenant/role scoping; no
+ * manual filtering happens here.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -66,67 +65,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The last message must be from the user" }, { status: 400 });
   }
 
-  const { data: profile } = await supabase.from("profiles").select("name, role").eq("id", user.id).single();
+  const [{ data: profile }, { data: isPlatformAdmin }] = await Promise.all([
+    supabase.from("profiles").select("name, role").eq("id", user.id).single(),
+    supabase.rpc("is_platform_admin"),
+  ]);
+
+  const role = profile?.role ?? "sales";
+  const platformAdmin = isPlatformAdmin === true;
 
   // Gemini uses "user"/"model" (not "assistant") as roles.
-  const contents = messages.map((m) => ({
+  const contents: GeminiContent[] = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }));
 
-  const upstream = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent?alt=sse`,
-    {
-      method: "POST",
-      headers: { "x-goog-api-key": apiKey, "content-type": "application/json" },
-      body: JSON.stringify({
-        contents,
-        systemInstruction: { parts: [{ text: buildSystemPrompt(profile?.name ?? "there", profile?.role ?? "sales") }] },
-        generationConfig: { maxOutputTokens: 512 },
-      }),
-      signal: AbortSignal.timeout(30_000),
-    },
-  );
-
-  if (!upstream.ok || !upstream.body) {
-    const detail = await upstream.text().catch(() => "");
-    console.error("Assistant upstream error", upstream.status, detail);
+  let stream: ReadableStream<Uint8Array>;
+  try {
+    stream = await runAssistantTurn({
+      apiKey,
+      systemInstruction: buildSystemPrompt(profile?.name ?? "there", role, platformAdmin),
+      history: contents,
+      isPlatformAdmin: platformAdmin,
+      supabase,
+      ctx: { role, isPlatformAdmin: platformAdmin },
+    });
+  } catch (err) {
+    console.error("Assistant upstream error", err);
     return NextResponse.json({ error: "The assistant is unavailable right now." }, { status: 502 });
   }
-
-  // Gemini sends Server-Sent Events; unwrap them to plain text deltas so the
-  // client can just read the stream as text, no SSE parsing needed.
-  const decoder = new TextDecoder();
-  const encoder = new TextEncoder();
-  const reader = upstream.body.getReader();
-  let buffer = "";
-
-  const stream = new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      const { done, value } = await reader.read();
-      if (done) {
-        controller.close();
-        return;
-      }
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const event = JSON.parse(line.slice(6));
-          const text = event?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (typeof text === "string") controller.enqueue(encoder.encode(text));
-        } catch {
-          // A partial/malformed SSE line — skip it rather than break the stream.
-        }
-      }
-    },
-    cancel() {
-      reader.cancel().catch(() => {});
-    },
-  });
 
   return new Response(stream, {
     headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },

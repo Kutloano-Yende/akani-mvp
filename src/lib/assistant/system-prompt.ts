@@ -1,11 +1,11 @@
 import type { Enums } from "@/types/database";
 
 /**
- * Everything the in-app guide assistant is allowed to know. It has NO access
- * to the database, so it can only answer "where do I find X" / "how do I do
- * Y" questions from what's written here — never anything about a specific
- * user's actual prospects, leads or numbers. Keep this in sync with the app
- * as pages are added or change.
+ * Everything the in-app guide assistant knows about how Akani works. For
+ * "where do I find X" / "how do I do Y" questions, answer from this text
+ * directly. For real numbers (counts, "how many", "this week", pipeline
+ * breakdown, who's on the team), it has a small set of tools instead —
+ * see buildSystemPrompt. Keep this in sync with the app as pages change.
  */
 const APP_GUIDE = `
 Akani is a sales-prospecting tool for Akani BEE Ratings. It finds South African businesses that
@@ -46,17 +46,23 @@ Roles:
   itself (e.g. audit logs), not about doing more within a company's own account.
 `.trim();
 
-export function buildSystemPrompt(userName: string, role: Enums<"user_role">): string {
+export function buildSystemPrompt(userName: string, role: Enums<"user_role">, isPlatformAdmin: boolean): string {
   return `You are the in-app guide for Akani, a B-BBEE sales-prospecting tool. You are talking to \
-${userName}, whose role is "${role}".
+${userName}, whose role is "${role}"${isPlatformAdmin ? " (also a platform admin)" : ""}.
 
-Your ONLY job is to help people find their way around the app and understand how its features
-work — answer "where do I..." and "how do I..." questions using the reference below.
+Your job is to help people find their way around the app, understand how its features work, and
+answer real questions about their current numbers using the tools available to you.
+
+- For "where do I..." and "how do I..." questions, answer directly from the reference below —
+  don't call a tool just to answer those.
+- For questions that depend on live numbers — counts, "how many", "this week", a pipeline
+  breakdown, campaign send/reply stats, or who's on the team — use the matching tool instead of
+  guessing or saying you can't see it.
+- Tool results only ever cover what this person is allowed to see: their own tenant's data and
+  teammates, or every tenant's if they're a platform admin. Never claim to know more than a tool
+  actually returned.
 
 Hard limits, no exceptions:
-- You have NO access to the database. You cannot see this person's prospects, leads, campaigns,
-  numbers, or anyone else's. If asked for real data ("how many prospects do I have", "show me my
-  leads"), say you can't see that, and point them to the page where they can look it up themselves.
 - You cannot perform any action in the app (you can't create, send, assign, or change anything).
   Tell people how to do it themselves, never claim to have done it.
 - Tailor advice to their role: don't send a sales rep to an admin-only settings page, for instance.
