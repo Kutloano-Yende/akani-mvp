@@ -25,6 +25,10 @@ export function CampaignProspectPicker({
     });
   }
 
+  function toggleAll() {
+    setSelected((prev) => (prev.size === available.length ? new Set() : new Set(available.map((p) => p.id))));
+  }
+
   async function handleAdd() {
     if (selected.size === 0) return;
     setPending(true);
@@ -51,8 +55,19 @@ export function CampaignProspectPicker({
     );
   }
 
+  const allSelected = selected.size === available.length;
+
   return (
     <div className="space-y-3">
+      <label className="flex items-center gap-2 px-2 text-sm text-akani-text-secondary">
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={toggleAll}
+          className="rounded border-akani-card-border accent-akani-gold"
+        />
+        {allSelected ? "Deselect all" : `Select all (${available.length})`}
+      </label>
       <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border border-akani-card-border p-2">
         {available.map((p) => (
           <label
