@@ -83,13 +83,15 @@ export async function POST(request: Request) {
         opportunityScore = rescored.score;
         opportunityLevel = rescored.level;
         signals = rescored.signals;
-        await supabase.from("api_usage").insert({
-          user_id: user.id,
-          provider: provider.name,
-          endpoint: "data-provider/enrich",
-          results_returned: 1,
-          credits_used: 1,
-        });
+        await supabase.from("api_usage").insert(
+          withServerTenant({
+            user_id: user.id,
+            provider: provider.name,
+            endpoint: "data-provider/enrich",
+            results_returned: 1,
+            credits_used: 1,
+          }),
+        );
       }
     }
 

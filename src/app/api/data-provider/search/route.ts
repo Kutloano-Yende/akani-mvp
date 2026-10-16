@@ -7,6 +7,7 @@ import { GeoapifyValidationError } from "@/lib/data/providers/geoapify-provider"
 import { findDuplicate } from "@/lib/data/dedupe";
 import { rateLimit } from "@/lib/rate-limit";
 import { dailyLimitReached, dailyProviderLimit, MOCK_PROVIDER_NAME } from "@/lib/data/usage";
+import { withServerTenant } from "@/lib/supabase/tenant-insert";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -98,13 +99,15 @@ export async function POST(request: Request) {
 
   scored.sort((a, b) => b.opportunityScore - a.opportunityScore);
 
-  await supabase.from("api_usage").insert({
-    user_id: user.id,
-    provider: provider.name,
-    endpoint: "data-provider/search",
-    results_returned: scored.length,
-    credits_used: 1,
-  });
+  await supabase.from("api_usage").insert(
+    withServerTenant({
+      user_id: user.id,
+      provider: provider.name,
+      endpoint: "data-provider/search",
+      results_returned: scored.length,
+      credits_used: 1,
+    }),
+  );
 
   // Some plans return only names and addresses for certain searches. Say so,
   // rather than leaving people to wonder why nothing has an email or phone.

@@ -108,13 +108,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  await supabase.from("api_usage").insert({
-    user_id: user.id,
-    provider: provider.name,
-    endpoint: "data-provider/refresh-contact",
-    results_returned: 1,
-    credits_used: 1,
-  });
+  await supabase.from("api_usage").insert(
+    withServerTenant({
+      user_id: user.id,
+      provider: provider.name,
+      endpoint: "data-provider/refresh-contact",
+      results_returned: 1,
+      credits_used: 1,
+    }),
+  );
 
   await supabase.from("activities").insert(withServerTenant({
     prospect_id: prospectId,
