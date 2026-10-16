@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Enums } from "@/types/database";
+import { LOST_REASONS } from "@/lib/prospects/lost-reasons";
 
 type Status = Enums<"prospect_status">;
 
@@ -57,6 +58,9 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
   const [collecting, setCollecting] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [collectingLost, setCollectingLost] = useState(false);
+  const [lostReason, setLostReason] = useState("");
+  const [lostNote, setLostNote] = useState("");
 
   async function updateStatus(newStatus: Status) {
     setPending(true);
@@ -95,9 +99,88 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
     }
   }
 
+  async function submitLost() {
+    if (!lostReason) return;
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/prospects/${prospectId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "lost", lostReason, note: lostNote }),
+      });
+      if (res.ok) {
+        setCollectingLost(false);
+        setLostReason("");
+        setLostNote("");
+        router.refresh();
+      } else {
+        setError((await res.json()).error ?? "Failed to update");
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
   const noteTransition = NOTE_TRANSITIONS[status];
   const simpleNext = SIMPLE_NEXT[status];
   const isClosed = status === "won" || status === "lost";
+
+  if (collectingLost) {
+    return (
+      <div className="space-y-2">
+        {error && <p className="text-sm text-akani-error">{error}</p>}
+        <label className="block">
+          <span className="text-sm font-medium text-akani-text-primary">Why was this lost?</span>
+          <select
+            value={lostReason}
+            onChange={(e) => setLostReason(e.target.value)}
+            autoFocus
+            className="input mt-1"
+          >
+            <option value="" disabled>
+              Select a reason
+            </option>
+            {LOST_REASONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-akani-text-primary">Notes (optional)</span>
+          <textarea
+            value={lostNote}
+            onChange={(e) => setLostNote(e.target.value)}
+            rows={3}
+            placeholder="e.g. Went with a competitor already on a retainer"
+            className="input mt-1"
+          />
+        </label>
+        <div className="flex gap-2">
+          <button
+            onClick={submitLost}
+            disabled={pending || !lostReason}
+            className="flex-1 rounded-md bg-akani-gold px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-akani-gold-bright disabled:opacity-60"
+          >
+            {pending ? "Saving…" : "Confirm lost"}
+          </button>
+          <button
+            onClick={() => {
+              setCollectingLost(false);
+              setLostReason("");
+              setLostNote("");
+            }}
+            disabled={pending}
+            className="rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (noteTransition && collecting) {
     return (
@@ -157,11 +240,11 @@ export function StatusActions({ prospectId, status }: { prospectId: string; stat
       )}
       {!isClosed && (
         <button
-          onClick={() => updateStatus("lost")}
+          onClick={() => setCollectingLost(true)}
           disabled={pending}
           className="w-full rounded-md border border-akani-card-border px-4 py-2 text-sm font-medium text-akani-text-primary hover:bg-akani-page-bg disabled:opacity-60"
         >
-          {pending ? "Updating…" : "Mark lost"}
+          Mark lost
         </button>
       )}
       {isClosed && (
