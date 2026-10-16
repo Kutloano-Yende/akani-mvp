@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -77,6 +77,7 @@ export type Database = {
           id: string
           provider: string
           results_returned: number
+          tenant_id: string
           user_id: string | null
         }
         Insert: {
@@ -86,6 +87,7 @@ export type Database = {
           id?: string
           provider: string
           results_returned?: number
+          tenant_id: string
           user_id?: string | null
         }
         Update: {
@@ -95,9 +97,17 @@ export type Database = {
           id?: string
           provider?: string
           results_returned?: number
+          tenant_id?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "api_usage_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "api_usage_user_id_fkey"
             columns: ["user_id"]
@@ -804,6 +814,7 @@ export type Database = {
           sequence_step: number
           source: string
           status: string
+          tenant_id: string | null
           token: string
         }
         Insert: {
@@ -823,6 +834,7 @@ export type Database = {
           sequence_step?: number
           source: string
           status?: string
+          tenant_id?: string | null
           token?: string
         }
         Update: {
@@ -842,6 +854,7 @@ export type Database = {
           sequence_step?: number
           source?: string
           status?: string
+          tenant_id?: string | null
           token?: string
         }
         Relationships: [
@@ -850,6 +863,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1017,6 +1037,8 @@ export type Database = {
           first_contacted_at: string | null
           id: string
           last_contacted_at: string | null
+          lost_reason: Database["public"]["Enums"]["prospect_lost_reason"] | null
+          lost_reason_note: string | null
           opportunity_score: number | null
           qualification_status: string | null
           qualified_at: string | null
@@ -1032,6 +1054,8 @@ export type Database = {
           first_contacted_at?: string | null
           id?: string
           last_contacted_at?: string | null
+          lost_reason?: Database["public"]["Enums"]["prospect_lost_reason"] | null
+          lost_reason_note?: string | null
           opportunity_score?: number | null
           qualification_status?: string | null
           qualified_at?: string | null
@@ -1047,6 +1071,8 @@ export type Database = {
           first_contacted_at?: string | null
           id?: string
           last_contacted_at?: string | null
+          lost_reason?: Database["public"]["Enums"]["prospect_lost_reason"] | null
+          lost_reason_note?: string | null
           opportunity_score?: number | null
           qualification_status?: string | null
           qualified_at?: string | null
@@ -1251,6 +1277,14 @@ export type Database = {
       campaign_status: "draft" | "active" | "completed"
       conversion_status: "pending" | "confirmed" | "rejected"
       opportunity_level: "low" | "medium" | "high"
+      prospect_lost_reason:
+        | "not_a_fit"
+        | "budget_pricing"
+        | "no_response"
+        | "chose_competitor"
+        | "not_ready_timing"
+        | "invalid_contact_details"
+        | "other"
       prospect_status:
         | "identified"
         | "qualified"
@@ -1392,6 +1426,15 @@ export const Constants = {
       campaign_status: ["draft", "active", "completed"],
       conversion_status: ["pending", "confirmed", "rejected"],
       opportunity_level: ["low", "medium", "high"],
+      prospect_lost_reason: [
+        "not_a_fit",
+        "budget_pricing",
+        "no_response",
+        "chose_competitor",
+        "not_ready_timing",
+        "invalid_contact_details",
+        "other",
+      ],
       prospect_status: [
         "identified",
         "qualified",
