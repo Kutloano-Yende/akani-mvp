@@ -16,13 +16,34 @@ import { UpdateSkeleton } from "@/components/whats-new/update-skeleton";
 import type { ActiveImpersonation } from "@/lib/impersonation";
 import type { Release } from "@/lib/whats-new/tour";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: {
+  href: string;
+  label: string;
+  icon: (props: { active: boolean }) => React.JSX.Element;
+  tour?: string;
+  /** Sub-items shown indented beneath this one, only while it's active --
+   * no existing nav item had children before Tender Intelligence, so this
+   * is new (see the render loop below). */
+  children?: { href: string; label: string }[];
+}[] = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon, tour: "nav-dashboard" },
   { href: "/prospects/discover", label: "Discover Businesses", icon: SearchIcon, tour: "nav-discover" },
   { href: "/prospects", label: "Prospects", icon: ListIcon, tour: "nav-prospects" },
   { href: "/leads", label: "Leads", icon: LeadsIcon, tour: "nav-leads" },
   { href: "/pipeline", label: "Pipeline", icon: PipelineIcon, tour: "nav-pipeline" },
   { href: "/campaigns", label: "Campaigns", icon: CampaignIcon, tour: "nav-campaigns" },
+  {
+    href: "/tenders",
+    label: "Tender Intelligence",
+    icon: TenderIcon,
+    tour: "nav-tenders",
+    // "My Matches" intentionally excluded from V1 -- matching isn't built
+    // yet (Phase 2), and an empty nav entry would be worse than no entry.
+    children: [
+      { href: "/tenders", label: "Opportunities" },
+      { href: "/tenders/saved", label: "Saved Tenders" },
+    ],
+  },
   { href: "/analytics", label: "Analytics", icon: AnalyticsIcon, tour: "nav-analytics" },
 ];
 
@@ -170,21 +191,40 @@ export function AppShell({
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
             const Icon = item.icon;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                data-tour={item.tour}
-                title={collapsed ? item.label : undefined}
-                className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-colors ${
-                  collapsed ? "lg:justify-center lg:px-0" : ""
-                } ${active ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white/90"}`}
-              >
-                {active && (
-                  <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-akani-gold" />
+              <div key={item.href}>
+                <Link
+                  href={item.href}
+                  data-tour={item.tour}
+                  title={collapsed ? item.label : undefined}
+                  className={`relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-colors ${
+                    collapsed ? "lg:justify-center lg:px-0" : ""
+                  } ${active ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white/90"}`}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-akani-gold" />
+                  )}
+                  <Icon active={active} />
+                  <span className={collapsed ? "lg:hidden" : ""}>{item.label}</span>
+                </Link>
+                {item.children && active && (
+                  <div className={`ml-7 mt-1 space-y-0.5 ${collapsed ? "lg:hidden" : ""}`}>
+                    {item.children.map((child) => {
+                      const childActive = pathname === child.href || pathname.startsWith(child.href + "/");
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={`block rounded-md py-1.5 pl-3 pr-3 text-sm transition-colors ${
+                            childActive ? "font-medium text-akani-gold" : "text-white/50 hover:text-white/80"
+                          }`}
+                        >
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-                <Icon active={active} />
-                <span className={collapsed ? "lg:hidden" : ""}>{item.label}</span>
-              </Link>
+              </div>
             );
           })}
 
@@ -390,6 +430,16 @@ function LeadsIcon({ active }: { active: boolean }) {
         strokeLinecap="round"
       />
       <path d="M8.5 10h7M8.5 13h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TenderIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+      <path d="M14 3v4h4" />
+      <path d="M9 12h6M9 16h4" />
     </svg>
   );
 }

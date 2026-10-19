@@ -1037,7 +1037,9 @@ export type Database = {
           first_contacted_at: string | null
           id: string
           last_contacted_at: string | null
-          lost_reason: Database["public"]["Enums"]["prospect_lost_reason"] | null
+          lost_reason:
+            | Database["public"]["Enums"]["prospect_lost_reason"]
+            | null
           lost_reason_note: string | null
           opportunity_score: number | null
           qualification_status: string | null
@@ -1054,7 +1056,9 @@ export type Database = {
           first_contacted_at?: string | null
           id?: string
           last_contacted_at?: string | null
-          lost_reason?: Database["public"]["Enums"]["prospect_lost_reason"] | null
+          lost_reason?:
+            | Database["public"]["Enums"]["prospect_lost_reason"]
+            | null
           lost_reason_note?: string | null
           opportunity_score?: number | null
           qualification_status?: string | null
@@ -1071,7 +1075,9 @@ export type Database = {
           first_contacted_at?: string | null
           id?: string
           last_contacted_at?: string | null
-          lost_reason?: Database["public"]["Enums"]["prospect_lost_reason"] | null
+          lost_reason?:
+            | Database["public"]["Enums"]["prospect_lost_reason"]
+            | null
           lost_reason_note?: string | null
           opportunity_score?: number | null
           qualification_status?: string | null
@@ -1100,6 +1106,71 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_tenders: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          saved_by: string
+          status: string
+          tenant_id: string
+          tender_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          saved_by: string
+          status?: string
+          tenant_id: string
+          tender_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          saved_by?: string
+          status?: string
+          tenant_id?: string
+          tender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_tenders_tenant_assignee_fk"
+            columns: ["tenant_id", "assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "saved_tenders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_tenders_tenant_saved_by_fk"
+            columns: ["tenant_id", "saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "saved_tenders_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
             referencedColumns: ["id"]
           },
         ]
@@ -1194,6 +1265,87 @@ export type Database = {
           slug?: string
           status?: string
           suspended_at?: string | null
+        }
+        Relationships: []
+      }
+      tenders: {
+        Row: {
+          buyer_id: string | null
+          buyer_name: string | null
+          created_at: string
+          description: string | null
+          documents: Json
+          first_synced_at: string
+          id: string
+          last_synced_at: string
+          main_procurement_category: string | null
+          ocid: string
+          province_guess: string | null
+          published_date: string
+          raw: Json
+          release_id: string
+          search_vector: unknown
+          source_url: string | null
+          status: string
+          tender_number: string | null
+          tender_period_end: string | null
+          tender_period_start: string | null
+          title: string
+          updated_at: string
+          value_amount: number | null
+          value_currency: string | null
+        }
+        Insert: {
+          buyer_id?: string | null
+          buyer_name?: string | null
+          created_at?: string
+          description?: string | null
+          documents?: Json
+          first_synced_at?: string
+          id?: string
+          last_synced_at?: string
+          main_procurement_category?: string | null
+          ocid: string
+          province_guess?: string | null
+          published_date: string
+          raw: Json
+          release_id: string
+          search_vector?: unknown
+          source_url?: string | null
+          status: string
+          tender_number?: string | null
+          tender_period_end?: string | null
+          tender_period_start?: string | null
+          title: string
+          updated_at?: string
+          value_amount?: number | null
+          value_currency?: string | null
+        }
+        Update: {
+          buyer_id?: string | null
+          buyer_name?: string | null
+          created_at?: string
+          description?: string | null
+          documents?: Json
+          first_synced_at?: string
+          id?: string
+          last_synced_at?: string
+          main_procurement_category?: string | null
+          ocid?: string
+          province_guess?: string | null
+          published_date?: string
+          raw?: Json
+          release_id?: string
+          search_vector?: unknown
+          source_url?: string | null
+          status?: string
+          tender_number?: string | null
+          tender_period_end?: string | null
+          tender_period_start?: string | null
+          title?: string
+          updated_at?: string
+          value_amount?: number | null
+          value_currency?: string | null
         }
         Relationships: []
       }
