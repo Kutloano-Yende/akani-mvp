@@ -19,18 +19,7 @@ function cronAuthorised(request: Request): boolean {
   return given.length === expected.length && timingSafeEqual(Buffer.from(given), Buffer.from(expected));
 }
 
-export async function POST(request: Request) {
-  const viaCron = cronAuthorised(request);
-  if (!viaCron) {
-    const check = await requirePlatformAdmin();
-    if (!check.authorized) {
-      return NextResponse.json({ error: "Forbidden" }, { status: check.status });
-    }
-  }
-
-  const body = await request.json().catch(() => ({}));
-  const month = typeof body.month === "string" ? body.month : undefined;
-
+async function runSync(month: string | undefined, viaCron: boolean) {
   // tenders has RLS-enabled with zero write policies for `authenticated`
   // (it's deliberately global reference data, see the migration) -- this
   // write must go through the service-role client, same pattern as
@@ -58,4 +47,33 @@ export async function POST(request: Request) {
     console.error("Tender sync failed", err);
     return NextResponse.json({ error: "Tender sync failed" }, { status: 500 });
   }
+}
+
+// Vercel Cron always calls its configured path with GET (same as
+// src/app/api/cron/leads/route.ts) -- cron-secret only, no platform-admin
+// session fallback, since a scheduled invocation never carries a user
+// session. Always syncs the current month; Cron can't supply a body.
+export async function GET(request: Request) {
+  if (!cronAuthorised(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return runSync(undefined, true);
+}
+
+// The manual "Sync now" path (today: a platform admin running this from the
+// browser console, per the Phase 1 scope -- no UI button yet), which can
+// also pass an explicit { month } to backfill a specific month.
+export async function POST(request: Request) {
+  const viaCron = cronAuthorised(request);
+  if (!viaCron) {
+    const check = await requirePlatformAdmin();
+    if (!check.authorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: check.status });
+    }
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const month = typeof body.month === "string" ? body.month : undefined;
+
+  return runSync(month, viaCron);
 }
