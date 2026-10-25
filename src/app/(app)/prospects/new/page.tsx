@@ -1,7 +1,18 @@
 import { AddProspectForm } from "./add-prospect-form";
 import { ImportFileForm } from "./import-file-form";
 
-export default function NewProspectPage() {
+export default async function NewProspectPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const sp = await searchParams;
+  // companyName: prefilled when arriving from a tender award signal (see
+  // src/app/(app)/tenders/[id]/page.tsx's "Create prospect" link) -- a
+  // manual starting point, not an auto-created prospect, since the award
+  // data gives us a company name but no verified contact to go with it.
+  const companyName = sp.companyName ?? "";
+
   return (
     <div className="space-y-8">
       <p className="text-sm text-akani-text-secondary">
@@ -11,7 +22,7 @@ export default function NewProspectPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-akani-text-primary">Add one prospect</h2>
-        <AddProspectForm />
+        <AddProspectForm initialCompanyName={companyName} />
       </section>
 
       <section className="space-y-3">

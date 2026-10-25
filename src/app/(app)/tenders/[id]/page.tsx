@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TenderStatusBadge, ProvinceBadge } from "@/components/tender-status-badge";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -17,7 +18,7 @@ export default async function TenderDetailPage({
   const { data: tender } = await supabase.from("tenders").select("*").eq("id", id).maybeSingle();
   if (!tender) notFound();
 
-  const [{ data: savedTender }, { data: members }, currentUser] = await Promise.all([
+  const [{ data: savedTender }, { data: members }, currentUser, { data: awards }] = await Promise.all([
     // .limit(1) before .maybeSingle(): a platform admin's read policy spans
     // every tenant, so if more than one tenant has saved this same global
     // tender, this would otherwise match >1 row and error -- see
@@ -25,6 +26,10 @@ export default async function TenderDetailPage({
     supabase.from("saved_tenders").select("*").eq("tender_id", id).limit(1).maybeSingle(),
     supabase.from("profiles").select("id, name").order("name"),
     getCurrentUser(),
+    // supplier_name/value only -- never the OCDS "supplier" party's
+    // contactPoint, which is actually the buyer's own contact. See the
+    // sprint29 migration's comment for how this was confirmed.
+    supabase.from("tender_awards").select("supplier_name, value_amount, value_currency").eq("tender_id", id),
   ]);
 
   const isManager = currentUser?.role === "admin" || currentUser?.role === "manager";
@@ -86,6 +91,40 @@ export default async function TenderDetailPage({
               </a>
             )}
           </section>
+
+          {awards && awards.length > 0 && (
+            <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">
+              <h2 className="mb-1 text-sm font-semibold text-akani-text-primary">Award</h2>
+              <p className="mb-4 text-xs text-akani-text-muted">
+                Name and value only — the source data&apos;s contact details on this record belong to the
+                buyer, not the winning company, so they&apos;re deliberately not shown here.
+              </p>
+              <div className="space-y-3">
+                {awards.map((a, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 rounded-lg bg-akani-page-bg p-3">
+                    <div>
+                      <p className="font-medium text-akani-text-primary">{a.supplier_name}</p>
+                      <p className="text-xs text-akani-text-muted">
+                        {a.value_amount != null
+                          ? new Intl.NumberFormat("en-ZA", {
+                              style: "currency",
+                              currency: a.value_currency ?? "ZAR",
+                              maximumFractionDigits: 0,
+                            }).format(a.value_amount)
+                          : "Value not disclosed"}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/prospects/new?companyName=${encodeURIComponent(a.supplier_name)}`}
+                      className="shrink-0 rounded-md border border-akani-card-border px-3 py-1.5 text-xs font-medium text-akani-text-primary hover:bg-white"
+                    >
+                      Create prospect
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {savedTender && (
             <section className="rounded-xl border border-akani-card-border bg-white p-6 shadow-sm">

@@ -93,4 +93,28 @@ describe("GET /api/tenders", () => {
     const res = await GET(request());
     expect(res.status).toBe(500);
   });
+
+  it("inner-joins tender_awards and sorts by award value when hasAward=true", async () => {
+    const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
+    await GET(request({ hasAward: "true" }));
+    expect(builder.select).toHaveBeenCalledWith(
+      expect.stringContaining("tender_awards!inner(supplier_name, value_amount, value_currency)"),
+      { count: "exact" },
+    );
+    expect(builder.order).toHaveBeenCalledWith("value_amount", {
+      foreignTable: "tender_awards",
+      ascending: false,
+      nullsFirst: false,
+    });
+  });
+
+  it("sorts by closing date and selects only the base columns when hasAward is absent", async () => {
+    const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
+    await GET(request());
+    expect(builder.select).toHaveBeenCalledWith(
+      "id, ocid, title, status, main_procurement_category, buyer_name, province_guess, tender_period_end, source_url",
+      { count: "exact" },
+    );
+    expect(builder.order).toHaveBeenCalledWith("tender_period_end", { ascending: true, nullsFirst: false });
+  });
 });

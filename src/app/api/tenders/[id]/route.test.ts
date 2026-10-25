@@ -19,9 +19,11 @@ beforeEach(() => {
 function mockBuilders({
   tender,
   savedTender,
+  awards = { data: [] },
 }: {
   tender: { data: unknown; error: unknown };
   savedTender: { data: unknown };
+  awards?: { data: unknown };
 }) {
   const tendersBuilder = {
     select: vi.fn(() => tendersBuilder),
@@ -34,8 +36,14 @@ function mockBuilders({
     limit: vi.fn(() => savedBuilder),
     maybeSingle: vi.fn(async () => savedTender),
   };
-  mockFrom.mockImplementation((table: string) => (table === "tenders" ? tendersBuilder : savedBuilder));
-  return { tendersBuilder, savedBuilder };
+  const awardsBuilder = {
+    select: vi.fn(() => awardsBuilder),
+    eq: vi.fn(async () => awards),
+  };
+  mockFrom.mockImplementation((table: string) =>
+    table === "tenders" ? tendersBuilder : table === "saved_tenders" ? savedBuilder : awardsBuilder,
+  );
+  return { tendersBuilder, savedBuilder, awardsBuilder };
 }
 
 describe("GET /api/tenders/[id]", () => {
@@ -83,5 +91,26 @@ describe("GET /api/tenders/[id]", () => {
     });
     await GET(new Request("http://localhost"), { params });
     expect(savedBuilder.limit).toHaveBeenCalledWith(1);
+  });
+
+  it("returns an empty awards array when the tender has none", async () => {
+    mockBuilders({
+      tender: { data: { id: "tender-1", title: "X" }, error: null },
+      savedTender: { data: null },
+    });
+    const res = await GET(new Request("http://localhost"), { params });
+    const body = await res.json();
+    expect(body.awards).toEqual([]);
+  });
+
+  it("returns award signals -- supplier_name/value only, never a contact field", async () => {
+    mockBuilders({
+      tender: { data: { id: "tender-1", title: "X" }, error: null },
+      savedTender: { data: null },
+      awards: { data: [{ supplier_name: "VODACOM", value_amount: 50871120, value_currency: "ZAR" }] },
+    });
+    const res = await GET(new Request("http://localhost"), { params });
+    const body = await res.json();
+    expect(body.awards).toEqual([{ supplier_name: "VODACOM", value_amount: 50871120, value_currency: "ZAR" }]);
   });
 });

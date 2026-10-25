@@ -39,6 +39,28 @@ export type OcdsBuyer = {
   name?: string;
 };
 
+/** Confirmed against a real sample containing awards (28 of 690 releases):
+ * `SupplierID` is always 0 and `CreateDate` is always the zero placeholder
+ * "0001-01-01T00:00:00" -- neither is a usable identifier. There is no
+ * `date` field on the award itself anywhere in the source data. */
+export type OcdsAwardSupplier = {
+  Name?: string;
+  SupplierID?: number;
+  CreateDate?: string;
+};
+
+export type OcdsAward = {
+  id: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  value?: { amount?: number; currency?: string };
+  // Always length 1 in every real sample seen, but the source schema allows
+  // more than one supplier per award (e.g. a joint venture) -- see
+  // extractAwards in ocds-normalize.ts.
+  suppliers?: OcdsAwardSupplier[];
+};
+
 export type OcdsRelease = {
   ocid: string;
   id: string;
@@ -48,7 +70,7 @@ export type OcdsRelease = {
   tender: OcdsTender;
   buyer?: OcdsBuyer;
   parties?: unknown[];
-  awards?: unknown[];
+  awards?: OcdsAward[];
   contracts?: unknown[];
   language?: string;
 };

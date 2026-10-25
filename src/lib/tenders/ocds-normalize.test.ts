@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { normalizeRelease, dedupeByOcid } from "./ocds-normalize";
-import type { OcdsRelease } from "./ocds-types";
+import { normalizeRelease, dedupeByOcid, extractAwards } from "./ocds-normalize";
+import type { OcdsRelease, OcdsAward } from "./ocds-types";
 
 function release(overrides: Partial<OcdsRelease> = {}): OcdsRelease {
   return {
@@ -84,6 +84,57 @@ describe("normalizeRelease", () => {
     const r = release();
     const row = normalizeRelease(r);
     expect(row.raw).toEqual(r);
+  });
+});
+
+function award(overrides: Partial<OcdsAward> = {}): OcdsAward {
+  return {
+    id: "75271",
+    status: "active",
+    value: { amount: 50871120, currency: "ZAR" },
+    suppliers: [{ Name: "VODACOM", SupplierID: 0, CreateDate: "0001-01-01T00:00:00" }],
+    ...overrides,
+  };
+}
+
+describe("extractAwards", () => {
+  it("extracts one row per award with its supplier name and value", () => {
+    const rows = extractAwards(release({ awards: [award()] }));
+    expect(rows).toEqual([
+      {
+        ocid: "ocds-9t57fa-163705",
+        award_id: "75271",
+        supplier_name: "VODACOM",
+        value_amount: 50871120,
+        value_currency: "ZAR",
+      },
+    ]);
+  });
+
+  it("returns an empty array when the release has no awards", () => {
+    expect(extractAwards(release({ awards: [] }))).toEqual([]);
+  });
+
+  it("extracts one row per supplier when an award has more than one", () => {
+    const rows = extractAwards(
+      release({ awards: [award({ suppliers: [{ Name: "ACME CONSTRUCTION" }, { Name: "BETA ENGINEERING" }] })] }),
+    );
+    expect(rows.map((r) => r.supplier_name)).toEqual(["ACME CONSTRUCTION", "BETA ENGINEERING"]);
+  });
+
+  it("skips a supplier with no name rather than storing an unidentifiable winner", () => {
+    const rows = extractAwards(release({ awards: [award({ suppliers: [{ Name: "" }, { Name: "  " }] })] }));
+    expect(rows).toEqual([]);
+  });
+
+  it("never reads tender.value -- only the award's own value", () => {
+    const rows = extractAwards(
+      release({
+        tender: { ...release().tender, value: { amount: 0, currency: "ZAR" } },
+        awards: [award({ value: { amount: 999, currency: "ZAR" } })],
+      }),
+    );
+    expect(rows[0].value_amount).toBe(999);
   });
 });
 

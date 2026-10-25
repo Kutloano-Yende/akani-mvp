@@ -71,18 +71,37 @@ describe("fetchMonthlyReleases", () => {
 });
 
 describe("syncTenders", () => {
+  /** `tenders` and `tender_awards` are separate tables, routed by
+   * `admin.from(table)`. `tenders.upsert().select("id, ocid")` returns the
+   * ocid -> id mapping sync.ts needs to link award rows -- mocked here by
+   * just echoing a deterministic id per ocid. */
   function mockAdmin(existingOcids: string[] = []) {
     const upsertCalls: unknown[][] = [];
+    const awardUpsertCalls: unknown[][] = [];
+
     const tendersBuilder = {
       select: vi.fn(() => tendersBuilder),
       in: vi.fn(async () => ({ data: existingOcids.map((ocid) => ({ ocid })), error: null })),
-      upsert: vi.fn(async (rows: unknown[]) => {
+      upsert: vi.fn((rows: { ocid: string }[]) => {
         upsertCalls.push(rows);
+        return {
+          select: vi.fn(async () => ({
+            data: rows.map((r) => ({ id: `id-${r.ocid}`, ocid: r.ocid })),
+            error: null,
+          })),
+        };
+      }),
+    };
+
+    const awardsBuilder = {
+      upsert: vi.fn(async (rows: unknown[]) => {
+        awardUpsertCalls.push(rows);
         return { error: null };
       }),
     };
-    const admin = { from: vi.fn(() => tendersBuilder) };
-    return { admin, tendersBuilder, upsertCalls };
+
+    const admin = { from: vi.fn((table: string) => (table === "tenders" ? tendersBuilder : awardsBuilder)) };
+    return { admin, tendersBuilder, awardsBuilder, upsertCalls, awardUpsertCalls };
   }
 
   beforeEach(() => {
@@ -147,7 +166,70 @@ describe("syncTenders", () => {
   it("surfaces an upsert error rather than silently dropping rows", async () => {
     const { admin, tendersBuilder } = mockAdmin([]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (tendersBuilder as any).upsert = vi.fn(async () => ({ error: { message: "constraint violation" } }));
+    (tendersBuilder as any).upsert = vi.fn(() => ({
+      select: vi.fn(async () => ({ data: null, error: { message: "constraint violation" } })),
+    }));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await expect(syncTenders(admin as any, "072026")).rejects.toThrow(/constraint violation/);
+  });
+
+  it("extracts award rows and upserts them into tender_awards, linked by the resolved tender id", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        Releases: [
+          release({
+            ocid: "ocds-9t57fa-1",
+            awards: [
+              {
+                id: "75271",
+                value: { amount: 50871120, currency: "ZAR" },
+                suppliers: [{ Name: "VODACOM" }],
+              },
+            ],
+          }),
+        ],
+      }),
+    }) as unknown as typeof fetch;
+    const { admin, awardUpsertCalls } = mockAdmin([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await syncTenders(admin as any, "072026");
+    expect(result.awardsSynced).toBe(1);
+    expect(awardUpsertCalls).toHaveLength(1);
+    expect(awardUpsertCalls[0]).toEqual([
+      {
+        tender_id: "id-ocds-9t57fa-1",
+        award_id: "75271",
+        supplier_name: "VODACOM",
+        value_amount: 50871120,
+        value_currency: "ZAR",
+      },
+    ]);
+  });
+
+  it("reports zero awardsSynced and never calls tender_awards.upsert when no release has an award", async () => {
+    const { admin, awardsBuilder } = mockAdmin([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await syncTenders(admin as any, "072026");
+    expect(result.awardsSynced).toBe(0);
+    expect(awardsBuilder.upsert).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a tender_awards upsert error rather than silently dropping award rows", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        Releases: [
+          release({
+            ocid: "ocds-9t57fa-1",
+            awards: [{ id: "75271", value: { amount: 100, currency: "ZAR" }, suppliers: [{ Name: "VODACOM" }] }],
+          }),
+        ],
+      }),
+    }) as unknown as typeof fetch;
+    const { admin, awardsBuilder } = mockAdmin([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (awardsBuilder as any).upsert = vi.fn(async () => ({ error: { message: "constraint violation" } }));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await expect(syncTenders(admin as any, "072026")).rejects.toThrow(/constraint violation/);
   });

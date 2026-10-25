@@ -9,7 +9,15 @@ import { PROCUREMENT_CATEGORIES, TENDER_STATUSES } from "@/lib/tenders/constants
 export function TenderFilters({
   initial,
 }: {
-  initial: { q: string; province: string; category: string; status: string; closingBefore: string; closingAfter: string };
+  initial: {
+    q: string;
+    province: string;
+    category: string;
+    status: string;
+    closingBefore: string;
+    closingAfter: string;
+    hasAward: string;
+  };
 }) {
   const router = useRouter();
   const [q, setQ] = useState(initial.q);
@@ -18,6 +26,7 @@ export function TenderFilters({
   const [status, setStatus] = useState(initial.status);
   const [closingBefore, setClosingBefore] = useState(initial.closingBefore);
   const [closingAfter, setClosingAfter] = useState(initial.closingAfter);
+  const [hasAward, setHasAward] = useState(initial.hasAward === "true");
 
   function apply(e: React.FormEvent) {
     e.preventDefault();
@@ -28,6 +37,7 @@ export function TenderFilters({
     if (status) qs.set("status", status);
     if (closingBefore) qs.set("closingBefore", closingBefore);
     if (closingAfter) qs.set("closingAfter", closingAfter);
+    if (hasAward) qs.set("hasAward", "true");
     router.push(qs.toString() ? `/tenders?${qs}` : "/tenders");
   }
 
@@ -38,6 +48,7 @@ export function TenderFilters({
     setStatus("");
     setClosingBefore("");
     setClosingAfter("");
+    setHasAward(false);
     router.push("/tenders");
   }
 
@@ -87,6 +98,16 @@ export function TenderFilters({
           title="Closing before"
         />
       </div>
+      <label className="flex items-center gap-2 text-sm text-akani-text-secondary lg:col-span-6">
+        <input
+          type="checkbox"
+          checked={hasAward}
+          onChange={(e) => setHasAward(e.target.checked)}
+          className="h-4 w-4 rounded border-akani-card-border"
+        />
+        Awarded only — sorted by award value, a signal for companies that may need B-BBEE re-verification
+      </label>
+
       <div className="flex gap-2 lg:col-span-6">
         <button
           type="submit"

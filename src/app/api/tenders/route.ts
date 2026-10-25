@@ -30,13 +30,27 @@ export async function GET(request: Request) {
   const status = url.searchParams.get("status")?.trim();
   const closingBefore = url.searchParams.get("closingBefore")?.trim();
   const closingAfter = url.searchParams.get("closingAfter")?.trim();
+  const hasAward = url.searchParams.get("hasAward") === "true";
   const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(url.searchParams.get("pageSize")) || DEFAULT_PAGE_SIZE));
 
+  // hasAward=true inner-joins tender_awards -- award data is sparse (~4% of
+  // a real sample month) and not correlated with status, so this is its own
+  // filter, never inferred from `status`. The inner join also lets us sort
+  // by award value, which (unlike tender.value_amount) is real post-award
+  // money, not the near-always-0 pre-award estimate.
   let query = supabase
     .from("tenders")
-    .select(TENDER_LIST_COLUMNS, { count: "exact" })
-    .order("tender_period_end", { ascending: true, nullsFirst: false });
+    .select(
+      hasAward ? `${TENDER_LIST_COLUMNS}, tender_awards!inner(supplier_name, value_amount, value_currency)` : TENDER_LIST_COLUMNS,
+      { count: "exact" },
+    );
+
+  if (hasAward) {
+    query = query.order("value_amount", { foreignTable: "tender_awards", ascending: false, nullsFirst: false });
+  } else {
+    query = query.order("tender_period_end", { ascending: true, nullsFirst: false });
+  }
 
   if (q) query = query.textSearch("search_vector", q, { type: "websearch" });
   if (province) query = query.eq("province_guess", province);

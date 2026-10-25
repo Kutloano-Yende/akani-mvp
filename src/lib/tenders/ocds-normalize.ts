@@ -1,6 +1,6 @@
-import type { Json } from "@/types/database";
 import type { OcdsRelease } from "./ocds-types";
 import { guessProvince } from "./province-guess";
+import type { Json } from "@/types/database";
 
 /** Matches the `tenders` table's insert shape (snake_case columns), minus
  * the DB-generated id/search_vector/first_synced_at/created_at/updated_at. */
@@ -66,6 +66,60 @@ export function normalizeRelease(release: OcdsRelease): NormalizedTender {
     raw: release as unknown as Json,
     last_synced_at: new Date().toISOString(),
   };
+}
+
+/** Matches the `tender_awards` table's insert shape, minus the DB-generated
+ * id/created_at/updated_at. `ocid` (not `tender_id`) is carried here since
+ * the tender's DB id isn't known until after the `tenders` upsert -- see
+ * sync.ts, which resolves ocid -> tender_id once that upsert returns. */
+export type NormalizedAward = {
+  ocid: string;
+  award_id: string;
+  supplier_name: string;
+  value_amount: number | null;
+  value_currency: string | null;
+};
+
+/**
+ * Extracts one row per (award, supplier) pair from a release's `awards[]`.
+ * Pure function, no I/O.
+ *
+ * Confirmed against a real sample containing awards: only 28 of 690
+ * releases (~4%) carried any award data at all, and it wasn't correlated
+ * with `tender.status` (several awarded releases were still "active", not
+ * "complete") -- so callers must treat "has an award" as its own signal,
+ * never inferred from status.
+ *
+ * Deliberately extracts ONLY `supplier.Name` and the award's value --
+ * nothing else from the award/party data is trustworthy as belonging to the
+ * winning company. In particular, the matching OCDS "supplier" *party*
+ * record's `contactPoint` (email/phone/contact name) was confirmed, across
+ * every real award sample inspected, to actually be the BUYER's own
+ * procurement officer contact, not the supplier's -- e.g. a release whose
+ * supplier is "VODACOM" carries contactPoint email "tshepom@ceta.co.za",
+ * the buyer's domain. That field must never be read as the supplier's own
+ * contact, so this function doesn't touch `parties` at all.
+ */
+export function extractAwards(release: OcdsRelease): NormalizedAward[] {
+  const awards = release.awards ?? [];
+  const rows: NormalizedAward[] = [];
+
+  for (const award of awards) {
+    for (const supplier of award.suppliers ?? []) {
+      const name = supplier.Name?.trim();
+      if (!name) continue; // never store an award row with no identifiable winner
+
+      rows.push({
+        ocid: release.ocid,
+        award_id: award.id,
+        supplier_name: name,
+        value_amount: typeof award.value?.amount === "number" ? award.value.amount : null,
+        value_currency: award.value?.currency ?? null,
+      });
+    }
+  }
+
+  return rows;
 }
 
 /**

@@ -18,8 +18,8 @@ const EMPTY_FORM = {
   website: "",
 };
 
-export function AddProspectForm() {
-  const [form, setForm] = useState(EMPTY_FORM);
+export function AddProspectForm({ initialCompanyName = "" }: { initialCompanyName?: string }) {
+  const [form, setForm] = useState({ ...EMPTY_FORM, companyName: initialCompanyName });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ alreadyExisted: boolean } | null>(null);

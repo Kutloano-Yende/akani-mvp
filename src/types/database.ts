@@ -1268,6 +1268,47 @@ export type Database = {
         }
         Relationships: []
       }
+      tender_awards: {
+        Row: {
+          award_id: string
+          created_at: string
+          id: string
+          supplier_name: string
+          tender_id: string
+          updated_at: string
+          value_amount: number | null
+          value_currency: string | null
+        }
+        Insert: {
+          award_id: string
+          created_at?: string
+          id?: string
+          supplier_name: string
+          tender_id: string
+          updated_at?: string
+          value_amount?: number | null
+          value_currency?: string | null
+        }
+        Update: {
+          award_id?: string
+          created_at?: string
+          id?: string
+          supplier_name?: string
+          tender_id?: string
+          updated_at?: string
+          value_amount?: number | null
+          value_currency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_awards_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenders: {
         Row: {
           buyer_id: string | null

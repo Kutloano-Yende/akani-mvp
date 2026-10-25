@@ -47,6 +47,13 @@ insert into tenders (id, ocid, release_id, title, status, published_date, raw) v
   ('cccccccc-0000-4000-8000-000000000003', 'ocds-9t57fa-rls-test-3', 'ocds-9t57fa-rls-test-3-2026-01-01',
    'RLS Test Tender 3', 'active', now(), '{}'::jsonb);
 
+-- One award signal, same deliberate "insert as table owner" shape as
+-- tenders above -- in production only syncTenders() writes this, via the
+-- service-role client (see supabase/migrations/20261025090000_sprint29_tender_award_signals.sql).
+insert into tender_awards (id, tender_id, award_id, supplier_name, value_amount, value_currency) values
+  ('ffffffff-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-000000000001', 'award-rls-test-1',
+   'RLS Test Supplier', 50871120, 'ZAR');
+
 -- Global read, any tenant -----------------------------------------------------
 do $$
 declare n int;
@@ -62,6 +69,68 @@ begin
   select count(*) into n from tenders where id = 'cccccccc-0000-4000-8000-000000000001';
   assert n = 1, 'tenant 2 must read the SAME global tenders row -- it is not tenant-owned';
   reset role;
+end $$;
+
+-- tender_awards: global read, any tenant, same shape as tenders above --------
+do $$
+declare n int;
+begin
+  set local role authenticated;
+  perform set_config('request.jwt.claims', '{"sub":"eeeeeeee-0000-4000-8000-000000000001","role":"authenticated"}', true);
+  select count(*) into n from tender_awards where id = 'ffffffff-0000-4000-8000-000000000001';
+  assert n = 1, 'tenant 1 must read the global tender_awards table';
+  reset role;
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', '{"sub":"eeeeeeee-0000-4000-8000-000000000003","role":"authenticated"}', true);
+  select count(*) into n from tender_awards where id = 'ffffffff-0000-4000-8000-000000000001';
+  assert n = 1, 'tenant 2 must read the SAME global tender_awards row -- it is not tenant-owned';
+  reset role;
+end $$;
+
+-- Authenticated users cannot write tender_awards directly ---------------------
+do $$
+begin
+  set local role authenticated;
+  perform set_config('request.jwt.claims', '{"sub":"eeeeeeee-0000-4000-8000-000000000001","role":"authenticated"}', true);
+
+  begin
+    insert into tender_awards (tender_id, award_id, supplier_name)
+      values ('cccccccc-0000-4000-8000-000000000001', 'award-fake', 'Fake Supplier');
+    raise exception 'an authenticated user inserted into tender_awards directly';
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    update tender_awards set supplier_name = 'Tampered' where id = 'ffffffff-0000-4000-8000-000000000001';
+    raise exception 'an authenticated user updated tender_awards directly';
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    delete from tender_awards where id = 'ffffffff-0000-4000-8000-000000000001';
+    raise exception 'an authenticated user deleted from tender_awards directly';
+  exception when insufficient_privilege then null;
+  end;
+  reset role;
+end $$;
+
+-- GRANT-level protection holds for tender_awards even if RLS were disabled ----
+do $$
+begin
+  alter table tender_awards disable row level security;
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', '{"sub":"eeeeeeee-0000-4000-8000-000000000001","role":"authenticated"}', true);
+  begin
+    insert into tender_awards (tender_id, award_id, supplier_name)
+      values ('cccccccc-0000-4000-8000-000000000001', 'award-fake-2', 'Fake Supplier 2');
+    raise exception 'an authenticated user inserted into tender_awards with RLS disabled -- the GRANT revoke alone must still block this';
+  exception when insufficient_privilege then null;
+  end;
+  reset role;
+
+  alter table tender_awards enable row level security;
 end $$;
 
 -- Authenticated users cannot write tenders directly ---------------------------
@@ -289,6 +358,8 @@ begin
   assert n = 0, 'anon must see no tenders';
   select count(*) into n from saved_tenders;
   assert n = 0, 'anon must see no saved_tenders';
+  select count(*) into n from tender_awards;
+  assert n = 0, 'anon must see no tender_awards';
   reset role;
 end $$;
 

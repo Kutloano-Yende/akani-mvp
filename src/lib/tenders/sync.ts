@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import type { OcdsReleasePackage } from "./ocds-types";
-import { normalizeRelease, dedupeByOcid } from "./ocds-normalize";
+import { normalizeRelease, dedupeByOcid, extractAwards } from "./ocds-normalize";
 
 const DOWNLOAD_BASE = "https://data.etenders.gov.za/Home/DownloadFile/";
 // The monthly bulk JSON files, not the live query API -- confirmed via
@@ -64,6 +64,7 @@ export type SyncResult = {
   inserted: number;
   updated: number;
   unmatchedProvince: number;
+  awardsSynced: number;
 };
 
 /**
@@ -84,7 +85,7 @@ export async function syncTenders(
   const rows = deduped.map(normalizeRelease);
 
   if (rows.length === 0) {
-    return { fetched: pkg.Releases.length, inserted: 0, updated: 0, unmatchedProvince: 0 };
+    return { fetched: pkg.Releases.length, inserted: 0, updated: 0, unmatchedProvince: 0, awardsSynced: 0 };
   }
 
   const ocids = rows.map((r) => r.ocid);
@@ -102,12 +103,55 @@ export async function syncTenders(
   const updatedCount = rows.length - insertedCount;
   const unmatchedProvince = rows.filter((r) => r.province_guess === null).length;
 
+  // Resolve ocid -> tender id as each chunk upserts, needed below to link
+  // tender_awards rows to the right tender without a second round trip.
+  const ocidToTenderId = new Map<string, string>();
   for (let i = 0; i < rows.length; i += UPSERT_CHUNK_SIZE) {
     const chunk = rows.slice(i, i + UPSERT_CHUNK_SIZE);
-    const { error } = await admin.from("tenders").upsert(chunk, { onConflict: "ocid" });
+    const { data: upserted, error } = await admin
+      .from("tenders")
+      .upsert(chunk, { onConflict: "ocid" })
+      .select("id, ocid");
     if (error) {
       throw new TenderSyncError(`Upsert failed for batch starting at ${i}: ${error.message}`);
     }
+    for (const row of upserted ?? []) {
+      ocidToTenderId.set(row.ocid, row.id);
+    }
+  }
+
+  // Award signals: derived from the same releases, written to their own
+  // global table (tender_awards) so the Opportunities list can filter/sort
+  // by award value without re-parsing raw jsonb on every request. Sparse in
+  // the real data (~4% of a sample month carried any award at all) -- see
+  // extractAwards's own comment for what is and isn't trustworthy here.
+  const awardRows = deduped
+    .flatMap(extractAwards)
+    .map((a) => {
+      const tenderId = ocidToTenderId.get(a.ocid);
+      // Shouldn't happen -- every deduped release was just upserted above --
+      // but skip rather than crash the whole sync over one unresolved award.
+      if (!tenderId) return null;
+      return {
+        tender_id: tenderId,
+        award_id: a.award_id,
+        supplier_name: a.supplier_name,
+        value_amount: a.value_amount,
+        value_currency: a.value_currency,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+
+  let awardsSynced = 0;
+  for (let i = 0; i < awardRows.length; i += UPSERT_CHUNK_SIZE) {
+    const chunk = awardRows.slice(i, i + UPSERT_CHUNK_SIZE);
+    const { error } = await admin
+      .from("tender_awards")
+      .upsert(chunk, { onConflict: "tender_id,award_id,supplier_name" });
+    if (error) {
+      throw new TenderSyncError(`Award upsert failed for batch starting at ${i}: ${error.message}`);
+    }
+    awardsSynced += chunk.length;
   }
 
   return {
@@ -115,5 +159,6 @@ export async function syncTenders(
     inserted: insertedCount,
     updated: updatedCount,
     unmatchedProvince,
+    awardsSynced,
   };
 }
