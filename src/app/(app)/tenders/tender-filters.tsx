@@ -17,6 +17,7 @@ export function TenderFilters({
     closingBefore: string;
     closingAfter: string;
     hasAward: string;
+    bbee: string;
   };
 }) {
   const router = useRouter();
@@ -27,6 +28,7 @@ export function TenderFilters({
   const [closingBefore, setClosingBefore] = useState(initial.closingBefore);
   const [closingAfter, setClosingAfter] = useState(initial.closingAfter);
   const [hasAward, setHasAward] = useState(initial.hasAward === "true");
+  const [bbee, setBbee] = useState(initial.bbee === "true");
 
   function apply(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +40,7 @@ export function TenderFilters({
     if (closingBefore) qs.set("closingBefore", closingBefore);
     if (closingAfter) qs.set("closingAfter", closingAfter);
     if (hasAward) qs.set("hasAward", "true");
+    if (bbee) qs.set("bbee", "true");
     router.push(qs.toString() ? `/tenders?${qs}` : "/tenders");
   }
 
@@ -49,6 +52,7 @@ export function TenderFilters({
     setClosingBefore("");
     setClosingAfter("");
     setHasAward(false);
+    setBbee(false);
     router.push("/tenders");
   }
 
@@ -106,6 +110,18 @@ export function TenderFilters({
           className="h-4 w-4 rounded border-akani-card-border"
         />
         Awarded only — sorted by award value, a signal for companies that may need B-BBEE re-verification
+      </label>
+
+      <label className="flex items-center gap-2 text-sm text-akani-text-secondary lg:col-span-6">
+        <input
+          type="checkbox"
+          checked={bbee}
+          onChange={(e) => setBbee(e.target.checked)}
+          className="h-4 w-4 rounded border-akani-card-border"
+        />
+        Mentions B-BBEE — matches tenders whose own text calls out B-BBEE or preferential procurement
+        (there&apos;s no structured &ldquo;requires B-BBEE&rdquo; field in the source data, so this is a text
+        match, not a verified requirement)
       </label>
 
       <div className="flex gap-2 lg:col-span-6">

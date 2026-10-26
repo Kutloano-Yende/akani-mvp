@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TenderStatusBadge, ProvinceBadge } from "@/components/tender-status-badge";
+import { bbeeOrFilter } from "@/lib/tenders/constants";
 import { TenderFilters } from "./tender-filters";
 import { SaveTenderButton } from "./save-tender-button";
 
-const PAGE_SIZE = 25;
+// Raised from 25 -- with ~690 tenders synced for a single month alone,
+// 25/page meant dozens of Next clicks to browse the catalog.
+const PAGE_SIZE = 50;
 
 /** The select string varies with `hasAward` (a runtime value, not a
  * literal), so the generated client can't narrow `tender_awards` into the
@@ -37,6 +40,7 @@ export default async function TendersPage({
   const closingBefore = sp.closingBefore ?? "";
   const closingAfter = sp.closingAfter ?? "";
   const hasAward = sp.hasAward === "true";
+  const bbee = sp.bbee === "true";
   const page = Math.max(1, Number(sp.page) || 1);
 
   const supabase = await createClient();
@@ -66,6 +70,9 @@ export default async function TendersPage({
   if (status) query = query.eq("status", status);
   if (closingBefore) query = query.lte("tender_period_end", closingBefore);
   if (closingAfter) query = query.gte("tender_period_end", closingAfter);
+  // Best-effort text match -- see bbeeOrFilter's own comment for why there
+  // is no structured "requires B-BBEE" field to filter on instead.
+  if (bbee) query = query.or(bbeeOrFilter());
 
   const from = (page - 1) * PAGE_SIZE;
   const { data: tendersData, count } = await query.range(from, from + PAGE_SIZE - 1);
@@ -90,6 +97,7 @@ export default async function TendersPage({
     if (closingBefore) qs.set("closingBefore", closingBefore);
     if (closingAfter) qs.set("closingAfter", closingAfter);
     if (hasAward) qs.set("hasAward", "true");
+    if (bbee) qs.set("bbee", "true");
     if (targetPage > 1) qs.set("page", String(targetPage));
     const str = qs.toString();
     return str ? `/tenders?${str}` : "/tenders";
@@ -109,7 +117,9 @@ export default async function TendersPage({
       </div>
 
       <div className="rounded-xl border border-akani-card-border bg-white p-4 shadow-sm">
-        <TenderFilters initial={{ q, province, category, status, closingBefore, closingAfter, hasAward: String(hasAward) }} />
+        <TenderFilters
+          initial={{ q, province, category, status, closingBefore, closingAfter, hasAward: String(hasAward), bbee: String(bbee) }}
+        />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-akani-card-border bg-white shadow-sm">

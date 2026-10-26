@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { bbeeOrFilter } from "@/lib/tenders/constants";
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
   const closingBefore = url.searchParams.get("closingBefore")?.trim();
   const closingAfter = url.searchParams.get("closingAfter")?.trim();
   const hasAward = url.searchParams.get("hasAward") === "true";
+  const bbee = url.searchParams.get("bbee") === "true";
   const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(url.searchParams.get("pageSize")) || DEFAULT_PAGE_SIZE));
 
@@ -58,6 +60,9 @@ export async function GET(request: Request) {
   if (status) query = query.eq("status", status);
   if (closingBefore) query = query.lte("tender_period_end", closingBefore);
   if (closingAfter) query = query.gte("tender_period_end", closingAfter);
+  // Best-effort text match -- see bbeeOrFilter's own comment for why there
+  // is no structured "requires B-BBEE" field to filter on instead.
+  if (bbee) query = query.or(bbeeOrFilter());
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;

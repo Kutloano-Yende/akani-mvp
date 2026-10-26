@@ -20,7 +20,7 @@ function request(params: Record<string, string> = {}) {
 function mockTendersQuery(result: { data: unknown; error: unknown; count: number | null }) {
   const calls: { method: string; args: unknown[] }[] = [];
   const builder: Record<string, unknown> = {};
-  for (const method of ["select", "order", "textSearch", "eq", "lte", "gte"]) {
+  for (const method of ["select", "order", "textSearch", "eq", "lte", "gte", "or"]) {
     builder[method] = vi.fn((...args: unknown[]) => {
       calls.push({ method, args });
       return builder;
@@ -116,5 +116,17 @@ describe("GET /api/tenders", () => {
       { count: "exact" },
     );
     expect(builder.order).toHaveBeenCalledWith("tender_period_end", { ascending: true, nullsFirst: false });
+  });
+
+  it("applies the B-BBEE keyword filter when bbee=true", async () => {
+    const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
+    await GET(request({ bbee: "true" }));
+    expect(builder.or).toHaveBeenCalledWith(expect.stringContaining("title.ilike.%B-BBEE%"));
+  });
+
+  it("never applies the B-BBEE filter when bbee is absent", async () => {
+    const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
+    await GET(request());
+    expect(builder.or).not.toHaveBeenCalled();
   });
 });
