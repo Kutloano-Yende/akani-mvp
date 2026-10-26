@@ -52,6 +52,7 @@ const SUPER_ADMIN_ITEMS = [
   { href: "/admin/tenants", label: "Tenants", icon: TenantsIcon },
   { href: "/admin/users", label: "All Users", icon: UsersIcon },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: AuditIcon },
+  { href: "/admin/tenders-sync", label: "Tender Sync", icon: TenderIcon },
 ];
 
 export function AppShell({
@@ -434,7 +435,7 @@ function LeadsIcon({ active }: { active: boolean }) {
   );
 }
 
-function TenderIcon({ active }: { active: boolean }) {
+function TenderIcon({ active = false }: { active?: boolean }) {
   return (
     <svg {...iconProps(active)}>
       <path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
