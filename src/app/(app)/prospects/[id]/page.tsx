@@ -258,8 +258,12 @@ export default async function ProspectDetailPage({
 function Detail({ label, value }: { label: string; value: string | number | null }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-akani-text-secondary">{label}</dt>
-      <dd className="text-right text-akani-text-primary">{value ?? "—"}</dd>
+      <dt className="shrink-0 text-akani-text-secondary">{label}</dt>
+      {/* min-w-0 lets this flex item actually shrink to the row's available
+          width; break-all wraps an unbroken long value (e.g. a website URL
+          with no spaces) instead of forcing the row to overflow the card,
+          which is what a long Website value was doing before this fix. */}
+      <dd className="min-w-0 break-all text-right text-akani-text-primary">{value ?? "—"}</dd>
     </div>
   );
 }
