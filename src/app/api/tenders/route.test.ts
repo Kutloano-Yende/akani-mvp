@@ -16,9 +16,12 @@ function request(params: Record<string, string> = {}) {
 
 /** Chainable mock covering every filter method the route calls, resolving
  * only once `.range()` is reached -- same "thenable builder" shape used
- * across this codebase's other route tests. */
+ * across this codebase's other route tests. Also records which table
+ * `.from()` was called with, since hasAward=true now queries FROM
+ * tender_awards instead of tenders (see route.ts's own comment on why). */
 function mockTendersQuery(result: { data: unknown; error: unknown; count: number | null }) {
   const calls: { method: string; args: unknown[] }[] = [];
+  const fromCalls: string[] = [];
   const builder: Record<string, unknown> = {};
   for (const method of ["select", "order", "textSearch", "eq", "lte", "gte", "or"]) {
     builder[method] = vi.fn((...args: unknown[]) => {
@@ -30,8 +33,11 @@ function mockTendersQuery(result: { data: unknown; error: unknown; count: number
     calls.push({ method: "range", args });
     return result;
   });
-  mockFrom.mockImplementation(() => builder);
-  return { builder, calls };
+  mockFrom.mockImplementation((table: string) => {
+    fromCalls.push(table);
+    return builder;
+  });
+  return { builder, calls, fromCalls };
 }
 
 beforeEach(() => {
@@ -94,18 +100,50 @@ describe("GET /api/tenders", () => {
     expect(res.status).toBe(500);
   });
 
-  it("inner-joins tender_awards and sorts by award value when hasAward=true", async () => {
-    const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
+  it("queries FROM tender_awards (not tenders) and sorts by award value when hasAward=true", async () => {
+    // Ordering `tenders` by a column on its embedded tender_awards doesn't
+    // work in PostgREST (one-to-many parent order is undefined) -- the
+    // route queries FROM tender_awards instead, embedding `tenders`, so
+    // value_amount is a plain top-level column PostgREST can actually sort.
+    const { builder, fromCalls } = mockTendersQuery({ data: [], error: null, count: 0 });
     await GET(request({ hasAward: "true" }));
+    expect(fromCalls).toEqual(["tender_awards"]);
     expect(builder.select).toHaveBeenCalledWith(
-      expect.stringContaining("tender_awards!inner(supplier_name, value_amount, value_currency)"),
+      expect.stringContaining("tenders!inner("),
       { count: "exact" },
     );
-    expect(builder.order).toHaveBeenCalledWith("value_amount", {
-      foreignTable: "tender_awards",
-      ascending: false,
-      nullsFirst: false,
+    expect(builder.order).toHaveBeenCalledWith("value_amount", { ascending: false, nullsFirst: false });
+  });
+
+  it("targets filters at the embedded tenders.* columns when combined with hasAward=true", async () => {
+    const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
+    await GET(request({ hasAward: "true", province: "Gauteng", status: "active" }));
+    expect(builder.eq).toHaveBeenCalledWith("tenders.province_guess", "Gauteng");
+    expect(builder.eq).toHaveBeenCalledWith("tenders.status", "active");
+  });
+
+  it("normalizes the hasAward=true response back to tender fields + an embedded tender_awards array", async () => {
+    mockTendersQuery({
+      data: [
+        {
+          supplier_name: "VODACOM",
+          value_amount: 50871120,
+          value_currency: "ZAR",
+          tenders: { id: "t1", title: "CETA - 04" },
+        },
+      ],
+      error: null,
+      count: 1,
     });
+    const res = await GET(request({ hasAward: "true" }));
+    const body = await res.json();
+    expect(body.tenders).toEqual([
+      {
+        id: "t1",
+        title: "CETA - 04",
+        tender_awards: [{ supplier_name: "VODACOM", value_amount: 50871120, value_currency: "ZAR" }],
+      },
+    ]);
   });
 
   it("sorts by closing date and selects only the base columns when hasAward is absent", async () => {
@@ -128,5 +166,13 @@ describe("GET /api/tenders", () => {
     const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
     await GET(request());
     expect(builder.or).not.toHaveBeenCalled();
+  });
+
+  it("scopes the B-BBEE filter to the embedded tenders table when combined with hasAward=true", async () => {
+    const { builder } = mockTendersQuery({ data: [], error: null, count: 0 });
+    await GET(request({ hasAward: "true", bbee: "true" }));
+    expect(builder.or).toHaveBeenCalledWith(expect.stringContaining("title.ilike.%B-BBEE%"), {
+      foreignTable: "tenders",
+    });
   });
 });

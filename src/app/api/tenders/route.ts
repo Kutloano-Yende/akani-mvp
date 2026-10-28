@@ -36,33 +36,36 @@ export async function GET(request: Request) {
   const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(url.searchParams.get("pageSize")) || DEFAULT_PAGE_SIZE));
 
-  // hasAward=true inner-joins tender_awards -- award data is sparse (~4% of
-  // a real sample month) and not correlated with status, so this is its own
-  // filter, never inferred from `status`. The inner join also lets us sort
-  // by award value, which (unlike tender.value_amount) is real post-award
-  // money, not the near-always-0 pre-award estimate.
-  let query = supabase
-    .from("tenders")
-    .select(
-      hasAward ? `${TENDER_LIST_COLUMNS}, tender_awards!inner(supplier_name, value_amount, value_currency)` : TENDER_LIST_COLUMNS,
-      { count: "exact" },
-    );
+  // hasAward=true needs results sorted by real award value. PostgREST can't
+  // order `tenders` by a column on its EMBEDDED tender_awards (confirmed
+  // live: it silently ignored the order and fell back to default row
+  // order) -- tenders:tender_awards is one-to-many, and ordering a parent
+  // by a column on its many-side isn't well-defined. Querying FROM
+  // tender_awards instead avoids the ambiguity: the sort column becomes a
+  // plain top-level column on the base table, and the embedded `tenders` is
+  // to-one (every award belongs to exactly one tender), which IS
+  // orderable/filterable. The other filters below target the embedded
+  // `tenders.<column>` in this branch for the same reason.
+  let query = hasAward
+    ? supabase
+        .from("tender_awards")
+        .select(`supplier_name, value_amount, value_currency, tenders!inner(${TENDER_LIST_COLUMNS})`, { count: "exact" })
+        .order("value_amount", { ascending: false, nullsFirst: false })
+    : supabase.from("tenders").select(TENDER_LIST_COLUMNS, { count: "exact" }).order("tender_period_end", {
+        ascending: true,
+        nullsFirst: false,
+      });
 
-  if (hasAward) {
-    query = query.order("value_amount", { foreignTable: "tender_awards", ascending: false, nullsFirst: false });
-  } else {
-    query = query.order("tender_period_end", { ascending: true, nullsFirst: false });
-  }
-
-  if (q) query = query.textSearch("search_vector", q, { type: "websearch" });
-  if (province) query = query.eq("province_guess", province);
-  if (category) query = query.eq("main_procurement_category", category);
-  if (status) query = query.eq("status", status);
-  if (closingBefore) query = query.lte("tender_period_end", closingBefore);
-  if (closingAfter) query = query.gte("tender_period_end", closingAfter);
+  const col = (name: string) => (hasAward ? `tenders.${name}` : name);
+  if (q) query = query.textSearch(col("search_vector"), q, { type: "websearch" });
+  if (province) query = query.eq(col("province_guess"), province);
+  if (category) query = query.eq(col("main_procurement_category"), category);
+  if (status) query = query.eq(col("status"), status);
+  if (closingBefore) query = query.lte(col("tender_period_end"), closingBefore);
+  if (closingAfter) query = query.gte(col("tender_period_end"), closingAfter);
   // Best-effort text match -- see bbeeOrFilter's own comment for why there
   // is no structured "requires B-BBEE" field to filter on instead.
-  if (bbee) query = query.or(bbeeOrFilter());
+  if (bbee) query = hasAward ? query.or(bbeeOrFilter(), { foreignTable: "tenders" }) : query.or(bbeeOrFilter());
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
@@ -72,9 +75,26 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Normalize back to the same shape regardless of hasAward, so API
+  // consumers always see tender fields + an embedded tender_awards array,
+  // never the inverted tender_awards-with-embedded-tender shape this branch
+  // has to query in to get a working sort.
+  type AwardJoinRow = {
+    supplier_name: string;
+    value_amount: number | null;
+    value_currency: string | null;
+    tenders: Record<string, unknown>;
+  };
+  const tenders = hasAward
+    ? ((data ?? []) as unknown as AwardJoinRow[]).map((r) => ({
+        ...r.tenders,
+        tender_awards: [{ supplier_name: r.supplier_name, value_amount: r.value_amount, value_currency: r.value_currency }],
+      }))
+    : (data ?? []);
+
   const total = count ?? 0;
   return NextResponse.json({
-    tenders: data ?? [],
+    tenders,
     page,
     pageSize,
     hasMore: from + (data?.length ?? 0) < total,

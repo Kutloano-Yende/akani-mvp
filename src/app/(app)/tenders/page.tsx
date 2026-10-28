@@ -26,6 +26,25 @@ type TenderRow = {
   tender_awards?: { supplier_name: string; value_amount: number | null; value_currency: string | null }[];
 };
 
+/** The hasAward=true query is based FROM tender_awards (see the comment
+ * where it's built) -- this is the raw shape that comes back before it's
+ * normalized into TenderRow below. */
+type TenderAwardJoinRow = {
+  supplier_name: string;
+  value_amount: number | null;
+  value_currency: string | null;
+  tenders: {
+    id: string;
+    title: string;
+    status: string;
+    main_procurement_category: string | null;
+    buyer_name: string | null;
+    province_guess: string | null;
+    tender_period_end: string | null;
+    source_url: string | null;
+  };
+};
+
 const zarFormatter = new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 });
 
 export default async function TendersPage({
@@ -46,38 +65,51 @@ export default async function TendersPage({
 
   const supabase = await createClient();
 
-  // hasAward=true inner-joins tender_awards and sorts by real award value --
-  // see src/app/api/tenders/route.ts for why this can't be a status filter
-  // (award data isn't correlated with tender.status) and why the contact
-  // info on the OCDS "supplier" party is never surfaced here.
-  let query = supabase
-    .from("tenders")
-    .select(
-      hasAward
-        ? "id, title, status, main_procurement_category, buyer_name, province_guess, tender_period_end, source_url, tender_awards!inner(supplier_name, value_amount, value_currency)"
-        : "id, title, status, main_procurement_category, buyer_name, province_guess, tender_period_end, source_url",
-      { count: "exact" },
-    );
+  // hasAward=true needs the list sorted by real award value. PostgREST
+  // can't do that by ordering `tenders` on a column of its EMBEDDED
+  // tender_awards (confirmed live: it silently ignored the order and fell
+  // back to default row order) -- tenders:tender_awards is one-to-many, and
+  // ordering a parent by a column on its many-side isn't well-defined.
+  // Querying FROM tender_awards instead avoids the ambiguity entirely: the
+  // sort column is now a plain top-level column on the base table, and the
+  // embedded `tenders` is to-one (every award belongs to exactly one
+  // tender), which IS orderable/filterable. The other filters below target
+  // the embedded `tenders.<column>` in this branch for the same reason.
+  let query = hasAward
+    ? supabase
+        .from("tender_awards")
+        .select(
+          "supplier_name, value_amount, value_currency, tenders!inner(id, title, status, main_procurement_category, buyer_name, province_guess, tender_period_end, source_url)",
+          { count: "exact" },
+        )
+        .order("value_amount", { ascending: false, nullsFirst: false })
+    : supabase
+        .from("tenders")
+        .select("id, title, status, main_procurement_category, buyer_name, province_guess, tender_period_end, source_url", {
+          count: "exact",
+        })
+        .order("tender_period_end", { ascending: true, nullsFirst: false });
 
-  if (hasAward) {
-    query = query.order("value_amount", { foreignTable: "tender_awards", ascending: false, nullsFirst: false });
-  } else {
-    query = query.order("tender_period_end", { ascending: true, nullsFirst: false });
-  }
-
-  if (q) query = query.textSearch("search_vector", q, { type: "websearch" });
-  if (province) query = query.eq("province_guess", province);
-  if (category) query = query.eq("main_procurement_category", category);
-  if (status) query = query.eq("status", status);
-  if (closingBefore) query = query.lte("tender_period_end", closingBefore);
-  if (closingAfter) query = query.gte("tender_period_end", closingAfter);
+  const col = (name: string) => (hasAward ? `tenders.${name}` : name);
+  if (q) query = query.textSearch(col("search_vector"), q, { type: "websearch" });
+  if (province) query = query.eq(col("province_guess"), province);
+  if (category) query = query.eq(col("main_procurement_category"), category);
+  if (status) query = query.eq(col("status"), status);
+  if (closingBefore) query = query.lte(col("tender_period_end"), closingBefore);
+  if (closingAfter) query = query.gte(col("tender_period_end"), closingAfter);
   // Best-effort text match -- see bbeeOrFilter's own comment for why there
   // is no structured "requires B-BBEE" field to filter on instead.
-  if (bbee) query = query.or(bbeeOrFilter());
+  if (bbee) query = hasAward ? query.or(bbeeOrFilter(), { foreignTable: "tenders" }) : query.or(bbeeOrFilter());
 
   const from = (page - 1) * PAGE_SIZE;
-  const { data: tendersData, count } = await query.range(from, from + PAGE_SIZE - 1);
-  const tenders = (tendersData ?? []) as unknown as TenderRow[];
+  const { data: rawData, count } = await query.range(from, from + PAGE_SIZE - 1);
+
+  const tenders: TenderRow[] = hasAward
+    ? ((rawData ?? []) as unknown as TenderAwardJoinRow[]).map((r) => ({
+        ...r.tenders,
+        tender_awards: [{ supplier_name: r.supplier_name, value_amount: r.value_amount, value_currency: r.value_currency }],
+      }))
+    : ((rawData ?? []) as unknown as TenderRow[]);
 
   const tenderIds = tenders.map((t) => t.id);
   const { data: saved } =
