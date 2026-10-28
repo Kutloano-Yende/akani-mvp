@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TenderStatusBadge, ProvinceBadge } from "@/components/tender-status-badge";
 import { bbeeOrFilter } from "@/lib/tenders/constants";
 import { TenderFilters } from "./tender-filters";
+import { TenderPagination } from "./tender-pagination";
 import { SaveTenderButton } from "./save-tender-button";
 
 // Raised from 25 -- with ~690 tenders synced for a single month alone,
@@ -196,25 +197,7 @@ export default async function TendersPage({
         </div>
       </div>
 
-      {(page > 1 || hasMore) && (
-        <div className="flex items-center justify-between text-sm">
-          {page > 1 ? (
-            <Link href={pageHref(page - 1)} className="font-medium text-akani-text-primary hover:text-akani-gold">
-              ← Previous
-            </Link>
-          ) : (
-            <span />
-          )}
-          <span className="text-akani-text-muted">Page {page}</span>
-          {hasMore ? (
-            <Link href={pageHref(page + 1)} className="font-medium text-akani-text-primary hover:text-akani-gold">
-              Next →
-            </Link>
-          ) : (
-            <span />
-          )}
-        </div>
-      )}
+      <TenderPagination page={page} hasMore={hasMore} prevHref={pageHref(page - 1)} nextHref={pageHref(page + 1)} />
     </div>
   );
 }

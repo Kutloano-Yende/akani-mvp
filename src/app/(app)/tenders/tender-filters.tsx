@@ -42,6 +42,11 @@ export function TenderFilters({
     if (hasAward) qs.set("hasAward", "true");
     if (bbee) qs.set("bbee", "true");
     router.push(qs.toString() ? `/tenders?${qs}` : "/tenders");
+    // router.push alone left this page showing a stale Router Cache entry
+    // (every filter on this form was silently a no-op in production -- the
+    // URL updated but the list never re-rendered) -- router.refresh() forces
+    // the Server Component to re-fetch for the new searchParams.
+    router.refresh();
   }
 
   function clear() {
@@ -54,6 +59,7 @@ export function TenderFilters({
     setHasAward(false);
     setBbee(false);
     router.push("/tenders");
+    router.refresh();
   }
 
   return (
